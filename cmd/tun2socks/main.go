@@ -65,8 +65,7 @@ func registerHandlerCreator(name string, creator func()) {
 }
 
 func showVersion() {
-	fmt.Println("Tun2Socks", version)
-	fmt.Println("Build Time", buildTime)
+	fmt.Println("Tun2Socks", version, buildTime)
 }
 
 func main() {
