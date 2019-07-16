@@ -14,10 +14,6 @@ import (
 )
 
 func init() {
-	args.addFlag(fProxyServer)
-	args.addFlag(fUdpTimeout)
-	args.addFlag(fStats)
-
 	args.ExceptionApps = flag.String("exceptionApps", "", "A list of exception apps separated by commas")
 	args.ExceptionSendThrough = flag.String("exceptionSendThrough", "192.168.1.101:0", "Exception send through address")
 

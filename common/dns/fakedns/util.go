@@ -1,8 +1,6 @@
 package fakedns
 
 import (
-	"encoding/binary"
-	"net"
 	"time"
 
 	D "github.com/miekg/dns"
@@ -36,14 +34,4 @@ func setMsgTTL(msg *D.Msg, ttl uint32) {
 	for _, extra := range msg.Extra {
 		extra.Header().Ttl = ttl
 	}
-}
-
-/*
-func uint322ip(n uint32) net.IP {
-	return net.IPv4(byte(n>>24), byte(n>>16), byte(n>>8), byte(n))
-}
-*/
-
-func ip2uint32(ip net.IP) uint32 {
-	return binary.BigEndian.Uint32([]byte(ip)[net.IPv6len-net.IPv4len:])
 }
