@@ -1,7 +1,7 @@
 NAME=tun2socks
 BUILDDIR=$(shell pwd)/build
 CMDDIR=$(shell pwd)/cmd/tun2socks
-VERSION=$(shell git describe --tags || echo "unknown version")
+VERSION=$(shell git describe --tags --long || echo "unknown version")
 BUILDTIME=$(shell date -u)
 BUILD_TAGS='socks fakedns d stats'
 BUILD_LDFLAGS='-s -w -X "main.version=$(VERSION)"  -X "main.buildTime=$(BUILDTIME)"'
