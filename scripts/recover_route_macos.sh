@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sudo route -n flush
 sudo route -n flush
 sudo route -n flush
