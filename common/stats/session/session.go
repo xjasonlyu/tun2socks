@@ -25,6 +25,7 @@ var (
 )
 
 type simpleSessionStater struct {
+	mux               sync.Mutex
 	sessions          sync.Map
 	completedSessions []stats.Session
 	server            *http.Server
@@ -90,10 +91,10 @@ func (s *simpleSessionStater) Start() error {
 	})
 	mux.HandleFunc(StatsPath, sessionStatsHandler)
 	server := &http.Server{Addr: StatsAddr, Handler: mux}
+	s.server = server
 	go func() {
 		_ = s.server.ListenAndServe()
 	}()
-	s.server = server
 	return nil
 }
 
@@ -115,10 +116,13 @@ func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
 
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
 	if sess, ok := s.sessions.Load(key); ok {
+		// temporary workaround for slice race condition
+		s.mux.Lock()
 		s.completedSessions = append(s.completedSessions, *(sess.(*stats.Session)))
 		if len(s.completedSessions) > maxCompletedSessions {
 			s.completedSessions = s.completedSessions[1:]
 		}
+		s.mux.Unlock()
 	}
 	s.sessions.Delete(key)
 }
