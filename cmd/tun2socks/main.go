@@ -50,8 +50,6 @@ type CmdArgs struct {
 	ProxyPassword        *string
 	DelayICMP            *int
 	UdpTimeout           *time.Duration
-	DisableDnsCache      *bool
-	DnsFallback          *bool
 	LogLevel             *string
 	EnableFakeDns        *bool
 	FakeIPRange          *string
@@ -100,8 +98,6 @@ func (a *CmdArgs) addFlag(f cmdFlag) {
 var args = new(CmdArgs)
 
 var lwipWriter io.Writer
-
-var dnsCache dns.DnsCache
 
 var fakeDns dns.FakeDns
 
@@ -173,15 +169,6 @@ func main() {
 		creator()
 	} else {
 		log.Fatalf("unsupported proxy type")
-	}
-
-	if args.DnsFallback != nil && *args.DnsFallback {
-		// Override the UDP handler with a DNS-over-TCP (fallback) UDP handler.
-		if creator, found := handlerCreator["dnsfallback"]; found {
-			creator()
-		} else {
-			log.Fatalf("DNS fallback connection handler not found, build with `dnsfallback` tag")
-		}
 	}
 
 	// Register an output callback to write packets output from lwip stack to tun
