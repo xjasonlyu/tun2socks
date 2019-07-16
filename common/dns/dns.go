@@ -11,7 +11,7 @@ type FakeDns interface {
 	// GenerateFakeResponse(request []byte) ([]byte, error)
 
 	// IPToHost returns the corresponding domain for the given IP.
-	IPToHost(ip net.IP) string
+	IPToHost(ip net.IP) (string, bool)
 
 	// IsFakeIP checks if the given ip is a fake IP.
 	// IsFakeIP(ip net.IP) bool

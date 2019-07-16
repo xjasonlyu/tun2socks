@@ -150,8 +150,8 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	// Replace with a domain name if target address IP is a fake IP.
 	var targetHost = target.IP.String()
 	if h.fakeDns != nil {
-		if t := h.fakeDns.IPToHost(target.IP); t != "" {
-			targetHost = t
+		if host, exist := h.fakeDns.IPToHost(target.IP); exist {
+			targetHost = host
 		}
 	}
 

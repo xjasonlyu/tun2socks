@@ -28,14 +28,14 @@ func NewUDPHandler() core.UDPConnHandler {
 
 func (h *udpHandler) Connect(conn core.UDPConn, udpAddr *net.UDPAddr) error {
 	if udpAddr.Port != dns.CommonDnsPort {
-		return errors.New("Cannot handle non-DNS packet")
+		return errors.New("cannot handle non-DNS packet")
 	}
 	return nil
 }
 
 func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
 	if len(data) < dnsHeaderLength {
-		return errors.New("Received malformed DNS query")
+		return errors.New("received malformed DNS query")
 	}
 	//  DNS Header
 	//  0  1  2  3  4  5  6  7  0  1  2  3  4  5  6  7

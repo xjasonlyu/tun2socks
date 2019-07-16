@@ -108,8 +108,8 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 				return nil // skip dns
 			}
 		*/
-		if t := h.fakeDns.IPToHost(target.IP); t != "" {
-			targetHost = t
+		if host, exist := h.fakeDns.IPToHost(target.IP); exist {
+			targetHost = host
 		}
 	}
 	dest := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
@@ -213,8 +213,8 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 	if ok1 && ok2 {
 		var targetHost = addr.IP.String()
 		if h.fakeDns != nil {
-			if t := h.fakeDns.IPToHost(addr.IP); t != "" {
-				targetHost = t
+			if host, exist := h.fakeDns.IPToHost(addr.IP); exist {
+				targetHost = host
 			}
 		}
 

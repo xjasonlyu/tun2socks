@@ -57,13 +57,13 @@ func (s *Server) StartServer(addr string) error {
 	return nil
 }
 
-func (s *Server) IPToHost(ip net.IP) string {
+func (s *Server) IPToHost(ip net.IP) (string, bool) {
 	c := s.c.Get(ip.String())
 	if c == nil {
-		return ""
+		return "", false
 	}
 	fqdn := c.(*D.Msg).Question[0].Name
-	return strings.TrimRight(fqdn, ".")
+	return strings.TrimRight(fqdn, "."), true
 }
 
 func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
