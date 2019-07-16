@@ -26,19 +26,17 @@ type udpHandler struct {
 	remoteAddrs map[core.UDPConn]*net.UDPAddr // UDP relay server addresses
 	timeout     time.Duration
 
-	dnsCache      dns.DnsCache
 	fakeDns       dns.FakeDns
 	sessionStater stats.SessionStater
 }
 
-func NewUDPHandler(proxyHost string, proxyPort uint16, timeout time.Duration, dnsCache dns.DnsCache, fakeDns dns.FakeDns, sessionStater stats.SessionStater) core.UDPConnHandler {
+func NewUDPHandler(proxyHost string, proxyPort uint16, timeout time.Duration, fakeDns dns.FakeDns, sessionStater stats.SessionStater) core.UDPConnHandler {
 	return &udpHandler{
 		proxyHost:     proxyHost,
 		proxyPort:     proxyPort,
 		udpConns:      make(map[core.UDPConn]net.PacketConn, 8),
 		tcpConns:      make(map[core.UDPConn]net.Conn, 8),
 		remoteAddrs:   make(map[core.UDPConn]*net.UDPAddr, 8),
-		dnsCache:      dnsCache,
 		fakeDns:       fakeDns,
 		timeout:       timeout,
 		sessionStater: sessionStater,
@@ -94,17 +92,6 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 			log.Warnf("write local failed: %v", err)
 			return
 		}
-
-		if h.dnsCache != nil {
-			_, port, err := net.SplitHostPort(addr.String())
-			if err != nil {
-				panic("impossible error")
-			}
-			if port == strconv.Itoa(dns.CommonDnsPort) {
-				h.dnsCache.Store(buf[int(3+len(addr)):n])
-				return // DNS response
-			}
-		}
 	}
 }
 
@@ -114,13 +101,15 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	}
 
 	// Replace with a domain name if target address IP is a fake IP.
-	targetHost := target.IP.String()
+	var targetHost = target.IP.String()
 	if h.fakeDns != nil {
-		if target.Port == dns.CommonDnsPort {
-			return nil // skip dns
-		}
-		if h.fakeDns.IsFakeIP(target.IP) {
-			targetHost = h.fakeDns.IPToHost(target.IP)
+		/*
+			if target.Port == dns.CommonDnsPort {
+				return nil // skip dns
+			}
+		*/
+		if t := h.fakeDns.IPToHost(target.IP); t != "" {
+			targetHost = t
 		}
 	}
 	dest := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
@@ -222,14 +211,14 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 
 	// use system DNS instead of force override
 	if ok1 && ok2 {
-		var targetHost string
-		if h.fakeDns != nil && h.fakeDns.IsFakeIP(addr.IP) {
-			targetHost = h.fakeDns.IPToHost(addr.IP)
-		} else {
-			targetHost = addr.IP.String()
+		var targetHost = addr.IP.String()
+		if h.fakeDns != nil {
+			if t := h.fakeDns.IPToHost(addr.IP); t != "" {
+				targetHost = t
+			}
 		}
-		dest := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
 
+		dest := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
 		buf := append([]byte{0, 0, 0}, ParseAddr(dest)...)
 		buf = append(buf, data[:]...)
 		n, err := pc.WriteTo(buf, remoteAddr)

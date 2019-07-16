@@ -19,7 +19,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/tun"
 )
 
-var version = "undefined"
+var Version  = "unknown version"
 
 var handlerCreator = make(map[string]func(), 0)
 
@@ -121,7 +121,7 @@ func main() {
 	flag.Parse()
 
 	if *args.Version {
-		fmt.Println(version)
+		fmt.Println("TUN2SOCKS", Version)
 		os.Exit(0)
 	}
 

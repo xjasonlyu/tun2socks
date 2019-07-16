@@ -148,14 +148,14 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	}
 
 	// Replace with a domain name if target address IP is a fake IP.
-	var targetHost string
-	if h.fakeDns != nil && h.fakeDns.IsFakeIP(target.IP) {
-		targetHost = h.fakeDns.IPToHost(target.IP)
-	} else {
-		targetHost = target.IP.String()
+	var targetHost = target.IP.String()
+	if h.fakeDns != nil {
+		if t := h.fakeDns.IPToHost(target.IP); t != "" {
+			targetHost = t
+		}
 	}
-	dest := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
 
+	dest := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
 	c, err := dialer.Dial(target.Network(), dest)
 	if err != nil {
 		return err
