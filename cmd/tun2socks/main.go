@@ -22,8 +22,8 @@ import (
 const MTU = 1500
 
 var (
-	version   = "unknown version"
-	buildTime = "unknown time"
+	version     = "unknown version"
+	description = "A tun2socks implementation written in Go."
 
 	args            = new(CmdArgs)
 	postFlagsInitFn = make([]func(), 0)
@@ -65,7 +65,8 @@ func registerHandlerCreator(name string, creator func()) {
 }
 
 func showVersion() {
-	fmt.Println("tun2socks", version, buildTime)
+	fmt.Println("Go-tun2socks", version)
+	fmt.Println(description)
 }
 
 func main() {
