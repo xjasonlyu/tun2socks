@@ -6,9 +6,10 @@ import (
 	"time"
 
 	D "github.com/miekg/dns"
+	"github.com/xjasonlyu/tun2socks/common/cache"
 )
 
-func putMsgToCache(c *Cache, key string, msg *D.Msg) {
+func putMsgToCache(c *cache.Cache, key string, msg *D.Msg) {
 	var ttl time.Duration
 	if len(msg.Answer) != 0 {
 		ttl = time.Duration(msg.Answer[0].Header().Ttl) * time.Second

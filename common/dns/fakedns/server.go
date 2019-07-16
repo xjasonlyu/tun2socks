@@ -7,6 +7,8 @@ import (
 	"time"
 
 	D "github.com/miekg/dns"
+	"github.com/xjasonlyu/tun2socks/common/cache"
+	"github.com/xjasonlyu/tun2socks/common/fakeip"
 )
 
 var (
@@ -18,8 +20,7 @@ var (
 
 type Server struct {
 	*D.Server
-	p *Pool
-	c *Cache
+	c *cache.Cache
 	h handler
 }
 
@@ -65,31 +66,22 @@ func (s *Server) IPToHost(ip net.IP) string {
 	return strings.TrimRight(fqdn, ".")
 }
 
-func (s *Server) IsFakeIP(ip net.IP) bool {
-	c := ip2uint32(ip)
-	if c >= s.p.min && c <= s.p.max {
-		return true
-	}
-	return false
-}
-
-func NewServer(fakeIPRange, hostsMap string) (*Server, error) {
+func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
 	_, ipnet, err := net.ParseCIDR(fakeIPRange)
 	if err != nil {
 		return nil, err
 	}
-	pool, err := NewPool(ipnet)
+	pool, err := fakeip.New(ipnet)
 	if err != nil {
 		return nil, err
 	}
 
-	cache := NewCache(cacheDuration)
-	hosts := strToHosts(hostsMap)
-	handler := newHandler(hosts, cache, pool)
+	hosts := lineToHosts(hostsLine)
+	cacheItem := cache.New(cacheDuration)
+	handler := newHandler(hosts, cacheItem, pool)
 
 	return &Server{
-		p: pool,
-		c: cache,
+		c: cacheItem,
 		h: handler,
 	}, nil
 }

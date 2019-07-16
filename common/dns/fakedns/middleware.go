@@ -5,13 +5,15 @@ import (
 	"net"
 	"strings"
 
-	trie "github.com/xjasonlyu/tun2socks/common/dns/domain-trie"
 	D "github.com/miekg/dns"
+	"github.com/xjasonlyu/tun2socks/common/cache"
+	trie "github.com/xjasonlyu/tun2socks/common/domain-trie"
+	"github.com/xjasonlyu/tun2socks/common/fakeip"
 )
 
 type handler func(w D.ResponseWriter, r *D.Msg)
 
-func withFakeIP(cache *Cache, pool *Pool) handler {
+func withFakeIP(cache *cache.Cache, pool *fakeip.Pool) handler {
 	return func(w D.ResponseWriter, r *D.Msg) {
 		q := r.Question[0]
 
@@ -88,7 +90,7 @@ func withHost(hosts *trie.Trie, next handler) handler {
 	}
 }
 
-func strToHosts(str string) *trie.Trie {
+func lineToHosts(str string) *trie.Trie {
 	// trim `'` `"` ` ` char
 	str = strings.Trim(str, "' \"")
 	if str == "" {
@@ -110,7 +112,7 @@ func strToHosts(str string) *trie.Trie {
 	return tree
 }
 
-func newHandler(hosts *trie.Trie, cache *Cache, pool *Pool) handler {
+func newHandler(hosts *trie.Trie, cache *cache.Cache, pool *fakeip.Pool) handler {
 	if hosts != nil {
 		return withHost(hosts, withFakeIP(cache, pool))
 	}
