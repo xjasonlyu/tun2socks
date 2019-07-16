@@ -1,4 +1,4 @@
-package fakedns
+package cache
 
 import (
 	"runtime"
@@ -93,7 +93,7 @@ func stopJanitor(c *Cache) {
 }
 
 // New return *Cache
-func NewCache(interval time.Duration) *Cache {
+func New(interval time.Duration) *Cache {
 	j := &janitor{
 		interval: interval,
 		stop:     make(chan struct{}),

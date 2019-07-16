@@ -1,4 +1,4 @@
-package fakedns
+package fakeip
 
 import (
 	"errors"
@@ -36,7 +36,7 @@ func uintToIP(v uint32) net.IP {
 }
 
 // New return Pool instance
-func NewPool(ipnet *net.IPNet) (*Pool, error) {
+func New(ipnet *net.IPNet) (*Pool, error) {
 	min := ipToUint(ipnet.IP) + 1
 
 	ones, bits := ipnet.Mask.Size()
