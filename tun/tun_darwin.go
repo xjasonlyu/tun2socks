@@ -31,6 +31,7 @@ func isIPv6(ip net.IP) bool {
 }
 
 func OpenTunDevice(name, addr, gw, mask string, dnsServers []string) (io.ReadWriteCloser, error) {
+	_ = dnsServers
 	tunDev, err := water.New(water.Config{
 		DeviceType: water.TUN,
 	})
@@ -47,11 +48,11 @@ func OpenTunDevice(name, addr, gw, mask string, dnsServers []string) (io.ReadWri
 	if isIPv4(ip) {
 		params = fmt.Sprintf("%s inet %s netmask %s %s", name, addr, mask, gw)
 	} else if isIPv6(ip) {
-		prefixlen, err := strconv.Atoi(mask)
+		prefixLen, err := strconv.Atoi(mask)
 		if err != nil {
 			return nil, errors.New(fmt.Sprintf("parse IPv6 prefixlen failed: %v", err))
 		}
-		params = fmt.Sprintf("%s inet6 %s/%d", name, addr, prefixlen)
+		params = fmt.Sprintf("%s inet6 %s/%d", name, addr, prefixLen)
 	} else {
 		return nil, errors.New("invalid IP address")
 	}

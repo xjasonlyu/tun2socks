@@ -150,7 +150,7 @@ func getTuntapComponentId() (string, error) {
 	return "", errors.New("not found component id")
 }
 
-func OpenTunDevice(name, addr, gw, mask string, dns []string) (io.ReadWriteCloser, error) {
+func OpenTunDevice(name, addr, gw, mask string, dnsServers []string) (io.ReadWriteCloser, error) {
 	componentId, err := getTuntapComponentId()
 	if err != nil {
 		return nil, err
@@ -207,10 +207,10 @@ func OpenTunDevice(name, addr, gw, mask string, dns []string) (io.ReadWriteClose
 
 	// set dns with dncp
 	dnsParam := []byte{6, 4}
-	primaryDNS := net.ParseIP(dns[0]).To4()
+	primaryDNS := net.ParseIP(dnsServers[0]).To4()
 	dnsParam = append(dnsParam, primaryDNS...)
-	if len(dns) >= 2 {
-		secondaryDNS := net.ParseIP(dns[1]).To4()
+	if len(dnsServers) >= 2 {
+		secondaryDNS := net.ParseIP(dnsServers[1]).To4()
 		dnsParam = append(dnsParam, secondaryDNS...)
 		dnsParam[1] += 4
 	}
@@ -228,7 +228,7 @@ func OpenTunDevice(name, addr, gw, mask string, dns []string) (io.ReadWriteClose
 		windows.Close(fd)
 		return nil, err
 	} else {
-		log.Printf("set %s with dns: %s through DHCP", devName, strings.Join(dns, ","))
+		log.Printf("set %s with dns: %s through DHCP", devName, strings.Join(dnsServers, ","))
 	}
 
 	// set connect.
