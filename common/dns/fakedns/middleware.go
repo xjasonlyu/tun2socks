@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	D "github.com/miekg/dns"
-	"github.com/xjasonlyu/tun2socks/common/cache"
 	trie "github.com/xjasonlyu/tun2socks/common/domain-trie"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
+	cache "github.com/xjasonlyu/tun2socks/common/lru-cache"
+	// "github.com/xjasonlyu/tun2socks/common/cache"
 )
 
 type handler func(w D.ResponseWriter, r *D.Msg)

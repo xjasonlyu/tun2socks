@@ -4,11 +4,11 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"time"
 
 	D "github.com/miekg/dns"
-	"github.com/xjasonlyu/tun2socks/common/cache"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
+	cache "github.com/xjasonlyu/tun2socks/common/lru-cache"
+	// "github.com/xjasonlyu/tun2socks/common/cache"
 )
 
 const (
@@ -16,7 +16,9 @@ const (
 	dnsDefaultTTL uint32 = 600
 )
 
-var cacheDuration = time.Duration(dnsDefaultTTL) * time.Second
+// var cacheDuration = time.Duration(dnsDefaultTTL) * time.Second
+
+var cacheSize = 100
 
 type Server struct {
 	*D.Server
@@ -77,7 +79,7 @@ func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
 	}
 
 	hosts := lineToHosts(hostsLine)
-	cacheItem := cache.New(cacheDuration)
+	cacheItem := cache.New(cacheSize)
 	handler := newHandler(hosts, cacheItem, pool)
 
 	return &Server{

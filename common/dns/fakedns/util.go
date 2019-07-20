@@ -1,12 +1,13 @@
 package fakedns
 
 import (
-	"time"
-
 	D "github.com/miekg/dns"
-	"github.com/xjasonlyu/tun2socks/common/cache"
+
+	cache "github.com/xjasonlyu/tun2socks/common/lru-cache"
+	// "github.com/xjasonlyu/tun2socks/common/cache"
 )
 
+/*
 func putMsgToCache(c *cache.Cache, key string, msg *D.Msg) {
 	var ttl time.Duration
 	if len(msg.Answer) != 0 {
@@ -20,6 +21,11 @@ func putMsgToCache(c *cache.Cache, key string, msg *D.Msg) {
 	}
 
 	c.Put(key, msg.Copy(), ttl)
+}
+*/
+
+func putMsgToCache(c *cache.Cache, key string, msg *D.Msg) {
+	c.Put(key, msg.Copy())
 }
 
 func setMsgTTL(msg *D.Msg, ttl uint32) {
