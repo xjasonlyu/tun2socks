@@ -18,8 +18,6 @@ const (
 
 // var cacheDuration = time.Duration(dnsDefaultTTL) * time.Second
 
-var cacheSize = 100
-
 type Server struct {
 	*D.Server
 	c *cache.Cache
@@ -68,7 +66,7 @@ func (s *Server) IPToHost(ip net.IP) (string, bool) {
 	return strings.TrimRight(fqdn, "."), true
 }
 
-func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
+func NewServer(fakeIPRange, hostsLine string, size int) (*Server, error) {
 	_, ipnet, err := net.ParseCIDR(fakeIPRange)
 	if err != nil {
 		return nil, err
@@ -79,7 +77,7 @@ func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
 	}
 
 	hosts := lineToHosts(hostsLine)
-	cacheItem := cache.New(cacheSize)
+	cacheItem := cache.New(size)
 	handler := newHandler(hosts, cacheItem, pool)
 
 	return &Server{
