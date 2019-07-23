@@ -4,18 +4,19 @@ import (
 	"errors"
 	"net"
 	"strings"
+	"time"
 
 	D "github.com/miekg/dns"
+	"github.com/xjasonlyu/tun2socks/common/cache"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
-	cache "github.com/xjasonlyu/tun2socks/common/lru-cache"
 )
 
 const (
 	dnsFakeTTL    uint32 = 1
-	dnsDefaultTTL uint32 = 600
+	dnsDefaultTTL uint32 = 3600
 )
 
-// var cacheDuration = time.Duration(dnsDefaultTTL) * time.Second
+var cacheDuration = 10 * time.Minute
 
 type Server struct {
 	*D.Server
@@ -57,15 +58,15 @@ func (s *Server) StartServer(addr string) error {
 }
 
 func (s *Server) IPToHost(ip net.IP) (string, bool) {
-	c, ok := s.c.Peek(ip.String())
-	if !ok {
+	c := s.c.Get(ip.String())
+	if c == nil {
 		return "", false
 	}
 	fqdn := c.(*D.Msg).Question[0].Name
 	return strings.TrimRight(fqdn, "."), true
 }
 
-func NewServer(fakeIPRange, hostsLine string, size int) (*Server, error) {
+func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
 	_, ipnet, err := net.ParseCIDR(fakeIPRange)
 	if err != nil {
 		return nil, err
@@ -75,16 +76,7 @@ func NewServer(fakeIPRange, hostsLine string, size int) (*Server, error) {
 		return nil, err
 	}
 
-	var cacheItem *cache.Cache
-	evictCallback := func(_ interface{}, value interface{}) {
-		msg := value.(*D.Msg).Copy()
-		q := msg.Question[0]
-		ip := msg.Answer[0].(*D.A).A
-		cacheItem.Remove("fakeip:" + q.String())
-		cacheItem.Remove(ip.String())
-	}
-	cacheItem = cache.New(size, evictCallback)
-
+	cacheItem := cache.New(cacheDuration)
 	hosts := lineToHosts(hostsLine)
 	handler := newHandler(hosts, cacheItem, pool)
 
