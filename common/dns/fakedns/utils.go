@@ -3,7 +3,6 @@ package fakedns
 import (
 	"time"
 
-	"github.com/Dreamacro/clash/log"
 	D "github.com/miekg/dns"
 	"github.com/xjasonlyu/tun2socks/common/cache"
 )
@@ -17,7 +16,6 @@ func putMsgToCache(c *cache.Cache, key string, msg *D.Msg) {
 	} else if len(msg.Extra) != 0 {
 		ttl = time.Duration(msg.Extra[0].Header().Ttl) * time.Second
 	} else {
-		log.Debugln("[DNS] response msg error: %#v", msg)
 		return
 	}
 
