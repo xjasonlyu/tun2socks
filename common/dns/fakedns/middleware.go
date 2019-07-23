@@ -9,7 +9,6 @@ import (
 	trie "github.com/xjasonlyu/tun2socks/common/domain-trie"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
 	cache "github.com/xjasonlyu/tun2socks/common/lru-cache"
-	// "github.com/xjasonlyu/tun2socks/common/cache"
 )
 
 type handler func(w D.ResponseWriter, r *D.Msg)
@@ -33,8 +32,9 @@ func withFakeIP(cache *cache.Cache, pool *fakeip.Pool) handler {
 		rr.A = ip
 		msg := r.Copy()
 		msg.Answer = []D.RR{rr}
+
 		putMsgToCache(cache, "fakeip:"+q.String(), msg)
-		putMsgToCache(cache, ip.String(), msg)
+		putMsgToMap(ipToHost, ip.String(), msg)
 
 		setMsgTTL(msg, dnsFakeTTL)
 		_ = w.WriteMsg(msg)
