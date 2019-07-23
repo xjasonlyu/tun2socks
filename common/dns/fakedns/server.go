@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net"
 	"strings"
-	"sync"
 
 	D "github.com/miekg/dns"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
@@ -14,10 +13,6 @@ import (
 const (
 	dnsFakeTTL    uint32 = 1
 	dnsDefaultTTL uint32 = 600
-)
-
-var (
-	ipToHost sync.Map
 )
 
 // var cacheDuration = time.Duration(dnsDefaultTTL) * time.Second
@@ -62,7 +57,7 @@ func (s *Server) StartServer(addr string) error {
 }
 
 func (s *Server) IPToHost(ip net.IP) (string, bool) {
-	c, ok := ipToHost.Load(ip.String())
+	c, ok := s.c.Peek(ip.String())
 	if !ok {
 		return "", false
 	}
@@ -80,8 +75,17 @@ func NewServer(fakeIPRange, hostsLine string, size int) (*Server, error) {
 		return nil, err
 	}
 
+	var cacheItem *cache.Cache
+	evictCallback := func(_ interface{}, value interface{}) {
+		msg := value.(*D.Msg).Copy()
+		q := msg.Question[0]
+		ip := msg.Answer[0].(*D.A).A
+		cacheItem.Remove("fakeip:" + q.String())
+		cacheItem.Remove(ip.String())
+	}
+	cacheItem = cache.New(size, evictCallback)
+
 	hosts := lineToHosts(hostsLine)
-	cacheItem := cache.New(size, evictCallback)
 	handler := newHandler(hosts, cacheItem, pool)
 
 	return &Server{

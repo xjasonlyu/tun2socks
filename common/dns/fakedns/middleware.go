@@ -34,7 +34,7 @@ func withFakeIP(cache *cache.Cache, pool *fakeip.Pool) handler {
 		msg.Answer = []D.RR{rr}
 
 		putMsgToCache(cache, "fakeip:"+q.String(), msg)
-		putMsgToMap(ipToHost, ip.String(), msg)
+		putMsgToCache(cache, ip.String(), msg)
 
 		setMsgTTL(msg, dnsFakeTTL)
 		_ = w.WriteMsg(msg)
