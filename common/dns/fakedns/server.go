@@ -13,10 +13,10 @@ import (
 
 const (
 	dnsFakeTTL    uint32 = 1
-	dnsDefaultTTL uint32 = 3600
+	dnsDefaultTTL uint32 = 600
 )
 
-var cacheDuration = 10 * time.Minute
+var cacheDuration = time.Duration(dnsDefaultTTL) * time.Second
 
 type Server struct {
 	*D.Server

@@ -1,6 +1,7 @@
 package fakedns
 
 import (
+	"strings"
 	"time"
 
 	D "github.com/miekg/dns"
@@ -9,16 +10,11 @@ import (
 
 func putMsgToCache(c *cache.Cache, key string, msg *D.Msg) {
 	var ttl time.Duration
-	if len(msg.Answer) != 0 {
-		ttl = time.Duration(msg.Answer[0].Header().Ttl) * time.Second
-	} else if len(msg.Ns) != 0 {
-		ttl = time.Duration(msg.Ns[0].Header().Ttl) * time.Second
-	} else if len(msg.Extra) != 0 {
-		ttl = time.Duration(msg.Extra[0].Header().Ttl) * time.Second
+	if strings.HasPrefix(key, "fakeip:") {
+		ttl = time.Duration(dnsDefaultTTL) * time.Second
 	} else {
-		return
+		ttl = 6 * time.Duration(dnsDefaultTTL) * time.Second
 	}
-
 	c.Put(key, msg.Copy(), ttl)
 }
 
