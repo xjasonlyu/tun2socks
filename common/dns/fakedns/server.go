@@ -58,11 +58,11 @@ func (s *Server) StartServer(addr string) error {
 }
 
 func (s *Server) IPToHost(ip net.IP) (string, bool) {
-	c := s.c.Get(ip.String())
-	if c == nil {
+	msg := getMsgFromCache(s.c, ip.String())
+	if msg == nil {
 		return "", false
 	}
-	fqdn := c.(*D.Msg).Question[0].Name
+	fqdn := msg.Question[0].Name
 	return strings.TrimRight(fqdn, "."), true
 }
 
@@ -76,8 +76,8 @@ func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
 		return nil, err
 	}
 
-	cacheItem := cache.New(cacheDuration)
 	hosts := lineToHosts(hostsLine)
+	cacheItem := cache.New(cacheDuration)
 	handler := newHandler(hosts, cacheItem, pool)
 
 	return &Server{

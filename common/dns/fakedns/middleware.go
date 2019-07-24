@@ -17,9 +17,7 @@ func withFakeIP(cache *cache.Cache, pool *fakeip.Pool) handler {
 	return func(w D.ResponseWriter, r *D.Msg) {
 		q := r.Question[0]
 
-		cacheItem := cache.Get("fakeip:" + q.String())
-		if cacheItem != nil {
-			msg := cacheItem.(*D.Msg).Copy()
+		if msg := getMsgFromCache(cache, "fakeip:"+q.String()); msg != nil {
 			setMsgTTL(msg, dnsFakeTTL)
 			msg.SetReply(r)
 			_ = w.WriteMsg(msg)
