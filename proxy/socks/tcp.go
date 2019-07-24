@@ -169,7 +169,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 		localPortInt, _ := strconv.Atoi(localPortStr)
 		process, err = lsof.GetCommandNameBySocket(target.Network(), localHost, uint16(localPortInt))
 		if err != nil {
-			process = "unknown process"
+			process = "N/A"
 		}
 
 		sess = &stats.Session{
