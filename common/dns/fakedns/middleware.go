@@ -18,6 +18,10 @@ func withFakeIP(cache *cache.Cache, pool *fakeip.Pool) handler {
 		q := r.Question[0]
 
 		if msg := getMsgFromCache(cache, "fakeip:"+q.String()); msg != nil {
+			// Update Cache TTL
+			ip := msg.Answer[0].(*D.A).A
+			putMsgToCache(cache, ip.String(), msg)
+
 			setMsgTTL(msg, dnsFakeTTL)
 			msg.SetReply(r)
 			_ = w.WriteMsg(msg)
