@@ -17,7 +17,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/stats"
 )
 
-const maxCompletedSessions = 50
+const maxCompletedSessions = 100
 
 var (
 	StatsAddr = "localhost:6001"
