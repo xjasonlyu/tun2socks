@@ -9,8 +9,6 @@ import (
 )
 
 const (
-	lruCacheSize = 1000
-
 	dnsFakeTTL    uint32 = 1
 	dnsDefaultTTL uint32 = 600
 )
@@ -56,12 +54,12 @@ func (s *Server) IPToHost(ip net.IP) (string, bool) {
 	return s.p.LookBack(ip)
 }
 
-func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
+func NewServer(fakeIPRange, hostsLine string, size int) (*Server, error) {
 	_, ipnet, err := net.ParseCIDR(fakeIPRange)
 	if err != nil {
 		return nil, err
 	}
-	pool, err := fakeip.New(ipnet, lruCacheSize)
+	pool, err := fakeip.New(ipnet, size)
 	if err != nil {
 		return nil, err
 	}
