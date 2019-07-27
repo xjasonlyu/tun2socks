@@ -1,12 +1,8 @@
 package direct
 
 import (
-	"errors"
-	"fmt"
 	"io"
 	"net"
-	"sync"
-	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/core"
