@@ -81,9 +81,7 @@ func (s *simpleSessionStater) Start() error {
   padding: 4;
 }</style><title>Go-tun2socks Sessions</title></head>`)
 		showTime := func() string {
-			loc, _ := time.LoadLocation("Asia/Shanghai")
-			now := time.Now().In(loc)
-			return now.Format("2006-01-02 15:04:05")
+			return time.Now().Format("2006-01-02 15:04:05")
 		}
 		_, _ = fmt.Fprintf(w, "<h2>Date: %s</h2>", showTime())
 		_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(sessions))
