@@ -24,7 +24,7 @@ func withFakeIP(pool *fakeip.Pool) handler {
 		msg := r.Copy()
 		msg.Answer = []D.RR{rr}
 
-		setMsgTTL(msg, 1)
+		setMsgTTL(msg, dnsFakeTTL)
 		msg.SetReply(r)
 		w.WriteMsg(msg)
 		return
