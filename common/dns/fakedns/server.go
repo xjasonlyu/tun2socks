@@ -3,24 +3,21 @@ package fakedns
 import (
 	"errors"
 	"net"
-	"strings"
-	"time"
 
 	D "github.com/miekg/dns"
-	"github.com/xjasonlyu/tun2socks/common/cache"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
 )
 
 const (
+	lruCacheSize = 1000
+
 	dnsFakeTTL    uint32 = 1
 	dnsDefaultTTL uint32 = 600
 )
 
-var cacheDuration = time.Duration(dnsDefaultTTL) * time.Second
-
 type Server struct {
 	*D.Server
-	c *cache.Cache
+	p *fakeip.Pool
 	h handler
 }
 
@@ -50,20 +47,13 @@ func (s *Server) StartServer(addr string) error {
 	}
 
 	s.Server = &D.Server{Addr: addr, PacketConn: p, Handler: s}
+	go s.ActivateAndServe()
 
-	go func() {
-		_ = s.ActivateAndServe()
-	}()
 	return nil
 }
 
 func (s *Server) IPToHost(ip net.IP) (string, bool) {
-	msg := getMsgFromCache(s.c, ip.String())
-	if msg == nil {
-		return "", false
-	}
-	fqdn := msg.Question[0].Name
-	return strings.TrimRight(fqdn, "."), true
+	return s.p.LookBack(ip)
 }
 
 func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
@@ -71,17 +61,16 @@ func NewServer(fakeIPRange, hostsLine string) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	pool, err := fakeip.New(ipnet)
+	pool, err := fakeip.New(ipnet, lruCacheSize)
 	if err != nil {
 		return nil, err
 	}
 
 	hosts := lineToHosts(hostsLine)
-	cacheItem := cache.New(cacheDuration)
-	handler := newHandler(hosts, cacheItem, pool)
+	handler := newHandler(hosts, pool)
 
 	return &Server{
-		c: cacheItem,
+		p: pool,
 		h: handler,
 	}, nil
 }

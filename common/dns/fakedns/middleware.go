@@ -6,40 +6,27 @@ import (
 	"strings"
 
 	D "github.com/miekg/dns"
-	"github.com/xjasonlyu/tun2socks/common/cache"
 	trie "github.com/xjasonlyu/tun2socks/common/domain-trie"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
 )
 
 type handler func(w D.ResponseWriter, r *D.Msg)
 
-func withFakeIP(cache *cache.Cache, pool *fakeip.Pool) handler {
+func withFakeIP(pool *fakeip.Pool) handler {
 	return func(w D.ResponseWriter, r *D.Msg) {
 		q := r.Question[0]
-
-		if msg := getMsgFromCache(cache, "fakeip:"+q.String()); msg != nil {
-			// Update Cache TTL
-			ip := msg.Answer[0].(*D.A).A
-			putMsgToCache(cache, ip.String(), msg)
-
-			setMsgTTL(msg, dnsFakeTTL)
-			msg.SetReply(r)
-			_ = w.WriteMsg(msg)
-			return
-		}
+		host := strings.TrimRight(q.Name, ".")
 
 		rr := &D.A{}
 		rr.Hdr = D.RR_Header{Name: q.Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL}
-		ip := pool.Get()
+		ip := pool.Lookup(host)
 		rr.A = ip
 		msg := r.Copy()
 		msg.Answer = []D.RR{rr}
 
-		putMsgToCache(cache, "fakeip:"+q.String(), msg)
-		putMsgToCache(cache, ip.String(), msg)
-
-		setMsgTTL(msg, dnsFakeTTL)
-		_ = w.WriteMsg(msg)
+		setMsgTTL(msg, 1)
+		msg.SetReply(r)
+		w.WriteMsg(msg)
 		return
 	}
 }
@@ -88,7 +75,7 @@ func withHost(hosts *trie.Trie, next handler) handler {
 		msg := r.Copy()
 		msg.Answer = []D.RR{rr}
 		msg.SetReply(r)
-		_ = w.WriteMsg(msg)
+		w.WriteMsg(msg)
 		return
 	}
 }
@@ -115,9 +102,9 @@ func lineToHosts(str string) *trie.Trie {
 	return tree
 }
 
-func newHandler(hosts *trie.Trie, cache *cache.Cache, pool *fakeip.Pool) handler {
+func newHandler(hosts *trie.Trie, pool *fakeip.Pool) handler {
 	if hosts != nil {
-		return withHost(hosts, withFakeIP(cache, pool))
+		return withHost(hosts, withFakeIP(pool))
 	}
-	return withFakeIP(cache, pool)
+	return withFakeIP(pool)
 }
