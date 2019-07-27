@@ -84,7 +84,6 @@ type duplexConn interface {
 }
 
 func (h *tcpHandler) relay(lhs, rhs net.Conn, sess *stats.Session) {
-	var err error
 	upCh := make(chan struct{})
 
 	cls := func(dir direction, interrupt bool) {
@@ -109,6 +108,7 @@ func (h *tcpHandler) relay(lhs, rhs net.Conn, sess *stats.Session) {
 
 	// Uplink
 	go func() {
+		var err error
 		if h.sessionStater != nil && sess != nil {
 			_, err = statsCopy(rhs, lhs, sess, dirUplink)
 		} else {
@@ -123,6 +123,7 @@ func (h *tcpHandler) relay(lhs, rhs net.Conn, sess *stats.Session) {
 	}()
 
 	// Downlink
+	var err error
 	if h.sessionStater != nil && sess != nil {
 		_, err = statsCopy(lhs, rhs, sess, dirDownlink)
 	} else {

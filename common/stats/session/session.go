@@ -93,11 +93,8 @@ func (s *simpleSessionStater) Start() error {
 		http.Redirect(w, r, StatsPath, 301)
 	})
 	mux.HandleFunc(StatsPath, sessionStatsHandler)
-	server := &http.Server{Addr: StatsAddr, Handler: mux}
-	s.server = server
-	go func() {
-		_ = s.server.ListenAndServe()
-	}()
+	s.server = &http.Server{Addr: StatsAddr, Handler: mux}
+	go s.server.ListenAndServe()
 	return nil
 }
 
@@ -118,14 +115,14 @@ func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
 }
 
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
+	s.mux.Lock()
+	defer s.mux.Unlock()
+
 	if sess, ok := s.sessions.Load(key); ok {
-		// temporary workaround for slice race condition
-		s.mux.Lock()
 		s.completedSessions = append(s.completedSessions, *(sess.(*stats.Session)))
 		if len(s.completedSessions) > maxCompletedSessions {
 			s.completedSessions = s.completedSessions[1:]
 		}
-		s.mux.Unlock()
 	}
 	s.sessions.Delete(key)
 }
