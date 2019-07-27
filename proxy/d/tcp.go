@@ -26,11 +26,6 @@ import (
 // Where 192.168.1.189 is the default interface address, in my case, it's the WiFi interface and it's en0.
 // 192.168.1.1 is the default gateway.
 // It's very important to have two default routes, and the default route to TUN should has the highest priority.
-//
-// Start v2ray (or any other chainable proxy clients) and has SOCKS inbound listen on 127.0.0.1:1086.
-//
-// Optinally with all outbounds have sendThrough set to 192.168.1.189, if applicable.
-// https://v2ray.com/chapter_02/01_overview.html#outboundobject
 
 type tcpHandler struct {
 	proxyHandler  core.TCPConnHandler
