@@ -18,6 +18,7 @@ func uptime() string {
 	year, month, day, hour, min, sec := diff(startTime, now)
 
 	var y, m, d, h string
+
 	if year != 0 {
 		y = fmt.Sprintf("%dY", year)
 	}
