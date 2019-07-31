@@ -80,10 +80,7 @@ func (s *simpleSessionStater) Start() error {
   text-align: right;
   padding: 4;
 }</style><title>Go-tun2socks Sessions</title></head>`)
-		showTime := func() string {
-			return time.Now().Format("2006-01-02 15:04:05")
-		}
-		_, _ = fmt.Fprintf(w, "<h2>%s</h2>", showTime())
+		_, _ = fmt.Fprintf(w, "<h2>Now: %s Uptime: %s</h2>", now(), uptime())
 		_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(sessions))
 		tablePrint(w, sessions)
 		_, _ = fmt.Fprintf(w, "<br/><br/>")
