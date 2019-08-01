@@ -20,15 +20,15 @@ func uptime() string {
 	var y, m, d, h string
 
 	if year != 0 {
-		y = fmt.Sprintf("%dY", year)
+		y = fmt.Sprintf("%dY,", year)
 	}
 
 	if month != 0 {
-		m = fmt.Sprintf("%dM", month)
+		m = fmt.Sprintf("%dM,", month)
 	}
 
 	if day != 0 {
-		d = fmt.Sprintf("%dd", day)
+		d = fmt.Sprintf("%dd,", day)
 	}
 
 	h = fmt.Sprintf("%dh%dm%ds", hour, min, sec)
