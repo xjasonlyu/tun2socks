@@ -42,8 +42,10 @@ const (
 	dirDownlink
 )
 
+var tcpTimeout = 300 * time.Second
+
 func statsCopy(dst io.Writer, src io.Reader, sess *stats.Session, dir direction) (written int64, err error) {
-	buf := make([]byte, 32*1024)
+	buf := make([]byte, 64*1024)
 	for {
 		nr, er := src.Read(buf)
 		if nr > 0 {
@@ -142,7 +144,7 @@ func (h *tcpHandler) relay(lhs, rhs net.Conn, sess *stats.Session) {
 	}
 }
 
-func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
+func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	dialer, err := proxy.SOCKS5("tcp", core.ParseTCPAddr(h.proxyHost, h.proxyPort).String(), nil, nil)
 	if err != nil {
 		return err
@@ -157,7 +159,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	}
 
 	dest := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
-	c, err := dialer.Dial(target.Network(), dest)
+	remoteConn, err := dialer.Dial(target.Network(), dest)
 	if err != nil {
 		return err
 	}
@@ -166,7 +168,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	var sess *stats.Session
 	if h.sessionStater != nil {
 		// Get name of the process.
-		localHost, localPortStr, _ := net.SplitHostPort(conn.LocalAddr().String())
+		localHost, localPortStr, _ := net.SplitHostPort(localConn.LocalAddr().String())
 		localPortInt, _ := strconv.Atoi(localPortStr)
 		process, err = lsof.GetCommandNameBySocket(target.Network(), localHost, uint16(localPortInt))
 		if err != nil {
@@ -176,18 +178,23 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 		sess = &stats.Session{
 			ProcessName:   process,
 			Network:       target.Network(),
-			LocalAddr:     conn.LocalAddr().String(),
+			LocalAddr:     localConn.LocalAddr().String(),
 			RemoteAddr:    dest,
 			UploadBytes:   0,
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
 		}
-		h.sessionStater.AddSession(conn, sess)
+		h.sessionStater.AddSession(localConn, sess)
 	}
 
-	go h.relay(conn, c, sess)
+	// set timeout
+	localConn.SetDeadline(time.Now().Add(tcpTimeout))
+	remoteConn.SetDeadline(time.Now().Add(tcpTimeout))
 
-	log.Access(process, "proxy", target.Network(), conn.LocalAddr().String(), dest)
+	// relay connections
+	go h.relay(localConn, remoteConn, sess)
+
+	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), dest)
 
 	return nil
 }
