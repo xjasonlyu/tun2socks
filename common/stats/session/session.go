@@ -22,6 +22,8 @@ const maxCompletedSessions = 100
 var (
 	StatsAddr = "localhost:6001"
 	StatsPath = "/stats/session/plain"
+
+	StatsVersion = ""
 )
 
 type simpleSessionStater struct {
@@ -79,7 +81,7 @@ func (s *simpleSessionStater) Start() error {
   border-collapse: collapse;
   text-align: right;
   padding: 4;
-}</style><title>Go-tun2socks Sessions</title></head>`)
+}</style><title>Go-tun2socks %s</title></head>`, StatsVersion)
 		_, _ = fmt.Fprintf(w, "<h2>%s</h2>", now())
 		_, _ = fmt.Fprintf(w, "<h3>Uptime: %s</h3>", uptime())
 		_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(sessions))
