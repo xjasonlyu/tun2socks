@@ -42,8 +42,6 @@ const (
 	dirDownlink
 )
 
-var tcpTimeout = 300 * time.Second
-
 func statsCopy(dst io.Writer, src io.Reader, sess *stats.Session, dir direction) (written int64, err error) {
 	buf := make([]byte, 64*1024)
 	for {
@@ -76,37 +74,17 @@ func statsCopy(dst io.Writer, src io.Reader, sess *stats.Session, dir direction)
 			break
 		}
 	}
-	return written, err
-}
-
-type duplexConn interface {
-	net.Conn
-	CloseRead() error
-	CloseWrite() error
+	return
 }
 
 func (h *tcpHandler) relay(lhs, rhs net.Conn, sess *stats.Session) {
-	upCh := make(chan struct{})
+	upCh := make(chan error)
 
-	cls := func(dir direction, interrupt bool) {
-		lhsDConn, lhsOk := lhs.(duplexConn)
-		rhsDConn, rhsOk := rhs.(duplexConn)
-		if !interrupt && lhsOk && rhsOk {
-			switch dir {
-			case dirUplink:
-				_ = lhsDConn.CloseRead()
-				_ = rhsDConn.CloseWrite()
-			case dirDownlink:
-				_ = lhsDConn.CloseWrite()
-				_ = rhsDConn.CloseRead()
-			default:
-				panic("unexpected direction")
-			}
-		} else {
-			_ = lhs.Close()
-			_ = rhs.Close()
-		}
-	}
+	// Close
+	defer func() {
+		lhs.Close()
+		rhs.Close()
+	}()
 
 	// Uplink
 	go func() {
@@ -116,26 +94,17 @@ func (h *tcpHandler) relay(lhs, rhs net.Conn, sess *stats.Session) {
 		} else {
 			_, err = io.Copy(rhs, lhs)
 		}
-		if err != nil {
-			cls(dirUplink, true) // interrupt the conn if the error is not nil (not EOF)
-		} else {
-			cls(dirUplink, false) // half close uplink direction of the TCP conn if possible
-		}
-		upCh <- struct{}{}
+		rhs.SetReadDeadline(time.Now())
+		upCh <- err
 	}()
 
 	// Downlink
-	var err error
 	if h.sessionStater != nil && sess != nil {
-		_, err = statsCopy(lhs, rhs, sess, dirDownlink)
+		statsCopy(lhs, rhs, sess, dirDownlink)
 	} else {
-		_, err = io.Copy(lhs, rhs)
+		io.Copy(lhs, rhs)
 	}
-	if err != nil {
-		cls(dirDownlink, true)
-	} else {
-		cls(dirDownlink, false)
-	}
+	lhs.SetReadDeadline(time.Now())
 
 	<-upCh // Wait for uplink done.
 
@@ -187,9 +156,9 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 		h.sessionStater.AddSession(localConn, sess)
 	}
 
-	// set timeout
-	localConn.SetDeadline(time.Now().Add(tcpTimeout))
-	remoteConn.SetDeadline(time.Now().Add(tcpTimeout))
+	// set keepalive
+	tcpKeepAlive(localConn)
+	tcpKeepAlive(remoteConn)
 
 	// relay connections
 	go h.relay(localConn, remoteConn, sess)
@@ -197,4 +166,11 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), dest)
 
 	return nil
+}
+
+func tcpKeepAlive(c net.Conn) {
+	if tcp, ok := c.(*net.TCPConn); ok {
+		tcp.SetKeepAlive(true)
+		tcp.SetKeepAlivePeriod(30 * time.Second)
+	}
 }
