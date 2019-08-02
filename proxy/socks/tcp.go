@@ -77,39 +77,39 @@ func statsCopy(dst io.Writer, src io.Reader, sess *stats.Session, dir direction)
 	return
 }
 
-func (h *tcpHandler) relay(lhs, rhs net.Conn, sess *stats.Session) {
+func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) {
 	upCh := make(chan error)
 
 	// Close
 	defer func() {
-		lhs.Close()
-		rhs.Close()
+		localConn.Close()
+		remoteConn.Close()
 	}()
 
 	// Uplink
 	go func() {
 		var err error
 		if h.sessionStater != nil && sess != nil {
-			_, err = statsCopy(rhs, lhs, sess, dirUplink)
+			_, err = statsCopy(remoteConn, localConn, sess, dirUplink)
 		} else {
-			_, err = io.Copy(rhs, lhs)
+			_, err = io.Copy(remoteConn, localConn)
 		}
-		rhs.SetReadDeadline(time.Now())
+		remoteConn.SetReadDeadline(time.Now())
 		upCh <- err
 	}()
 
 	// Downlink
 	if h.sessionStater != nil && sess != nil {
-		statsCopy(lhs, rhs, sess, dirDownlink)
+		statsCopy(localConn, remoteConn, sess, dirDownlink)
 	} else {
-		io.Copy(lhs, rhs)
+		io.Copy(localConn, remoteConn)
 	}
-	lhs.SetReadDeadline(time.Now())
+	localConn.SetReadDeadline(time.Now())
 
 	<-upCh // Wait for uplink done.
 
 	if h.sessionStater != nil {
-		h.sessionStater.RemoveSession(lhs)
+		h.sessionStater.RemoveSession(localConn)
 	}
 }
 
@@ -168,8 +168,8 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	return nil
 }
 
-func tcpKeepAlive(c net.Conn) {
-	if tcp, ok := c.(*net.TCPConn); ok {
+func tcpKeepAlive(conn net.Conn) {
+	if tcp, ok := conn.(*net.TCPConn); ok {
 		tcp.SetKeepAlive(true)
 		tcp.SetKeepAlivePeriod(30 * time.Second)
 	}
