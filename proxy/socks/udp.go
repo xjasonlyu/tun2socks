@@ -112,12 +112,12 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 			targetHost = host
 		}
 	}
-	dest := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
+	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
 
-	return h.connectInternal(conn, dest)
+	return h.connectInternal(conn, targetAddr)
 }
 
-func (h *udpHandler) connectInternal(conn core.UDPConn, dest string) error {
+func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error {
 	c, err := net.DialTimeout("tcp", core.ParseTCPAddr(h.proxyHost, h.proxyPort).String(), 4*time.Second)
 	if err != nil {
 		return err
@@ -133,8 +133,8 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, dest string) error {
 		return err
 	}
 
-	if len(dest) != 0 {
-		targetAddr := ParseAddr(dest)
+	if len(targetAddr) != 0 {
+		targetAddr := ParseAddr(targetAddr)
 		// write VER CMD RSV ATYP DST.ADDR DST.PORT
 		_, _ = c.Write(append([]byte{5, socks5UDPAssociate, 0}, targetAddr...))
 	} else {
@@ -176,7 +176,7 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, dest string) error {
 
 	go h.fetchUDPInput(conn, pc)
 
-	if len(dest) != 0 {
+	if len(targetAddr) != 0 {
 		var process string
 		if h.sessionStater != nil {
 			// Get name of the process.
@@ -191,14 +191,14 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, dest string) error {
 				ProcessName:   process,
 				Network:       conn.LocalAddr().Network(),
 				LocalAddr:     conn.LocalAddr().String(),
-				RemoteAddr:    dest,
+				RemoteAddr:    targetAddr,
 				UploadBytes:   0,
 				DownloadBytes: 0,
 				SessionStart:  time.Now(),
 			}
 			h.sessionStater.AddSession(conn, sess)
 		}
-		log.Access(process, "proxy", "udp", conn.LocalAddr().String(), dest)
+		log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
 	}
 	return nil
 }
@@ -218,8 +218,8 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 			}
 		}
 
-		dest := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
-		buf := append([]byte{0, 0, 0}, ParseAddr(dest)...)
+		targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
+		buf := append([]byte{0, 0, 0}, ParseAddr(targetAddr)...)
 		buf = append(buf, data[:]...)
 		n, err := pc.WriteTo(buf, remoteAddr)
 		if n > 0 && h.sessionStater != nil {

@@ -127,8 +127,8 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 		}
 	}
 
-	dest := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
-	remoteConn, err := dialer.Dial(target.Network(), dest)
+	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
+	remoteConn, err := dialer.Dial(target.Network(), targetAddr)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 			ProcessName:   process,
 			Network:       target.Network(),
 			LocalAddr:     localConn.LocalAddr().String(),
-			RemoteAddr:    dest,
+			RemoteAddr:    targetAddr,
 			UploadBytes:   0,
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
@@ -163,7 +163,7 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	// relay connections
 	go h.relay(localConn, remoteConn, sess)
 
-	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), dest)
+	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), targetAddr)
 
 	return nil
 }
