@@ -38,7 +38,7 @@ func NewSimpleSessionStater() stats.SessionStater {
 }
 
 func (s *simpleSessionStater) Start() error {
-	log.Infof("Start session stater.")
+	log.Infof("Start session stater")
 	sessionStatsHandler := func(respw http.ResponseWriter, req *http.Request) {
 		// Make a snapshot.
 		var sessions []stats.Session
@@ -104,7 +104,7 @@ func (s *simpleSessionStater) Start() error {
 }
 
 func (s *simpleSessionStater) Stop() error {
-	log.Infof("Stop session stater.")
+	log.Infof("Stop session stater")
 	return s.server.Close()
 }
 
