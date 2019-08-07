@@ -1,9 +1,9 @@
 package log
 
-type LogLevel uint8
+type Level uint8
 
 const (
-	DEBUG LogLevel = iota
+	DEBUG Level = iota
 	INFO
 	WARN
 	ERROR
@@ -11,7 +11,7 @@ const (
 )
 
 type Logger interface {
-	SetLevel(level LogLevel)
+	SetLevel(level Level)
 	Debugf(msg string, args ...interface{})
 	Infof(msg string, args ...interface{})
 	Warnf(msg string, args ...interface{})

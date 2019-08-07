@@ -13,7 +13,7 @@ func RegisterLogger(l Logger) {
 	logger = l
 }
 
-func SetLevel(level LogLevel) {
+func SetLevel(level Level) {
 	if logger != nil {
 		logger.SetLevel(level)
 	}

@@ -1,20 +1,20 @@
 package simple
 
 import (
-	golog "log"
+	goLog "log"
 
 	"github.com/xjasonlyu/tun2socks/common/log"
 )
 
 type simpleLogger struct {
-	level log.LogLevel
+	level log.Level
 }
 
 func NewSimpleLogger() log.Logger {
 	return &simpleLogger{log.INFO}
 }
 
-func (l *simpleLogger) SetLevel(level log.LogLevel) {
+func (l *simpleLogger) SetLevel(level log.Level) {
 	l.level = level
 }
 
@@ -43,11 +43,11 @@ func (l *simpleLogger) Errorf(msg string, args ...interface{}) {
 }
 
 func (l *simpleLogger) Fatalf(msg string, args ...interface{}) {
-	golog.Fatalf(msg, args...)
+	goLog.Fatalf(msg, args...)
 }
 
 func (l *simpleLogger) output(msg string, args ...interface{}) {
-	golog.Printf(msg, args...)
+	goLog.Printf(msg, args...)
 }
 
 func init() {
