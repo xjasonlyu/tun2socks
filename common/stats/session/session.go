@@ -120,14 +120,17 @@ func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
 }
 
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
-	s.mux.Lock()
-	defer s.mux.Unlock()
-
 	if sess, ok := s.sessions.Load(key); ok {
+		// move to completed sessions
+		s.mux.Lock()
 		s.completedSessions = append(s.completedSessions, *(sess.(*stats.Session)))
 		if len(s.completedSessions) > maxCompletedSessions {
 			s.completedSessions = s.completedSessions[1:]
 		}
+		s.mux.Unlock()
+
+		s.sessions.Delete(key)
+	} else {
+		log.Warnf("session key [%v] not found", key)
 	}
-	s.sessions.Delete(key)
 }
