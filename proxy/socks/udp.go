@@ -19,12 +19,14 @@ import (
 type udpHandler struct {
 	sync.Mutex
 
-	proxyHost   string
-	proxyPort   uint16
+	closed    bool
+	proxyHost string
+	proxyPort uint16
+	timeout   time.Duration
+
 	udpConns    map[core.UDPConn]net.PacketConn
 	tcpConns    map[core.UDPConn]net.Conn
 	remoteAddrs map[core.UDPConn]*net.UDPAddr // UDP relay server addresses
-	timeout     time.Duration
 
 	fakeDns       dns.FakeDns
 	sessionStater stats.SessionStater
@@ -103,11 +105,6 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	// Replace with a domain name if target address IP is a fake IP.
 	var targetHost = target.IP.String()
 	if h.fakeDns != nil {
-		/*
-			if target.Port == dns.CommonDnsPort {
-				return nil // skip dns
-			}
-		*/
 		if host, exist := h.fakeDns.IPToHost(target.IP); exist {
 			targetHost = host
 		}
@@ -187,18 +184,17 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 				process = "N/A"
 			}
 
-			localConn := conn
 			sess := &stats.Session{
 				ProcessName:   process,
-				Network:       localConn.LocalAddr().Network(),
+				Network:       conn.LocalAddr().Network(),
 				DialerAddr:    remoteConn.LocalAddr().String(),
-				ClientAddr:    localConn.LocalAddr().String(),
+				ClientAddr:    conn.LocalAddr().String(),
 				TargetAddr:    targetAddr,
 				UploadBytes:   0,
 				DownloadBytes: 0,
 				SessionStart:  time.Now(),
 			}
-			key := fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
+			key := fmt.Sprintf("%s:%s", conn.LocalAddr().Network(), conn.LocalAddr().String())
 			h.sessionStater.AddSession(key, sess)
 		}
 		log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
@@ -242,23 +238,29 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
-	_ = conn.Close()
+	if h.closed {
+		return
+	}
 
 	h.Lock()
 	defer h.Unlock()
 
 	if c, ok := h.tcpConns[conn]; ok {
-		_ = c.Close()
+		c.Close()
 		delete(h.tcpConns, conn)
 	}
 	if pc, ok := h.udpConns[conn]; ok {
-		_ = pc.Close()
+		pc.Close()
 		delete(h.udpConns, conn)
 	}
+
+	conn.Close()
 	delete(h.remoteAddrs, conn)
 
 	if h.sessionStater != nil {
 		key := fmt.Sprintf("%s:%s", conn.LocalAddr().Network(), conn.LocalAddr().String())
 		h.sessionStater.RemoveSession(key)
 	}
+
+	h.closed = true
 }
