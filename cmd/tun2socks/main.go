@@ -79,7 +79,7 @@ func main() {
 	args.TunDns = flag.String("tunDns", "1.1.1.1", "DNS resolvers for TUN interface (Windows Only)")
 	args.ProxyType = flag.String("proxyType", "socks", "Proxy handler type")
 	args.DelayICMP = flag.Int("delayICMP", 1, "Delay ICMP packets for a short period of time, in milliseconds")
-	args.LogLevel = flag.String("loglevel", "info", "Logging level. (debug, info, warn, error, none)")
+	args.LogLevel = flag.String("loglevel", "info", "Logging level. (info, warning, error, debug, silent)")
 
 	flag.Parse()
 
@@ -101,11 +101,11 @@ func main() {
 		log.SetLevel(log.DEBUG)
 	case "info":
 		log.SetLevel(log.INFO)
-	case "warn":
+	case "warning":
 		log.SetLevel(log.WARN)
 	case "error":
 		log.SetLevel(log.ERROR)
-	case "none":
+	case "silent":
 		log.SetLevel(log.NONE)
 	default:
 		panic("unsupported logging level")
