@@ -48,13 +48,13 @@ func (s *simpleSessionStater) Start() error {
 			return true
 		})
 
-		// Sort by session start time.
-		sort.Slice(sessions, func(i, j int) bool {
-			return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
-		})
-
 		p := message.NewPrinter(language.English)
 		tablePrint := func(w io.Writer, sessions []stats.Session) {
+			// Sort by session start time.
+			sort.Slice(sessions, func(i, j int) bool {
+				return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
+			})
+
 			_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
 			_, _ = fmt.Fprintf(w, "<tr><td>Process Name</td><td>Network</td><td>Duration</td><td>Local Addr</td><td>Remote Addr</td><td>Upload Bytes</td><td>Download Bytes</td></tr>")
 			sort.Slice(sessions, func(i, j int) bool {
