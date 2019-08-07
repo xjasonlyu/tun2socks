@@ -86,7 +86,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 		remoteConn.Close()
 	}()
 
-	// Uplink
+	// UpLink
 	go func() {
 		var err error
 		if h.sessionStater != nil && sess != nil {
@@ -98,7 +98,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 		upCh <- err
 	}()
 
-	// Downlink
+	// DownLink
 	if h.sessionStater != nil && sess != nil {
 		statsCopy(localConn, remoteConn, sess, dirDownlink)
 	} else {
@@ -147,8 +147,9 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 		sess = &stats.Session{
 			ProcessName:   process,
 			Network:       target.Network(),
-			LocalAddr:     localConn.LocalAddr().String(),
-			RemoteAddr:    targetAddr,
+			DialerAddr:    remoteConn.LocalAddr().String(),
+			ClientAddr:    localConn.LocalAddr().String(),
+			TargetAddr:    targetAddr,
 			UploadBytes:   0,
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),

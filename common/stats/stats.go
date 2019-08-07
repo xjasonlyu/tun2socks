@@ -16,8 +16,9 @@ type SessionStater interface {
 type Session struct {
 	ProcessName   string
 	Network       string
-	LocalAddr     string
-	RemoteAddr    string
+	DialerAddr    string
+	ClientAddr    string
+	TargetAddr    string
 	UploadBytes   int64
 	DownloadBytes int64
 	SessionStart  time.Time

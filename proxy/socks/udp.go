@@ -118,31 +118,31 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 }
 
 func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error {
-	c, err := net.DialTimeout("tcp", core.ParseTCPAddr(h.proxyHost, h.proxyPort).String(), 4*time.Second)
+	remoteConn, err := net.DialTimeout("tcp", core.ParseTCPAddr(h.proxyHost, h.proxyPort).String(), 4*time.Second)
 	if err != nil {
 		return err
 	}
-	_ = c.SetDeadline(time.Now().Add(4 * time.Second))
+	_ = remoteConn.SetDeadline(time.Now().Add(4 * time.Second))
 
 	// send VER, NMETHODS, METHODS
-	_, _ = c.Write([]byte{5, 1, 0})
+	_, _ = remoteConn.Write([]byte{5, 1, 0})
 
 	buf := make([]byte, MaxAddrLen)
 	// read VER METHOD
-	if _, err := io.ReadFull(c, buf[:2]); err != nil {
+	if _, err := io.ReadFull(remoteConn, buf[:2]); err != nil {
 		return err
 	}
 
 	if len(targetAddr) != 0 {
 		targetAddr := ParseAddr(targetAddr)
 		// write VER CMD RSV ATYP DST.ADDR DST.PORT
-		_, _ = c.Write(append([]byte{5, socks5UDPAssociate, 0}, targetAddr...))
+		_, _ = remoteConn.Write(append([]byte{5, socks5UDPAssociate, 0}, targetAddr...))
 	} else {
-		_, _ = c.Write(append([]byte{5, socks5UDPAssociate, 0}, []byte{1, 0, 0, 0, 0, 0, 0}...))
+		_, _ = remoteConn.Write(append([]byte{5, socks5UDPAssociate, 0}, []byte{1, 0, 0, 0, 0, 0, 0}...))
 	}
 
 	// read VER REP RSV ATYP BND.ADDR BND.PORT
-	if _, err := io.ReadFull(c, buf[:3]); err != nil {
+	if _, err := io.ReadFull(remoteConn, buf[:3]); err != nil {
 		return err
 	}
 
@@ -151,7 +151,7 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		return errors.New("SOCKS handshake failed")
 	}
 
-	remoteAddr, err := readAddr(c, buf)
+	remoteAddr, err := readAddr(remoteConn, buf)
 	if err != nil {
 		return err
 	}
@@ -161,20 +161,20 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		return errors.New("failed to resolve remote address")
 	}
 
-	go h.handleTCP(conn, c)
+	go h.handleTCP(conn, remoteConn)
 
-	pc, err := net.ListenPacket("udp", "")
+	remoteUDPConn, err := net.ListenPacket("udp", "")
 	if err != nil {
 		return err
 	}
 
 	h.Lock()
-	h.tcpConns[conn] = c
-	h.udpConns[conn] = pc
+	h.tcpConns[conn] = remoteConn
+	h.udpConns[conn] = remoteUDPConn
 	h.remoteAddrs[conn] = resolvedRemoteAddr
 	h.Unlock()
 
-	go h.fetchUDPInput(conn, pc)
+	go h.fetchUDPInput(conn, remoteUDPConn)
 
 	if len(targetAddr) != 0 {
 		var process string
@@ -190,8 +190,9 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 			sess := &stats.Session{
 				ProcessName:   process,
 				Network:       conn.LocalAddr().Network(),
-				LocalAddr:     conn.LocalAddr().String(),
-				RemoteAddr:    targetAddr,
+				DialerAddr:    remoteConn.LocalAddr().String(),
+				ClientAddr:    conn.LocalAddr().String(),
+				TargetAddr:    targetAddr,
 				UploadBytes:   0,
 				DownloadBytes: 0,
 				SessionStart:  time.Now(),
