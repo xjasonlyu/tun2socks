@@ -19,15 +19,13 @@ import (
 type udpHandler struct {
 	sync.Mutex
 
-	closed  bool
-	timeout time.Duration
-
 	proxyHost string
 	proxyPort uint16
 
 	udpConns    map[core.UDPConn]net.PacketConn
 	tcpConns    map[core.UDPConn]net.Conn
 	remoteAddrs map[core.UDPConn]*net.UDPAddr // UDP relay server addresses
+	timeout     time.Duration
 
 	fakeDns       dns.FakeDns
 	sessionStater stats.SessionStater
@@ -51,7 +49,7 @@ func (h *udpHandler) handleTCP(conn core.UDPConn, c net.Conn) {
 	defer core.FreeBytes(buf)
 
 	for {
-		_ = c.SetDeadline(time.Time{})
+		c.SetDeadline(time.Time{})
 		_, err := c.Read(buf)
 		if err == io.EOF {
 			log.Warnf("UDP associate to %v closed by remote", c.RemoteAddr())
@@ -73,7 +71,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 	}()
 
 	for {
-		_ = input.SetDeadline(time.Now().Add(h.timeout))
+		input.SetDeadline(time.Now().Add(h.timeout))
 		n, _, err := input.ReadFrom(buf)
 		if err != nil {
 			// log.Printf("read remote failed: %v", err)
@@ -120,10 +118,10 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 	if err != nil {
 		return err
 	}
-	_ = remoteConn.SetDeadline(time.Now().Add(4 * time.Second))
+	remoteConn.SetDeadline(time.Now().Add(4 * time.Second))
 
 	// send VER, NMETHODS, METHODS
-	_, _ = remoteConn.Write([]byte{5, 1, 0})
+	remoteConn.Write([]byte{5, 1, 0})
 
 	buf := make([]byte, MaxAddrLen)
 	// read VER METHOD
@@ -238,12 +236,10 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
+	conn.Close()
+
 	h.Lock()
 	defer h.Unlock()
-
-	if h.closed {
-		return
-	}
 
 	if remoteConn, ok := h.tcpConns[conn]; ok {
 		remoteConn.Close()
@@ -253,13 +249,9 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 		remoteUDPConn.Close()
 		delete(h.udpConns, conn)
 	}
-
-	conn.Close()
 	delete(h.remoteAddrs, conn)
 
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(conn)
 	}
-
-	h.closed = true
 }
