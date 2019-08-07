@@ -20,6 +20,8 @@ import (
 type tcpHandler struct {
 	sync.Mutex
 
+	sessKey string
+
 	proxyHost string
 	proxyPort uint16
 
@@ -110,8 +112,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 	<-upCh // Wait for uplink done.
 
 	if h.sessionStater != nil {
-		key := fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
-		h.sessionStater.RemoveSession(key)
+		h.sessionStater.RemoveSession(h.sessKey)
 	}
 }
 
@@ -156,8 +157,8 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
 		}
-		key := fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
-		h.sessionStater.AddSession(key, sess)
+		h.sessKey = fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
+		h.sessionStater.AddSession(h.sessKey, sess)
 	}
 
 	// set keepalive
