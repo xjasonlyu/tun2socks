@@ -17,23 +17,35 @@ func uptime() string {
 	now := time.Now()
 	year, month, day, hour, min, sec := diff(startTime, now)
 
-	var y, m, d, h string
+	var Y, M, d, h, m, s string
 
+	// Y M d
 	if year != 0 {
-		y = fmt.Sprintf("%dY,", year)
+		Y = fmt.Sprintf("%dY,", year)
 	}
 
 	if month != 0 {
-		m = fmt.Sprintf("%dM,", month)
+		M = fmt.Sprintf("%dM,", month)
 	}
 
 	if day != 0 {
 		d = fmt.Sprintf("%dd,", day)
 	}
 
-	h = fmt.Sprintf("%dh%dm%ds", hour, min, sec)
+	// h m s
+	if hour != 0 {
+		h = fmt.Sprintf("%dh", hour)
+	}
 
-	return strings.Join([]string{y, m, d, h}, "")
+	if min != 0 {
+		m = fmt.Sprintf("%dm", min)
+	}
+
+	if sec != 0 {
+		s = fmt.Sprintf("%ds", sec)
+	}
+
+	return strings.Join([]string{Y, M, d, h, m, s}, "")
 }
 
 func diff(a, b time.Time) (year, month, day, hour, min, sec int) {
