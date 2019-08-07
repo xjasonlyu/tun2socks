@@ -1,6 +1,7 @@
 package socks
 
 import (
+	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -109,7 +110,8 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 	<-upCh // Wait for uplink done.
 
 	if h.sessionStater != nil {
-		h.sessionStater.RemoveSession(localConn)
+		key := fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
+		h.sessionStater.RemoveSession(key)
 	}
 }
 
@@ -154,7 +156,8 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
 		}
-		h.sessionStater.AddSession(localConn, sess)
+		key := fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
+		h.sessionStater.AddSession(key, sess)
 	}
 
 	// set keepalive

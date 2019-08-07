@@ -131,6 +131,6 @@ func (s *simpleSessionStater) RemoveSession(key interface{}) {
 
 		s.sessions.Delete(key)
 	} else {
-		log.Warnf("session key [%v] not found", key)
+		log.Warnf("cannot found session key: [%v] ", key)
 	}
 }

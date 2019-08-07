@@ -187,17 +187,19 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 				process = "N/A"
 			}
 
+			localConn := conn
 			sess := &stats.Session{
 				ProcessName:   process,
-				Network:       conn.LocalAddr().Network(),
+				Network:       localConn.LocalAddr().Network(),
 				DialerAddr:    remoteConn.LocalAddr().String(),
-				ClientAddr:    conn.LocalAddr().String(),
+				ClientAddr:    localConn.LocalAddr().String(),
 				TargetAddr:    targetAddr,
 				UploadBytes:   0,
 				DownloadBytes: 0,
 				SessionStart:  time.Now(),
 			}
-			h.sessionStater.AddSession(conn, sess)
+			key := fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
+			h.sessionStater.AddSession(key, sess)
 		}
 		log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
 	}
@@ -256,6 +258,7 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 	delete(h.remoteAddrs, conn)
 
 	if h.sessionStater != nil {
-		h.sessionStater.RemoveSession(conn)
+		key := fmt.Sprintf("%s:%s", conn.LocalAddr().Network(), conn.LocalAddr().String())
+		h.sessionStater.RemoveSession(key)
 	}
 }
