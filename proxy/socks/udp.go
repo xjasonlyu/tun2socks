@@ -236,8 +236,6 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
-	conn.Close()
-
 	h.Lock()
 	defer h.Unlock()
 
@@ -249,6 +247,8 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 		remoteUDPConn.Close()
 		delete(h.udpConns, conn)
 	}
+
+	conn.Close()
 	delete(h.remoteAddrs, conn)
 
 	if h.sessionStater != nil {

@@ -128,7 +128,7 @@ func (s *simpleSessionStater) RemoveSession(key interface{}) {
 			s.completedSessions = s.completedSessions[1:]
 		}
 		s.mux.Unlock()
+		// delete
+		s.sessions.Delete(key)
 	}
-	// delete
-	s.sessions.Delete(key)
 }
