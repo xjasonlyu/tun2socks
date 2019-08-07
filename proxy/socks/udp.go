@@ -44,7 +44,6 @@ func NewUDPHandler(proxyHost string, proxyPort uint16, timeout time.Duration, fa
 		fakeDns:       fakeDns,
 		sessionStater: sessionStater,
 		timeout:       timeout,
-		closed:        false,
 	}
 }
 
@@ -241,12 +240,12 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
+	h.Lock()
+	defer h.Unlock()
+
 	if h.closed {
 		return
 	}
-
-	h.Lock()
-	defer h.Unlock()
 
 	if remoteConn, ok := h.tcpConns[conn]; ok {
 		remoteConn.Close()
