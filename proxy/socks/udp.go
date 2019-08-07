@@ -20,11 +20,10 @@ type udpHandler struct {
 	sync.Mutex
 
 	closed  bool
-	sessKey string
+	timeout time.Duration
 
 	proxyHost string
 	proxyPort uint16
-	timeout   time.Duration
 
 	udpConns    map[core.UDPConn]net.PacketConn
 	tcpConns    map[core.UDPConn]net.Conn
@@ -88,7 +87,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 		}
 		n, err = conn.WriteFrom(buf[int(3+len(addr)):n], resolvedAddr)
 		if n > 0 && h.sessionStater != nil {
-			if sess := h.sessionStater.GetSession(h.sessKey); sess != nil {
+			if sess := h.sessionStater.GetSession(conn); sess != nil {
 				sess.AddDownloadBytes(int64(n))
 			}
 		}
@@ -196,8 +195,7 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 				DownloadBytes: 0,
 				SessionStart:  time.Now(),
 			}
-			h.sessKey = fmt.Sprintf("%s:%s", conn.LocalAddr().Network(), conn.LocalAddr().String())
-			h.sessionStater.AddSession(h.sessKey, sess)
+			h.sessionStater.AddSession(conn, sess)
 		}
 		log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
 	}
@@ -224,7 +222,7 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 		buf = append(buf, data[:]...)
 		n, err := remoteUDPConn.WriteTo(buf, remoteAddr)
 		if n > 0 && h.sessionStater != nil {
-			if sess := h.sessionStater.GetSession(h.sessKey); sess != nil {
+			if sess := h.sessionStater.GetSession(conn); sess != nil {
 				sess.AddUploadBytes(int64(n))
 			}
 		}
@@ -260,7 +258,7 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 	delete(h.remoteAddrs, conn)
 
 	if h.sessionStater != nil {
-		h.sessionStater.RemoveSession(h.sessKey)
+		h.sessionStater.RemoveSession(conn)
 	}
 
 	h.closed = true

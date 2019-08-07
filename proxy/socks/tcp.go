@@ -1,7 +1,6 @@
 package socks
 
 import (
-	"fmt"
 	"io"
 	"net"
 	"strconv"
@@ -19,8 +18,6 @@ import (
 
 type tcpHandler struct {
 	sync.Mutex
-
-	sessKey string
 
 	proxyHost string
 	proxyPort uint16
@@ -112,7 +109,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 	<-upCh // Wait for uplink done.
 
 	if h.sessionStater != nil {
-		h.sessionStater.RemoveSession(h.sessKey)
+		h.sessionStater.RemoveSession(localConn)
 	}
 }
 
@@ -157,8 +154,7 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
 		}
-		h.sessKey = fmt.Sprintf("%s:%s", localConn.LocalAddr().Network(), localConn.LocalAddr().String())
-		h.sessionStater.AddSession(h.sessKey, sess)
+		h.sessionStater.AddSession(localConn, sess)
 	}
 
 	// set keepalive
@@ -169,7 +165,6 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	go h.relay(localConn, remoteConn, sess)
 
 	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), targetAddr)
-
 	return nil
 }
 

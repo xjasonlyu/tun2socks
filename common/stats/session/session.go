@@ -128,9 +128,9 @@ func (s *simpleSessionStater) RemoveSession(key interface{}) {
 			s.completedSessions = s.completedSessions[1:]
 		}
 		s.mux.Unlock()
-
-		s.sessions.Delete(key)
 	} else {
 		log.Warnf("cannot found session key: [%v] ", key)
 	}
+	// delete
+	s.sessions.Delete(key)
 }
