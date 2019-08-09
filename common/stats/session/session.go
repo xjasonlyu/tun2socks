@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"sort"
 	"sync"
@@ -39,11 +40,19 @@ func NewSimpleSessionStater() stats.SessionStater {
 
 func (s *simpleSessionStater) Start() error {
 	log.Infof("Start session stater")
-	sessionStatsHandler := func(respw http.ResponseWriter, req *http.Request) {
+	sessionStatsHandler := func(resp http.ResponseWriter, req *http.Request) {
 		// Make a snapshot.
 		var sessions []stats.Session
 		s.sessions.Range(func(key, value interface{}) bool {
 			sess := value.(*stats.Session)
+			// check conn is closed or not
+			if sess.Network == "tcp" {
+				conn := key.(net.Conn)
+				if isClosed(conn) {
+					s.RemoveSession(conn)
+					return true
+				}
+			}
 			sessions = append(sessions, *sess)
 			return true
 		})
@@ -75,7 +84,7 @@ func (s *simpleSessionStater) Start() error {
 			_, _ = fmt.Fprintf(w, "</table>")
 		}
 
-		w := bufio.NewWriter(respw)
+		w := bufio.NewWriter(resp)
 		_, _ = fmt.Fprintf(w, "<html>")
 		_, _ = fmt.Fprintf(w, `<head><style>table, th, td {
   border: 1px solid black;

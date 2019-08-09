@@ -2,6 +2,8 @@ package session
 
 import (
 	"fmt"
+	"io"
+	"net"
 	"strings"
 	"time"
 )
@@ -93,4 +95,18 @@ func diff(a, b time.Time) (year, month, day, hour, min, sec int) {
 	}
 
 	return
+}
+
+func isClosed(conn net.Conn) bool {
+	conn.SetReadDeadline(time.Now())
+	_, err := conn.Read([]byte{})
+	if err != nil {
+		if err == io.EOF {
+			conn.Close()
+			return true
+		} else if strings.Contains(err.Error(), "use of closed network connection") {
+			return true
+		}
+	}
+	return false
 }
