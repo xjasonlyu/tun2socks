@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"sort"
 	"sync"
@@ -45,14 +44,6 @@ func (s *simpleSessionStater) Start() error {
 		var sessions []stats.Session
 		s.sessions.Range(func(key, value interface{}) bool {
 			sess := value.(*stats.Session)
-			// check conn is closed or not
-			if sess.Network == "tcp" {
-				conn := key.(net.Conn)
-				if isClosed(conn) {
-					s.RemoveSession(conn)
-					return true
-				}
-			}
 			sessions = append(sessions, *sess)
 			return true
 		})
