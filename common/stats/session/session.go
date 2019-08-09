@@ -54,7 +54,6 @@ func (s *simpleSessionStater) Start() error {
 			sort.Slice(sessions, func(i, j int) bool {
 				return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
 			})
-
 			_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
 			_, _ = fmt.Fprintf(w, "<tr><td>Process Name</td><td>Network</td><td>Duration</td><td>Dialer Addr</td><td>Client Addr</td><td>Target Addr</td><td>Upload Bytes</td><td>Download Bytes</td></tr>")
 			sort.Slice(sessions, func(i, j int) bool {

@@ -78,7 +78,7 @@ func statsCopy(dst io.Writer, src io.Reader, sess *stats.Session, dir direction)
 }
 
 func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) {
-	upCh := make(chan error)
+	upCh := make(chan struct{})
 
 	// Close
 	defer func() {
@@ -88,14 +88,13 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 
 	// UpLink
 	go func() {
-		var err error
 		if h.sessionStater != nil && sess != nil {
-			_, err = statsCopy(remoteConn, localConn, sess, dirUplink)
+			statsCopy(remoteConn, localConn, sess, dirUplink)
 		} else {
-			_, err = io.Copy(remoteConn, localConn)
+			io.Copy(remoteConn, localConn)
 		}
 		remoteConn.SetReadDeadline(time.Now())
-		upCh <- err
+		upCh <- struct{}{}
 	}()
 
 	// DownLink
@@ -106,7 +105,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 	}
 	localConn.SetReadDeadline(time.Now())
 
-	<-upCh // Wait for uplink done.
+	<-upCh // Wait for UpLink done.
 
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(localConn)
