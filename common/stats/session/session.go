@@ -29,26 +29,32 @@ var (
 )
 
 type simpleSessionStater struct {
-	mux               sync.Mutex
-	sessions          sync.Map
-	completedSessions []stats.Session
+	activeSessions    sync.Map
+	completedSessions chan *stats.Session
 	server            *http.Server
 }
 
 func NewSimpleSessionStater() stats.SessionStater {
-	return &simpleSessionStater{}
+	return &simpleSessionStater{
+		completedSessions: make(chan *stats.Session, maxCompletedSessions),
+	}
 }
 
 func (s *simpleSessionStater) Start() error {
 	log.Infof("Start session stater")
 	sessionStatsHandler := func(resp http.ResponseWriter, req *http.Request) {
 		// Make a snapshot.
-		var sessions []stats.Session
-		s.sessions.Range(func(key, value interface{}) bool {
+		var activeSessions []stats.Session
+		s.activeSessions.Range(func(key, value interface{}) bool {
 			sess := value.(*stats.Session)
-			sessions = append(sessions, *sess)
+			activeSessions = append(activeSessions, *sess)
 			return true
 		})
+
+		var completedSessions []stats.Session
+		for sess := range s.completedSessions {
+			completedSessions = append(completedSessions, *sess)
+		}
 
 		p := message.NewPrinter(language.English)
 		tablePrint := func(w io.Writer, sessions []stats.Session) {
@@ -86,11 +92,11 @@ func (s *simpleSessionStater) Start() error {
 }</style><title>Go-tun2socks Sessions</title></head>`)
 		_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", StatsVersion)
 		_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
-		_, _ = fmt.Fprintf(w, "<p>Active sessions %d (%d)</p>", len(sessions), atomic.LoadInt64(ActiveTCPConnections))
-		tablePrint(w, sessions)
+		_, _ = fmt.Fprintf(w, "<p>Active sessions %d (%d)</p>", len(activeSessions), atomic.LoadInt64(ActiveTCPConnections))
+		tablePrint(w, activeSessions)
 		_, _ = fmt.Fprintf(w, "<br/><br/>")
 		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(s.completedSessions))
-		tablePrint(w, s.completedSessions)
+		tablePrint(w, completedSessions)
 		_, _ = fmt.Fprintf(w, "</html>")
 		_ = w.Flush()
 	}
@@ -110,26 +116,26 @@ func (s *simpleSessionStater) Stop() error {
 }
 
 func (s *simpleSessionStater) AddSession(key interface{}, session *stats.Session) {
-	s.sessions.Store(key, session)
+	s.activeSessions.Store(key, session)
 }
 
 func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
-	if sess, ok := s.sessions.Load(key); ok {
+	if sess, ok := s.activeSessions.Load(key); ok {
 		return sess.(*stats.Session)
 	}
 	return nil
 }
 
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
-	if sess, ok := s.sessions.Load(key); ok {
+	if sess, ok := s.activeSessions.Load(key); ok {
 		// move to completed sessions
-		s.mux.Lock()
-		s.completedSessions = append(s.completedSessions, *(sess.(*stats.Session)))
-		if len(s.completedSessions) > maxCompletedSessions {
-			s.completedSessions = s.completedSessions[1:]
+		select {
+		case s.completedSessions <- sess.(*stats.Session):
+		default:
+			<-s.completedSessions
+			s.completedSessions <- sess.(*stats.Session)
 		}
-		s.mux.Unlock()
 		// delete
-		s.sessions.Delete(key)
+		s.activeSessions.Delete(key)
 	}
 }
