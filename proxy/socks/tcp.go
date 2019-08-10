@@ -43,48 +43,6 @@ func NewTCPHandler(proxyHost string, proxyPort uint16, fakeDns dns.FakeDns, sess
 	}
 }
 
-type direction byte
-
-const (
-	dirUplink direction = iota
-	dirDownlink
-)
-
-func statsCopy(dst io.Writer, src io.Reader, sess *stats.Session, dir direction) (written int64, err error) {
-	buf := make([]byte, 64*1024)
-	for {
-		nr, er := src.Read(buf)
-		if nr > 0 {
-			nw, ew := dst.Write(buf[0:nr])
-			if nw > 0 {
-				switch dir {
-				case dirUplink:
-					sess.AddUploadBytes(int64(nw))
-				case dirDownlink:
-					sess.AddDownloadBytes(int64(nw))
-				default:
-				}
-				written += int64(nw)
-			}
-			if ew != nil {
-				err = ew
-				break
-			}
-			if nr != nw {
-				err = io.ErrShortWrite
-				break
-			}
-		}
-		if er != nil {
-			if er != io.EOF {
-				err = er
-			}
-			break
-		}
-	}
-	return
-}
-
 func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) {
 	upCh := make(chan struct{})
 
@@ -96,21 +54,13 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 
 	// UpLink
 	go func() {
-		if h.sessionStater != nil && sess != nil {
-			statsCopy(remoteConn, localConn, sess, dirUplink)
-		} else {
-			io.Copy(remoteConn, localConn)
-		}
+		io.Copy(remoteConn, localConn)
 		remoteConn.SetReadDeadline(time.Now())
 		upCh <- struct{}{}
 	}()
 
 	// DownLink
-	if h.sessionStater != nil && sess != nil {
-		statsCopy(localConn, remoteConn, sess, dirDownlink)
-	} else {
-		io.Copy(localConn, remoteConn)
-	}
+	io.Copy(localConn, remoteConn)
 	localConn.SetReadDeadline(time.Now())
 
 	<-upCh // Wait for UpLink done.
@@ -143,16 +93,13 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 		return err
 	}
 
-	var process string
+	var process = "N/A"
 	var sess *stats.Session
 	if h.sessionStater != nil {
 		// Get name of the process.
 		localHost, localPortStr, _ := net.SplitHostPort(localConn.LocalAddr().String())
 		localPortInt, _ := strconv.Atoi(localPortStr)
-		process, err = lsof.GetCommandNameBySocket(target.Network(), localHost, uint16(localPortInt))
-		if err != nil {
-			process = "N/A"
-		}
+		process, _ = lsof.GetCommandNameBySocket(target.Network(), localHost, uint16(localPortInt))
 
 		sess = &stats.Session{
 			ProcessName:   process,
@@ -165,6 +112,8 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 			SessionStart:  time.Now(),
 		}
 		h.sessionStater.AddSession(localConn, sess)
+
+		remoteConn = stats.NewSessionConn(remoteConn, sess)
 	}
 
 	// set keepalive

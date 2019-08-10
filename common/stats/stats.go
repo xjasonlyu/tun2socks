@@ -25,14 +25,6 @@ type Session struct {
 	SessionStart  time.Time
 }
 
-func (s *Session) AddUploadBytes(n int64) {
-	atomic.AddInt64(&s.UploadBytes, n)
-}
-
-func (s *Session) AddDownloadBytes(n int64) {
-	atomic.AddInt64(&s.DownloadBytes, n)
-}
-
 type SessionConn struct {
 	net.Conn
 	*Session

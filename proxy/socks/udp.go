@@ -74,7 +74,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 		input.SetDeadline(time.Now().Add(h.timeout))
 		n, _, err := input.ReadFrom(buf)
 		if err != nil {
-			// log.Printf("read remote failed: %v", err)
+			log.Warnf("read remote failed: %v", err)
 			return
 		}
 
@@ -83,12 +83,8 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 		if err != nil {
 			return
 		}
-		n, err = conn.WriteFrom(buf[int(3+len(addr)):n], resolvedAddr)
-		if n > 0 && h.sessionStater != nil {
-			if sess := h.sessionStater.GetSession(conn); sess != nil {
-				sess.AddDownloadBytes(int64(n))
-			}
-		}
+
+		_, err = conn.WriteFrom(buf[int(3+len(addr)):n], resolvedAddr)
 		if err != nil {
 			log.Warnf("write local failed: %v", err)
 			return
@@ -109,6 +105,9 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		}
 	}
 	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
+	if len(targetAddr) == 0 {
+		return errors.New("target address is empty")
+	}
 
 	return h.connectInternal(conn, targetAddr)
 }
@@ -118,7 +117,7 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 	if err != nil {
 		return err
 	}
-	remoteConn.SetDeadline(time.Now().Add(4 * time.Second))
+	remoteConn.SetDeadline(time.Now().Add(5 * time.Second))
 
 	// send VER, NMETHODS, METHODS
 	remoteConn.Write([]byte{5, 1, 0})
@@ -129,12 +128,13 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		return err
 	}
 
-	if len(targetAddr) != 0 {
-		targetAddr := ParseAddr(targetAddr)
-		// write VER CMD RSV ATYP DST.ADDR DST.PORT
-		_, _ = remoteConn.Write(append([]byte{5, socks5UDPAssociate, 0}, targetAddr...))
-	} else {
+	switch len(targetAddr) {
+	case 0:
 		_, _ = remoteConn.Write(append([]byte{5, socks5UDPAssociate, 0}, []byte{1, 0, 0, 0, 0, 0, 0}...))
+	default:
+		destination := ParseAddr(targetAddr)
+		// write VER CMD RSV ATYP DST.ADDR DST.PORT
+		_, _ = remoteConn.Write(append([]byte{5, socks5UDPAssociate, 0}, destination...))
 	}
 
 	// read VER REP RSV ATYP BND.ADDR BND.PORT
@@ -164,6 +164,28 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		return err
 	}
 
+	var process = "N/A"
+	if h.sessionStater != nil {
+		// Get name of the process.
+		localHost, localPortStr, _ := net.SplitHostPort(conn.LocalAddr().String())
+		localPortInt, _ := strconv.Atoi(localPortStr)
+		process, _ = lsof.GetCommandNameBySocket(conn.LocalAddr().Network(), localHost, uint16(localPortInt))
+
+		sess := &stats.Session{
+			ProcessName:   process,
+			Network:       conn.LocalAddr().Network(),
+			DialerAddr:    remoteConn.LocalAddr().String(),
+			ClientAddr:    conn.LocalAddr().String(),
+			TargetAddr:    targetAddr,
+			UploadBytes:   0,
+			DownloadBytes: 0,
+			SessionStart:  time.Now(),
+		}
+		h.sessionStater.AddSession(conn, sess)
+
+		remoteUDPConn = stats.NewSessionPacketConn(remoteUDPConn, sess)
+	}
+
 	h.Lock()
 	h.tcpConns[conn] = remoteConn
 	h.udpConns[conn] = remoteUDPConn
@@ -172,31 +194,7 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 
 	go h.fetchUDPInput(conn, remoteUDPConn)
 
-	if len(targetAddr) != 0 {
-		var process string
-		if h.sessionStater != nil {
-			// Get name of the process.
-			localHost, localPortStr, _ := net.SplitHostPort(conn.LocalAddr().String())
-			localPortInt, _ := strconv.Atoi(localPortStr)
-			process, err = lsof.GetCommandNameBySocket(conn.LocalAddr().Network(), localHost, uint16(localPortInt))
-			if err != nil {
-				process = "N/A"
-			}
-
-			sess := &stats.Session{
-				ProcessName:   process,
-				Network:       conn.LocalAddr().Network(),
-				DialerAddr:    remoteConn.LocalAddr().String(),
-				ClientAddr:    conn.LocalAddr().String(),
-				TargetAddr:    targetAddr,
-				UploadBytes:   0,
-				DownloadBytes: 0,
-				SessionStart:  time.Now(),
-			}
-			h.sessionStater.AddSession(conn, sess)
-		}
-		log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
-	}
+	log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
 	return nil
 }
 
@@ -218,12 +216,7 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 		targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
 		buf := append([]byte{0, 0, 0}, ParseAddr(targetAddr)...)
 		buf = append(buf, data[:]...)
-		n, err := remoteUDPConn.WriteTo(buf, remoteAddr)
-		if n > 0 && h.sessionStater != nil {
-			if sess := h.sessionStater.GetSession(conn); sess != nil {
-				sess.AddUploadBytes(int64(n))
-			}
-		}
+		_, err := remoteUDPConn.WriteTo(buf, remoteAddr)
 		if err != nil {
 			h.Close(conn)
 			return errors.New(fmt.Sprintf("write remote failed: %v", err))
