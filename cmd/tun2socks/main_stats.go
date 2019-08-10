@@ -18,6 +18,8 @@ func init() {
 			session.StatsAddr = *args.StatsAddr
 			session.StatsVersion = version
 
+			session.ActiveConnections = &tcpConnections
+
 			sessionStater = session.NewSimpleSessionStater()
 			sessionStater.Start()
 		} else {
