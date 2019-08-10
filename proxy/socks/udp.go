@@ -74,9 +74,10 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 		input.SetDeadline(time.Now().Add(h.timeout))
 		n, _, err := input.ReadFrom(buf)
 		if err != nil {
-			if err, ok := err.(net.Error); ok && !err.Timeout() {
-				log.Warnf("read remote failed: %v", err)
+			if err, ok := err.(net.Error); ok && err.Timeout() {
+				return
 			}
+			log.Warnf("read remote failed: %v", err)
 			return
 		}
 
