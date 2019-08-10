@@ -14,10 +14,15 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/stats"
+	"github.com/xjasonlyu/tun2socks/common/stats/session"
 	"github.com/xjasonlyu/tun2socks/core"
 )
 
-var ActiveConnections *int64
+var activeTCPConnections int64
+
+func init() {
+	session.ActiveTCPConnections = &activeTCPConnections
+}
 
 type tcpHandler struct {
 	sync.Mutex
@@ -115,7 +120,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 	}
 
 	// add -1
-	atomic.AddInt64(ActiveConnections, -1)
+	atomic.AddInt64(&activeTCPConnections, -1)
 }
 
 func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
@@ -170,7 +175,7 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	go h.relay(localConn, remoteConn, sess)
 
 	// add 1
-	atomic.AddInt64(ActiveConnections, 1)
+	atomic.AddInt64(&activeTCPConnections, 1)
 
 	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), targetAddr)
 	return nil

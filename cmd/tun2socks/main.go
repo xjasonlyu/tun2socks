@@ -21,8 +21,6 @@ import (
 
 const MTU = 1500
 
-var tcpConnections int64 = 0
-
 var (
 	version     = "unknown version"
 	description = "A tun2socks implementation written in Go."
