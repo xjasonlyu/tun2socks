@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/hashicorp/golang-lru"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
@@ -30,13 +31,14 @@ var (
 
 type simpleSessionStater struct {
 	activeSessions    sync.Map
-	completedSessions chan *stats.Session
+	completedSessions *lru.Cache
 	server            *http.Server
 }
 
 func NewSimpleSessionStater() stats.SessionStater {
+	cache, _ := lru.New(maxCompletedSessions)
 	return &simpleSessionStater{
-		completedSessions: make(chan *stats.Session, maxCompletedSessions),
+		completedSessions: cache,
 	}
 }
 
@@ -52,8 +54,11 @@ func (s *simpleSessionStater) Start() error {
 		})
 
 		var completedSessions []stats.Session
-		for sess := range s.completedSessions {
-			completedSessions = append(completedSessions, *sess)
+		keys := s.completedSessions.Keys()
+		for _, key := range keys {
+			if item, ok := s.completedSessions.Peek(key); ok {
+				completedSessions = append(completedSessions, *(item.(*stats.Session)))
+			}
 		}
 
 		p := message.NewPrinter(language.English)
@@ -95,7 +100,7 @@ func (s *simpleSessionStater) Start() error {
 		_, _ = fmt.Fprintf(w, "<p>Active sessions %d (%d)</p>", len(activeSessions), atomic.LoadInt64(ActiveTCPConnections))
 		tablePrint(w, activeSessions)
 		_, _ = fmt.Fprintf(w, "<br/><br/>")
-		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(s.completedSessions))
+		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(completedSessions))
 		tablePrint(w, completedSessions)
 		_, _ = fmt.Fprintf(w, "</html>")
 		_ = w.Flush()
@@ -129,12 +134,7 @@ func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
 	if sess, ok := s.activeSessions.Load(key); ok {
 		// move to completed sessions
-		select {
-		case s.completedSessions <- sess.(*stats.Session):
-		default:
-			<-s.completedSessions
-			s.completedSessions <- sess.(*stats.Session)
-		}
+		s.completedSessions.ContainsOrAdd(key, sess)
 		// delete
 		s.activeSessions.Delete(key)
 	}

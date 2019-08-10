@@ -115,12 +115,12 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) 
 
 	<-upCh // Wait for UpLink done.
 
+	// add -1
+	atomic.AddInt64(&activeTCPConnections, -1)
+
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(localConn)
 	}
-
-	// add -1
-	atomic.AddInt64(&activeTCPConnections, -1)
 }
 
 func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
