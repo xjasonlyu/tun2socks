@@ -84,11 +84,12 @@ func getTuntapName(componentId string) (string, error) {
 	return s, nil
 }
 
-func getTuntapComponentId() (string, error) {
+func getTuntapComponentId(ifaceName string) (string, string, error) {
 	adapters, err := registry.OpenKey(registry.LOCAL_MACHINE, ADAPTER_KEY, registry.READ)
 	if err != nil {
-		return "", err
+		return "", "", fmt.Errorf("failed to read adapter list: %v", err)
 	}
+	defer adapters.Close()
 	var i uint32
 	for i = 0; i < 1000; i++ {
 		var name_length uint32 = TAPWIN32_MAX_REG_SIZE
@@ -102,10 +103,11 @@ func getTuntapComponentId() (string, error) {
 			nil,
 			nil,
 			nil); err != nil {
-			return "", err
+			return "", "", fmt.Errorf("failed to read name: %v", err)
 		}
 		key_name := windows.UTF16ToString(buf[:])
 		adapter, err := registry.OpenKey(adapters, key_name, registry.READ)
+		defer adapter.Close()
 		if err != nil {
 			continue
 		}
@@ -136,29 +138,33 @@ func getTuntapComponentId() (string, error) {
 				&valtype,
 				&netCfgInstanceId[0],
 				&netCfgInstanceIdLen); err != nil {
-				return "", err
+				return "", "", fmt.Errorf("failed to read net cfg instance id: %v", err)
 			}
 			s := decodeUTF16(netCfgInstanceId)
-			log.Printf("device component id: %s", s)
-			adapter.Close()
-			adapters.Close()
-			return s, nil
+			log.Printf("TAP device component ID: %s", s)
+
+			devName, err := getTuntapName(s)
+			if err != nil {
+				return "", "", fmt.Errorf("failed to get tun/tap name: %v", err)
+			}
+			if len(ifaceName) == 0 {
+				return s, devName, nil
+			} else if devName == ifaceName {
+				return s, devName, nil
+			}
 		}
-		adapter.Close()
 	}
-	adapters.Close()
-	return "", errors.New("not found component id")
+	return "", "", errors.New("not found component id")
 }
 
-func OpenTunDevice(name, addr, gw, mask string, dnsServers []string) (io.ReadWriteCloser, error) {
-	componentId, err := getTuntapComponentId()
+func OpenTunDevice(name, addr, gw, mask string, dns []string) (io.ReadWriteCloser, error) {
+	componentId, devName, err := getTuntapComponentId(name)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get component ID: %v", err)
 	}
+	log.Printf("TAP device name: %s", devName)
 
 	devId, _ := windows.UTF16FromString(fmt.Sprintf(`\\.\Global\%s.tap`, componentId))
-	devName, err := getTuntapName(componentId)
-	log.Printf("device name: %s", devName)
 	// set dhcp with netsh
 	cmd := exec.Command("netsh", "interface", "ip", "set", "address", devName, "dhcp")
 	cmd.Run()
@@ -202,15 +208,15 @@ func OpenTunDevice(name, addr, gw, mask string, dnsServers []string) (io.ReadWri
 		windows.Close(fd)
 		return nil, err
 	} else {
-		log.Printf("set %s with net/mask: %s/%s through DHCP", devName, addr, mask)
+		log.Printf("Set %s with net/mask: %s/%s through DHCP", devName, addr, mask)
 	}
 
 	// set dns with dncp
 	dnsParam := []byte{6, 4}
-	primaryDNS := net.ParseIP(dnsServers[0]).To4()
+	primaryDNS := net.ParseIP(dns[0]).To4()
 	dnsParam = append(dnsParam, primaryDNS...)
-	if len(dnsServers) >= 2 {
-		secondaryDNS := net.ParseIP(dnsServers[1]).To4()
+	if len(dns) >= 2 {
+		secondaryDNS := net.ParseIP(dns[1]).To4()
 		dnsParam = append(dnsParam, secondaryDNS...)
 		dnsParam[1] += 4
 	}
@@ -228,7 +234,7 @@ func OpenTunDevice(name, addr, gw, mask string, dnsServers []string) (io.ReadWri
 		windows.Close(fd)
 		return nil, err
 	} else {
-		log.Printf("set %s with dns: %s through DHCP", devName, strings.Join(dnsServers, ","))
+		log.Printf("Set %s with DNS: %s through DHCP", devName, strings.Join(dns, ","))
 	}
 
 	// set connect.
