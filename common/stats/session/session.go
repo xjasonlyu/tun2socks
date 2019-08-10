@@ -10,7 +10,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hashicorp/golang-lru"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
@@ -30,16 +29,14 @@ var (
 )
 
 type simpleSessionStater struct {
+	mux               sync.Mutex
 	activeSessions    sync.Map
-	completedSessions *lru.Cache
+	completedSessions []stats.Session
 	server            *http.Server
 }
 
 func NewSimpleSessionStater() stats.SessionStater {
-	cache, _ := lru.New(maxCompletedSessions)
-	return &simpleSessionStater{
-		completedSessions: cache,
-	}
+	return &simpleSessionStater{}
 }
 
 func (s *simpleSessionStater) Start() error {
@@ -52,14 +49,6 @@ func (s *simpleSessionStater) Start() error {
 			activeSessions = append(activeSessions, *sess)
 			return true
 		})
-
-		var completedSessions []stats.Session
-		keys := s.completedSessions.Keys()
-		for _, key := range keys {
-			if item, ok := s.completedSessions.Peek(key); ok {
-				completedSessions = append(completedSessions, *(item.(*stats.Session)))
-			}
-		}
 
 		p := message.NewPrinter(language.English)
 		tablePrint := func(w io.Writer, sessions []stats.Session) {
@@ -100,8 +89,8 @@ func (s *simpleSessionStater) Start() error {
 		_, _ = fmt.Fprintf(w, "<p>Active sessions %d (%d)</p>", len(activeSessions), atomic.LoadInt64(ActiveTCPConnections))
 		tablePrint(w, activeSessions)
 		_, _ = fmt.Fprintf(w, "<br/><br/>")
-		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(completedSessions))
-		tablePrint(w, completedSessions)
+		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(s.completedSessions))
+		tablePrint(w, s.completedSessions)
 		_, _ = fmt.Fprintf(w, "</html>")
 		_ = w.Flush()
 	}
@@ -134,7 +123,12 @@ func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
 	if sess, ok := s.activeSessions.Load(key); ok {
 		// move to completed sessions
-		s.completedSessions.ContainsOrAdd(key, sess)
+		s.mux.Lock()
+		s.completedSessions = append(s.completedSessions, *(sess.(*stats.Session)))
+		if len(s.completedSessions) > maxCompletedSessions {
+			s.completedSessions = s.completedSessions[1:]
+		}
+		s.mux.Unlock()
 		// delete
 		s.activeSessions.Delete(key)
 	}
