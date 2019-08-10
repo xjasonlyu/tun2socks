@@ -164,12 +164,15 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		return err
 	}
 
-	var process = "N/A"
+	var process string
 	if h.sessionStater != nil {
 		// Get name of the process.
 		localHost, localPortStr, _ := net.SplitHostPort(conn.LocalAddr().String())
 		localPortInt, _ := strconv.Atoi(localPortStr)
-		process, _ = lsof.GetCommandNameBySocket(conn.LocalAddr().Network(), localHost, uint16(localPortInt))
+		process, err = lsof.GetCommandNameBySocket(conn.LocalAddr().Network(), localHost, uint16(localPortInt))
+		if err != nil {
+			process = "N/A"
+		}
 
 		sess := &stats.Session{
 			ProcessName:   process,

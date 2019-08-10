@@ -93,13 +93,16 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 		return err
 	}
 
-	var process = "N/A"
+	var process string
 	var sess *stats.Session
 	if h.sessionStater != nil {
 		// Get name of the process.
 		localHost, localPortStr, _ := net.SplitHostPort(localConn.LocalAddr().String())
 		localPortInt, _ := strconv.Atoi(localPortStr)
-		process, _ = lsof.GetCommandNameBySocket(target.Network(), localHost, uint16(localPortInt))
+		process, err = lsof.GetCommandNameBySocket(target.Network(), localHost, uint16(localPortInt))
+		if err != nil {
+			process = "N/A"
+		}
 
 		sess = &stats.Session{
 			ProcessName:   process,
