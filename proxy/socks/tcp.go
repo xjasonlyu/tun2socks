@@ -45,12 +45,17 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	go func() {
 		io.Copy(remoteConn, localConn)
 		remoteConn.SetReadDeadline(time.Now())
+
+		log.Warnf("up link finished")
+
 		upCh <- struct{}{}
 	}()
 
 	// DownLink
 	io.Copy(localConn, remoteConn)
 	localConn.SetReadDeadline(time.Now())
+
+	log.Warnf("down link finished")
 
 	<-upCh // Wait for UpLink done.
 
