@@ -2,6 +2,7 @@ package stats
 
 import (
 	"net"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -30,6 +31,8 @@ type Session struct {
 type SessionConn struct {
 	net.Conn
 	*Session
+
+	once sync.Once
 }
 
 func NewSessionConn(conn net.Conn, session *Session) net.Conn {
@@ -56,9 +59,9 @@ func (c *SessionConn) Write(b []byte) (n int, err error) {
 }
 
 func (c *SessionConn) Close() error {
-	if c.SessionClose.IsZero() {
+	c.once.Do(func() {
 		c.SessionClose = time.Now()
-	}
+	})
 	return c.Conn.Close()
 }
 
@@ -66,6 +69,8 @@ func (c *SessionConn) Close() error {
 type SessionPacketConn struct {
 	net.PacketConn
 	*Session
+
+	once sync.Once
 }
 
 func NewSessionPacketConn(conn net.PacketConn, session *Session) net.PacketConn {
@@ -92,8 +97,8 @@ func (c *SessionPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) 
 }
 
 func (c *SessionPacketConn) Close() error {
-	if c.SessionClose.IsZero() {
+	c.once.Do(func() {
 		c.SessionClose = time.Now()
-	}
+	})
 	return c.PacketConn.Close()
 }
