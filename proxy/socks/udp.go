@@ -73,6 +73,11 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 			return
 		}
 
+		if n < 4 {
+			log.Warnf("short udp packet length: %d", n)
+			return
+		}
+
 		addr := SplitAddr(buf[3:])
 		resolvedAddr, err := net.ResolveUDPAddr("udp", addr.String())
 		if err != nil {
