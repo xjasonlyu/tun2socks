@@ -20,6 +20,13 @@ func tcpCloseRead(conn net.Conn) {
 	}
 }
 
+func tcpCloseWrite(conn net.Conn) {
+	if c, ok := conn.(duplexConn); ok {
+		log.Warnf("ok!++++")
+		c.CloseWrite()
+	}
+}
+
 func tcpKeepAlive(conn net.Conn) {
 	if tcp, ok := conn.(*net.TCPConn); ok {
 		tcp.SetKeepAlive(true)

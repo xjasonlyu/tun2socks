@@ -52,13 +52,15 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	// Up Link
 	go func() {
 		io.Copy(remoteConn, localConn)
-		//closeOnce()
+		tcpCloseRead(localConn)
+		tcpCloseWrite(remoteConn)
 		wg.Done()
 	}()
 
 	// Down Link
 	io.Copy(localConn, remoteConn)
-	tcpCloseRead(localConn)
+	tcpCloseRead(remoteConn)
+	tcpCloseWrite(localConn)
 
 	wg.Wait() // Wait for Up Link done
 
