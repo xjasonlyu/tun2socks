@@ -45,28 +45,29 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	// Close
 	defer closeOnce()
 
-	upCh := make(chan struct{})
+	up := make(chan struct{})
+	down := make(chan struct{})
 
 	// UpLink
 	go func() {
 		if _, err := io.Copy(remoteConn, localConn); err != nil {
 			closeOnce()
 		}
-		upCh <- struct{}{}
+		up <- struct{}{}
 	}()
 
 	// DownLink
-	if _, err := io.Copy(localConn, remoteConn); err != nil {
-		closeOnce()
-	}
+	go func() {
+		if _, err := io.Copy(localConn, remoteConn); err != nil {
+			closeOnce()
+		}
+		down <- struct{}{}
+	}()
 
 	select {
-	case <-upCh:
-	case <-time.After(10 * time.Second):
-		closeOnce()
+	case <-up: // Wait for UpLink done.
+	case <-down:
 	}
-
-	//<-upCh // Wait for UpLink done.
 
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(localConn)
