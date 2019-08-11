@@ -40,7 +40,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 
 	// Close
 	defer func() {
-		log.Warnf("relay close")
 		localConn.Close()
 		remoteConn.Close()
 	}()

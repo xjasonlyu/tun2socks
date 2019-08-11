@@ -4,8 +4,6 @@ import (
 	"net"
 	"sync/atomic"
 	"time"
-
-	"github.com/xjasonlyu/tun2socks/common/log"
 )
 
 type SessionStater interface {
@@ -58,9 +56,7 @@ func (c *SessionConn) Write(b []byte) (n int, err error) {
 }
 
 func (c *SessionConn) Close() error {
-	log.Warnf("sessionConn close")
 	if c.SessionClose.IsZero() {
-		log.Warnf("set close time")
 		c.SessionClose = time.Now()
 	}
 	return c.Conn.Close()
@@ -96,9 +92,7 @@ func (c *SessionPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) 
 }
 
 func (c *SessionPacketConn) Close() error {
-	log.Warnf("sessionConn close")
 	if c.SessionClose.IsZero() {
-		log.Warnf("set close time")
 		c.SessionClose = time.Now()
 	}
 	return c.PacketConn.Close()
