@@ -4,6 +4,8 @@ import (
 	"net"
 	"sync/atomic"
 	"time"
+
+	"github.com/xjasonlyu/tun2socks/common/log"
 )
 
 type SessionStater interface {
@@ -26,6 +28,7 @@ type Session struct {
 	SessionClose  time.Time
 }
 
+// Track SessionConn
 type SessionConn struct {
 	net.Conn
 	*Session
@@ -55,12 +58,15 @@ func (c *SessionConn) Write(b []byte) (n int, err error) {
 }
 
 func (c *SessionConn) Close() error {
+	log.Warnf("sessionConn close")
 	if c.SessionClose.IsZero() {
+		log.Warnf("set close time")
 		c.SessionClose = time.Now()
 	}
 	return c.Conn.Close()
 }
 
+// Track SessionPacketConn
 type SessionPacketConn struct {
 	net.PacketConn
 	*Session
@@ -90,7 +96,9 @@ func (c *SessionPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) 
 }
 
 func (c *SessionPacketConn) Close() error {
+	log.Warnf("sessionConn close")
 	if c.SessionClose.IsZero() {
+		log.Warnf("set close time")
 		c.SessionClose = time.Now()
 	}
 	return c.PacketConn.Close()
