@@ -4,7 +4,6 @@ import (
 	"io"
 	"net"
 	"strconv"
-	"sync"
 	"time"
 
 	"golang.org/x/net/proxy"
@@ -17,8 +16,6 @@ import (
 )
 
 type tcpHandler struct {
-	sync.Mutex
-
 	proxyHost string
 	proxyPort uint16
 
