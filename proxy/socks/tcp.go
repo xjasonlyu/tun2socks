@@ -42,6 +42,9 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 		})
 	}
 
+	// Close
+	defer closeOnce()
+
 	// WaitGroup
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -56,7 +59,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	// Down Link
 	io.Copy(localConn, remoteConn)
 	tcpCloseRead(localConn)
-	defer closeOnce()
 
 	wg.Wait() // Wait for Up Link done
 
@@ -119,18 +121,4 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 
 	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), targetAddr)
 	return nil
-}
-
-func tcpKeepAlive(conn net.Conn) {
-	if tcp, ok := conn.(*net.TCPConn); ok {
-		tcp.SetKeepAlive(true)
-		tcp.SetKeepAlivePeriod(30 * time.Second)
-	}
-}
-
-func tcpCloseRead(conn net.Conn) {
-	if c, ok := conn.(interface{ CloseRead() error }); ok {
-		log.Warnf("ok!")
-		c.CloseRead()
-	}
 }
