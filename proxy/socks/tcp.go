@@ -5,7 +5,6 @@ import (
 	"net"
 	"strconv"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"golang.org/x/net/proxy"
@@ -14,15 +13,8 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/stats"
-	"github.com/xjasonlyu/tun2socks/common/stats/session"
 	"github.com/xjasonlyu/tun2socks/core"
 )
-
-var activeTCPConnections int64
-
-func init() {
-	session.ActiveTCPConnections = &activeTCPConnections
-}
 
 type tcpHandler struct {
 	sync.Mutex
@@ -64,9 +56,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	localConn.SetReadDeadline(time.Now())
 
 	<-upCh // Wait for UpLink done.
-
-	// add -1
-	atomic.AddInt64(&activeTCPConnections, -1)
 
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(localConn)
@@ -125,9 +114,6 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 
 	// relay connections
 	go h.relay(localConn, remoteConn)
-
-	// add 1
-	atomic.AddInt64(&activeTCPConnections, 1)
 
 	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), targetAddr)
 	return nil

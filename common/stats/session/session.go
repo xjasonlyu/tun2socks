@@ -19,8 +19,6 @@ import (
 
 const maxCompletedSessions = 100
 
-var ActiveTCPConnections *int64
-
 var (
 	StatsAddr = "localhost:6001"
 	StatsPath = "/stats/session/plain"
@@ -97,7 +95,7 @@ func (s *simpleSessionStater) Start() error {
 }</style><title>Go-tun2socks Sessions</title></head>`)
 		_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", StatsVersion)
 		_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
-		_, _ = fmt.Fprintf(w, "<p>Active sessions %d (%d)</p>", len(activeSessions), atomic.LoadInt64(ActiveTCPConnections))
+		_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(activeSessions))
 		tablePrint(w, activeSessions)
 		_, _ = fmt.Fprintf(w, "<br/><br/>")
 		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(s.completedSessions))
