@@ -1,6 +1,7 @@
 package socks
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -17,15 +18,13 @@ import (
 )
 
 type udpHandler struct {
-	sync.Mutex
-
 	proxyHost string
 	proxyPort uint16
+	timeout   time.Duration
 
-	udpConns    map[core.UDPConn]net.PacketConn
-	tcpConns    map[core.UDPConn]net.Conn
-	remoteAddrs map[core.UDPConn]*net.UDPAddr // UDP relay server addresses
-	timeout     time.Duration
+	remoteAddrMap       sync.Map
+	remoteConnMap       sync.Map
+	remotePacketConnMap sync.Map
 
 	fakeDns       dns.FakeDns
 	sessionStater stats.SessionStater
@@ -35,9 +34,6 @@ func NewUDPHandler(proxyHost string, proxyPort uint16, timeout time.Duration, fa
 	return &udpHandler{
 		proxyHost:     proxyHost,
 		proxyPort:     proxyPort,
-		udpConns:      make(map[core.UDPConn]net.PacketConn, 8),
-		tcpConns:      make(map[core.UDPConn]net.Conn, 8),
-		remoteAddrs:   make(map[core.UDPConn]*net.UDPAddr, 8),
 		fakeDns:       fakeDns,
 		sessionStater: sessionStater,
 		timeout:       timeout,
@@ -45,17 +41,14 @@ func NewUDPHandler(proxyHost string, proxyPort uint16, timeout time.Duration, fa
 }
 
 func (h *udpHandler) handleTCP(conn core.UDPConn, c net.Conn) {
-	buf := core.NewBytes(core.BufSize)
-	defer core.FreeBytes(buf)
-
 	for {
+		// clear timeout settings
 		c.SetDeadline(time.Time{})
-		_, err := c.Read(buf)
-		if err == io.EOF {
-			log.Warnf("UDP associate to %v closed by remote", c.RemoteAddr())
-			h.Close(conn)
-			return
-		} else if err != nil {
+		_, err := c.Read(make([]byte, 1))
+		if err != nil {
+			if err == io.EOF {
+				log.Warnf("UDP associate to %v closed by remote", c.RemoteAddr())
+			}
 			h.Close(conn)
 			return
 		}
@@ -86,8 +79,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 			return
 		}
 
-		_, err = conn.WriteFrom(buf[int(3+len(addr)):n], resolvedAddr)
-		if err != nil {
+		if _, err := conn.WriteFrom(buf[int(3+len(addr)):n], resolvedAddr); err != nil {
 			log.Warnf("write local failed: %v", err)
 			return
 		}
@@ -122,7 +114,9 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 	remoteConn.SetDeadline(time.Now().Add(5 * time.Second))
 
 	// send VER, NMETHODS, METHODS
-	remoteConn.Write([]byte{5, 1, 0})
+	if _, err := remoteConn.Write([]byte{socks5Version, 1, 0}); err != nil {
+		return err
+	}
 
 	buf := make([]byte, MaxAddrLen)
 	// read VER METHOD
@@ -130,13 +124,10 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		return err
 	}
 
-	switch len(targetAddr) {
-	case 0:
-		_, _ = remoteConn.Write(append([]byte{5, socks5UDPAssociate, 0}, []byte{1, 0, 0, 0, 0, 0, 0}...))
-	default:
-		destination := ParseAddr(targetAddr)
-		// write VER CMD RSV ATYP DST.ADDR DST.PORT
-		_, _ = remoteConn.Write(append([]byte{5, socks5UDPAssociate, 0}, destination...))
+	destination := ParseAddr(targetAddr)
+	// write VER CMD RSV ATYP DST.ADDR DST.PORT
+	if _, err := remoteConn.Write(append([]byte{socks5Version, socks5UDPAssociate, 0}, destination...)); err != nil {
+		return err
 	}
 
 	// read VER REP RSV ATYP BND.ADDR BND.PORT
@@ -191,11 +182,9 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		remoteUDPConn = stats.NewSessionPacketConn(remoteUDPConn, sess)
 	}
 
-	h.Lock()
-	h.tcpConns[conn] = remoteConn
-	h.udpConns[conn] = remoteUDPConn
-	h.remoteAddrs[conn] = resolvedRemoteAddr
-	h.Unlock()
+	h.remoteAddrMap.Store(conn, resolvedRemoteAddr)
+	h.remoteConnMap.Store(conn, remoteConn)
+	h.remotePacketConnMap.Store(conn, remoteUDPConn)
 
 	go h.fetchUDPInput(conn, remoteUDPConn)
 
@@ -204,50 +193,52 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 }
 
 func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
-	h.Lock()
-	remoteUDPConn, ok1 := h.udpConns[conn]
-	remoteAddr, ok2 := h.remoteAddrs[conn]
-	h.Unlock()
+	var remoteAddr net.Addr
+	var remoteUDPConn net.PacketConn
 
-	// use system DNS instead of force override
-	if ok1 && ok2 {
-		var targetHost = addr.IP.String()
-		if h.fakeDns != nil {
-			if host, exist := h.fakeDns.IPToHost(addr.IP); exist {
-				targetHost = host
-			}
-		}
+	if value, ok := h.remotePacketConnMap.Load(conn); ok {
+		remoteUDPConn = value.(net.PacketConn)
+	}
 
-		targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
-		buf := append([]byte{0, 0, 0}, ParseAddr(targetAddr)...)
-		buf = append(buf, data[:]...)
-		_, err := remoteUDPConn.WriteTo(buf, remoteAddr)
-		if err != nil {
-			h.Close(conn)
-			return errors.New(fmt.Sprintf("write remote failed: %v", err))
-		}
-		return nil
-	} else {
+	if value, ok := h.remoteAddrMap.Load(conn); ok {
+		remoteAddr = value.(net.Addr)
+	}
+
+	if remoteAddr == nil || remoteUDPConn == nil {
 		h.Close(conn)
 		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr))
 	}
+
+	var targetHost = addr.IP.String()
+	if h.fakeDns != nil {
+		if host, exist := h.fakeDns.IPToHost(addr.IP); exist {
+			targetHost = host
+		}
+	}
+
+	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
+	buf := bytes.Join([][]byte{{0, 0, 0}, ParseAddr(targetAddr), data[:]}, []byte{})
+	if _, err := remoteUDPConn.WriteTo(buf, remoteAddr); err != nil {
+		h.Close(conn)
+		return errors.New(fmt.Sprintf("write remote failed: %v", err))
+	}
+
+	return nil
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
-	h.Lock()
-	defer h.Unlock()
-
-	if remoteConn, ok := h.tcpConns[conn]; ok {
-		remoteConn.Close()
-		delete(h.tcpConns, conn)
+	if remoteConn, ok := h.remoteConnMap.Load(conn); ok {
+		remoteConn.(net.Conn).Close()
+		h.remoteConnMap.Delete(conn)
 	}
-	if remoteUDPConn, ok := h.udpConns[conn]; ok {
-		remoteUDPConn.Close()
-		delete(h.udpConns, conn)
+
+	if remoteUDPConn, ok := h.remotePacketConnMap.Load(conn); ok {
+		remoteUDPConn.(net.PacketConn).Close()
+		h.remotePacketConnMap.Delete(conn)
 	}
 
 	conn.Close()
-	delete(h.remoteAddrs, conn)
+	h.remoteAddrMap.Delete(conn)
 
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(conn)

@@ -10,6 +10,8 @@ import (
 	"strconv"
 )
 
+const socks5Version = 5
+
 // SOCKS request commands as defined in RFC 1928 section 4.
 const (
 	socks5Connect      = 1
@@ -94,12 +96,12 @@ func ParseAddr(s string) Addr {
 		copy(addr[2:], host)
 	}
 
-	portnum, err := strconv.ParseUint(port, 10, 16)
+	portUint, err := strconv.ParseUint(port, 10, 16)
 	if err != nil {
 		return nil
 	}
 
-	addr[len(addr)-2], addr[len(addr)-1] = byte(portnum>>8), byte(portnum)
+	addr[len(addr)-2], addr[len(addr)-1] = byte(portUint>>8), byte(portUint)
 
 	return addr
 }
