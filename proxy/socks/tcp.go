@@ -49,13 +49,14 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	// Up Link
 	go func() {
 		io.Copy(remoteConn, localConn)
-		closeOnce()
+		//closeOnce()
 		wg.Done()
 	}()
 
 	// Down Link
 	io.Copy(localConn, remoteConn)
-	closeOnce()
+	tcpCloseRead(localConn)
+	defer closeOnce()
 
 	wg.Wait() // Wait for Up Link done
 
@@ -129,6 +130,7 @@ func tcpKeepAlive(conn net.Conn) {
 
 func tcpCloseRead(conn net.Conn) {
 	if c, ok := conn.(interface{ CloseRead() error }); ok {
+		log.Warnf("ok!")
 		c.CloseRead()
 	}
 }
