@@ -31,7 +31,7 @@ func (l *simpleLogger) Infof(msg string, args ...interface{}) {
 }
 
 func (l *simpleLogger) Warnf(msg string, args ...interface{}) {
-	if l.level <= log.WARN {
+	if l.level <= log.WARNING {
 		l.output(msg, args...)
 	}
 }

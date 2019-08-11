@@ -5,9 +5,9 @@ type Level uint8
 const (
 	DEBUG Level = iota
 	INFO
-	WARN
+	WARNING
 	ERROR
-	NONE
+	SILENT
 )
 
 type Logger interface {

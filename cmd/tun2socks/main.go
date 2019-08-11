@@ -102,11 +102,11 @@ func main() {
 	case "info":
 		log.SetLevel(log.INFO)
 	case "warning":
-		log.SetLevel(log.WARN)
+		log.SetLevel(log.WARNING)
 	case "error":
 		log.SetLevel(log.ERROR)
 	case "silent":
-		log.SetLevel(log.NONE)
+		log.SetLevel(log.SILENT)
 	default:
 		panic("unsupported logging level")
 	}
