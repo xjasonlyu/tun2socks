@@ -56,8 +56,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 		} else {
 			localConn.SetDeadline(time.Now())
 			remoteConn.SetDeadline(time.Now())
-			tcpCloseRead(localConn)
-			tcpCloseWrite(remoteConn)
+			tcpCloseRead(remoteConn)
 		}
 		wg.Done()
 	}()
@@ -68,8 +67,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	} else {
 		localConn.SetDeadline(time.Now())
 		remoteConn.SetDeadline(time.Now())
-		tcpCloseRead(remoteConn)
-		tcpCloseWrite(localConn)
+		tcpCloseRead(localConn)
 	}
 
 	wg.Wait() // Wait for Up Link done
