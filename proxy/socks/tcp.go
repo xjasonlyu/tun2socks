@@ -41,12 +41,14 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 		remoteConn.Close()
 	}()
 
+	flag := remoteConn.LocalAddr().String()
+
 	// UpLink
 	go func() {
 		io.Copy(remoteConn, localConn)
 		remoteConn.SetReadDeadline(time.Now())
 
-		log.Warnf("up link finished")
+		log.Warnf("up link finished: %v", flag)
 
 		upCh <- struct{}{}
 	}()
@@ -55,7 +57,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	io.Copy(localConn, remoteConn)
 	localConn.SetReadDeadline(time.Now())
 
-	log.Warnf("down link finished")
+	log.Warnf("down link finished: %v", flag)
 
 	<-upCh // Wait for UpLink done.
 
