@@ -51,16 +51,22 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 
 	// Up Link
 	go func() {
-		io.Copy(remoteConn, localConn)
-		tcpCloseRead(localConn)
-		tcpCloseWrite(remoteConn)
+		if _, err := io.Copy(remoteConn, localConn); err != nil {
+			closeOnce()
+		} else {
+			tcpCloseRead(localConn)
+			tcpCloseWrite(remoteConn)
+		}
 		wg.Done()
 	}()
 
 	// Down Link
-	io.Copy(localConn, remoteConn)
-	tcpCloseRead(remoteConn)
-	tcpCloseWrite(localConn)
+	if _, err := io.Copy(localConn, remoteConn); err != nil {
+		closeOnce()
+	} else {
+		tcpCloseRead(remoteConn)
+		tcpCloseWrite(localConn)
+	}
 
 	wg.Wait() // Wait for Up Link done
 

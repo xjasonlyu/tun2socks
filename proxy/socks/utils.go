@@ -3,8 +3,6 @@ package socks
 import (
 	"net"
 	"time"
-
-	"github.com/xjasonlyu/tun2socks/common/log"
 )
 
 type duplexConn interface {
@@ -15,14 +13,12 @@ type duplexConn interface {
 
 func tcpCloseRead(conn net.Conn) {
 	if c, ok := conn.(duplexConn); ok {
-		log.Warnf("ok!----")
 		c.CloseRead()
 	}
 }
 
 func tcpCloseWrite(conn net.Conn) {
 	if c, ok := conn.(duplexConn); ok {
-		log.Warnf("ok!++++")
 		c.CloseWrite()
 	}
 }
