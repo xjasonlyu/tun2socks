@@ -54,6 +54,8 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 		if _, err := io.Copy(remoteConn, localConn); err != nil {
 			closeOnce()
 		} else {
+			localConn.SetDeadline(time.Now())
+			remoteConn.SetDeadline(time.Now())
 			tcpCloseRead(localConn)
 			tcpCloseWrite(remoteConn)
 		}
@@ -64,6 +66,8 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	if _, err := io.Copy(localConn, remoteConn); err != nil {
 		closeOnce()
 	} else {
+		localConn.SetDeadline(time.Now())
+		remoteConn.SetDeadline(time.Now())
 		tcpCloseRead(remoteConn)
 		tcpCloseWrite(localConn)
 	}
