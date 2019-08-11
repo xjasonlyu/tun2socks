@@ -26,29 +26,30 @@ var (
 )
 
 type simpleSessionStater struct {
-	mux               sync.Mutex
-	activeSessions    sync.Map
-	completedSessions []stats.Session
+	sync.Mutex
+
 	server            *http.Server
+	activeSessionMap  sync.Map
+	completedSessions []*stats.Session
 }
 
 func NewSimpleSessionStater() stats.SessionStater {
-	return &simpleSessionStater{}
+	return new(simpleSessionStater)
 }
 
 func (s *simpleSessionStater) Start() error {
 	log.Infof("Start session stater")
 	sessionStatsHandler := func(resp http.ResponseWriter, req *http.Request) {
 		// Make a snapshot.
-		var activeSessions []stats.Session
-		s.activeSessions.Range(func(key, value interface{}) bool {
+		var activeSessions []*stats.Session
+		s.activeSessionMap.Range(func(key, value interface{}) bool {
 			sess := value.(*stats.Session)
-			activeSessions = append(activeSessions, *sess)
+			activeSessions = append(activeSessions, sess)
 			return true
 		})
 
 		p := message.NewPrinter(language.English)
-		tablePrint := func(w io.Writer, sessions []stats.Session) {
+		tablePrint := func(w io.Writer, sessions []*stats.Session) {
 			// Sort by session start time.
 			sort.Slice(sessions, func(i, j int) bool {
 				return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
@@ -109,26 +110,26 @@ func (s *simpleSessionStater) Stop() error {
 }
 
 func (s *simpleSessionStater) AddSession(key interface{}, session *stats.Session) {
-	s.activeSessions.Store(key, session)
+	s.activeSessionMap.Store(key, session)
 }
 
 func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
-	if sess, ok := s.activeSessions.Load(key); ok {
+	if sess, ok := s.activeSessionMap.Load(key); ok {
 		return sess.(*stats.Session)
 	}
 	return nil
 }
 
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
-	if sess, ok := s.activeSessions.Load(key); ok {
+	if sess, ok := s.activeSessionMap.Load(key); ok {
 		// move to completed sessions
-		s.mux.Lock()
-		s.completedSessions = append(s.completedSessions, *(sess.(*stats.Session)))
+		s.Lock()
+		s.completedSessions = append(s.completedSessions, sess.(*stats.Session))
 		if len(s.completedSessions) > maxCompletedSessions {
 			s.completedSessions = s.completedSessions[1:]
 		}
-		s.mux.Unlock()
+		s.Unlock()
 		// delete
-		s.activeSessions.Delete(key)
+		s.activeSessionMap.Delete(key)
 	}
 }
