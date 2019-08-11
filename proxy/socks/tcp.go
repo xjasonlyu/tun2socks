@@ -42,27 +42,22 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 		})
 	}
 
-	// Close
-	defer closeOnce()
+	// WaitGroup
+	var wg sync.WaitGroup
+	wg.Add(1)
 
-	up := make(chan struct{})
-
-	// UpLink
+	// Up Link
 	go func() {
-		if _, err := io.Copy(remoteConn, localConn); err != nil {
-			closeOnce()
-		}
-		tcpCloseRead(remoteConn)
-		up <- struct{}{}
+		io.Copy(remoteConn, localConn)
+		closeOnce()
+		wg.Done()
 	}()
 
-	// DownLink
-	if _, err := io.Copy(localConn, remoteConn); err != nil {
-		closeOnce()
-	}
-	tcpCloseRead(localConn)
+	// Down Link
+	io.Copy(localConn, remoteConn)
+	closeOnce()
 
-	<-up
+	wg.Wait() // Wait for Up Link done
 
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(localConn)
