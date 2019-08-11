@@ -13,11 +13,11 @@ func init() {
 }
 
 func date(t time.Time) string {
-	return t.Format("2006-01-02 15:04:05")
+	return t.Format("Mon Jan 2 15:04:05")
 }
 
 func now() string {
-	return time.Now().Format("Mon Jan 2 15:04:05 MST")
+	return time.Now().Format("2006-01-02 15:04:05")
 }
 
 func uptime() string {
