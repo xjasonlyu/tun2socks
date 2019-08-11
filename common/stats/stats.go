@@ -23,6 +23,7 @@ type Session struct {
 	UploadBytes   int64
 	DownloadBytes int64
 	SessionStart  time.Time
+	SessionClose  time.Time
 }
 
 type SessionConn struct {
@@ -53,6 +54,13 @@ func (c *SessionConn) Write(b []byte) (n int, err error) {
 	return
 }
 
+func (c *SessionConn) Close() error {
+	if c.SessionClose.IsZero() {
+		c.SessionClose = time.Now()
+	}
+	return c.Conn.Close()
+}
+
 type SessionPacketConn struct {
 	net.PacketConn
 	*Session
@@ -79,4 +87,11 @@ func (c *SessionPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) 
 		atomic.AddInt64(&c.UploadBytes, int64(n))
 	}
 	return
+}
+
+func (c *SessionPacketConn) Close() error {
+	if c.SessionClose.IsZero() {
+		c.SessionClose = time.Now()
+	}
+	return c.PacketConn.Close()
 }
