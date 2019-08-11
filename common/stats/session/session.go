@@ -9,9 +9,6 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
-
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 )
@@ -48,14 +45,13 @@ func (s *simpleSessionStater) Start() error {
 			return true
 		})
 
-		p := message.NewPrinter(language.English)
 		tablePrint := func(w io.Writer, sessions []*stats.Session) {
 			// Sort by session start time.
 			sort.Slice(sessions, func(i, j int) bool {
 				return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
 			})
 			_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-			_, _ = fmt.Fprintf(w, "<tr><td>Process Name</td><td>Network</td><td>Date</td><td>Duration</td><td>Client Addr</td><td>Target Addr</td><td>Upload Bytes</td><td>Download Bytes</td></tr>")
+			_, _ = fmt.Fprintf(w, "<tr><td>Process Name</td><td>Network</td><td>Date</td><td>Duration</td><td>Client Addr</td><td>Target Addr</td><td>Upload</td><td>Download</td></tr>")
 			sort.Slice(sessions, func(i, j int) bool {
 				return sessions[i].SessionStart.After(sessions[j].SessionStart)
 			})
@@ -68,8 +64,8 @@ func (s *simpleSessionStater) Start() error {
 					duration(sess.SessionStart, sess.SessionClose),
 					sess.ClientAddr,
 					sess.TargetAddr,
-					p.Sprintf("%d", atomic.LoadInt64(&sess.UploadBytes)),
-					p.Sprintf("%d", atomic.LoadInt64(&sess.DownloadBytes)),
+					byteCountSI(atomic.LoadInt64(&sess.UploadBytes)),
+					byteCountSI(atomic.LoadInt64(&sess.DownloadBytes)),
 				)
 			}
 			_, _ = fmt.Fprintf(w, "</table>")
