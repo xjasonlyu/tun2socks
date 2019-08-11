@@ -8,7 +8,6 @@ import (
 	"sort"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -60,21 +59,12 @@ func (s *simpleSessionStater) Start() error {
 				return sessions[i].SessionStart.After(sessions[j].SessionStart)
 			})
 
-			// Duration from session uptime
-			duration := func(sess stats.Session) time.Duration {
-				if sess.SessionClose.IsZero() {
-					return time.Now().Sub(sess.SessionStart).Round(time.Millisecond)
-				} else {
-					return sess.SessionClose.Sub(sess.SessionStart).Round(time.Millisecond)
-				}
-			}
-
 			for _, sess := range sessions {
 				_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
 					sess.ProcessName,
 					sess.Network,
 					date(sess.SessionStart),
-					duration(sess),
+					duration(sess.SessionStart, sess.SessionClose),
 					sess.DialerAddr,
 					sess.ClientAddr,
 					sess.TargetAddr,

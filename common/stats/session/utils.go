@@ -20,6 +20,14 @@ func now() string {
 	return time.Now().Format("2006-01-02 15:04:05")
 }
 
+func duration(start, end time.Time) time.Duration {
+	if end.IsZero() {
+		return time.Now().Sub(start).Round(time.Millisecond)
+	} else {
+		return end.Sub(start).Round(time.Millisecond)
+	}
+}
+
 func uptime() string {
 	// Y M d h m s
 	now := time.Now()
