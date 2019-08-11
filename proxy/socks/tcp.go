@@ -43,7 +43,7 @@ func NewTCPHandler(proxyHost string, proxyPort uint16, fakeDns dns.FakeDns, sess
 	}
 }
 
-func (h *tcpHandler) relay(localConn, remoteConn net.Conn, sess *stats.Session) {
+func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	upCh := make(chan struct{})
 
 	// Close
@@ -124,7 +124,7 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	tcpKeepAlive(remoteConn)
 
 	// relay connections
-	go h.relay(localConn, remoteConn, sess)
+	go h.relay(localConn, remoteConn)
 
 	// add 1
 	atomic.AddInt64(&activeTCPConnections, 1)
