@@ -45,9 +45,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	// Close
 	defer closeOnce()
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-
 	upCh := make(chan struct{})
 
 	// UpLink
@@ -56,7 +53,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 			closeOnce()
 		}
 		upCh <- struct{}{}
-		wg.Done()
 	}()
 
 	// DownLink
@@ -71,7 +67,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	}
 
 	//<-upCh // Wait for UpLink done.
-	wg.Wait()
 
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(localConn)
