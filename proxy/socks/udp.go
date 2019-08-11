@@ -175,7 +175,6 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		sess := &stats.Session{
 			ProcessName:   process,
 			Network:       conn.LocalAddr().Network(),
-			DialerAddr:    remoteConn.LocalAddr().String(),
 			ClientAddr:    conn.LocalAddr().String(),
 			TargetAddr:    targetAddr,
 			UploadBytes:   0,
