@@ -48,7 +48,7 @@ func (h *udpHandler) handleTCP(conn core.UDPConn, c net.Conn) {
 		_, err := c.Read(make([]byte, 1))
 		if err != nil {
 			if err == io.EOF {
-				log.Warnf("UDP associate to %v closed by remote", c.RemoteAddr())
+				log.Debugf("UDP associate to %v closed by remote", c.RemoteAddr())
 			}
 			h.Close(conn)
 			return
