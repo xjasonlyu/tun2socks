@@ -158,7 +158,7 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 
 	go h.handleTCP(conn, remoteConn)
 
-	remoteUDPConn, err := net.ListenPacket("udp", "")
+	remotePacketConn, err := net.ListenPacket("udp", "")
 	if err != nil {
 		return err
 	}
@@ -185,14 +185,14 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		}
 		h.sessionStater.AddSession(conn, sess)
 
-		remoteUDPConn = stats.NewSessionPacketConn(remoteUDPConn, sess)
+		remotePacketConn = stats.NewSessionPacketConn(remotePacketConn, sess)
 	}
 
 	h.remoteAddrMap.Store(conn, resolvedRemoteAddr)
 	h.remoteConnMap.Store(conn, remoteConn)
-	h.remotePacketConnMap.Store(conn, remoteUDPConn)
+	h.remotePacketConnMap.Store(conn, remotePacketConn)
 
-	go h.fetchUDPInput(conn, remoteUDPConn)
+	go h.fetchUDPInput(conn, remotePacketConn)
 
 	log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
 	return nil
@@ -200,17 +200,17 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 
 func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
 	var remoteAddr net.Addr
-	var remoteUDPConn net.PacketConn
+	var remotePacketConn net.PacketConn
 
 	if value, ok := h.remotePacketConnMap.Load(conn); ok {
-		remoteUDPConn = value.(net.PacketConn)
+		remotePacketConn = value.(net.PacketConn)
 	}
 
 	if value, ok := h.remoteAddrMap.Load(conn); ok {
 		remoteAddr = value.(net.Addr)
 	}
 
-	if remoteAddr == nil || remoteUDPConn == nil {
+	if remoteAddr == nil || remotePacketConn == nil {
 		h.Close(conn)
 		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr))
 	}
@@ -224,7 +224,7 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 
 	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(addr.Port))
 	buf := bytes.Join([][]byte{{0, 0, 0}, ParseAddr(targetAddr), data[:]}, []byte{})
-	if _, err := remoteUDPConn.WriteTo(buf, remoteAddr); err != nil {
+	if _, err := remotePacketConn.WriteTo(buf, remoteAddr); err != nil {
 		h.Close(conn)
 		return errors.New(fmt.Sprintf("write remote failed: %v", err))
 	}
@@ -240,8 +240,8 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 		h.remoteConnMap.Delete(conn)
 	}
 
-	if remoteUDPConn, ok := h.remotePacketConnMap.Load(conn); ok {
-		remoteUDPConn.(net.PacketConn).Close()
+	if remotePacketConn, ok := h.remotePacketConnMap.Load(conn); ok {
+		remotePacketConn.(net.PacketConn).Close()
 		h.remotePacketConnMap.Delete(conn)
 	}
 
