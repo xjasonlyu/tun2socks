@@ -9,7 +9,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/core"
-	"github.com/xjasonlyu/tun2socks/proxy/d"
+	"github.com/xjasonlyu/tun2socks/proxy/exception"
 	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
 
@@ -17,7 +17,7 @@ func init() {
 	args.ExceptionApps = flag.String("exceptionApps", "", "A list of exception apps separated by commas")
 	args.ExceptionSendThrough = flag.String("exceptionSendThrough", "192.168.1.101:0", "Exception send through address")
 
-	registerHandlerCreator("d", func() {
+	registerHandlerCreator("exception", func() {
 		// Verify proxy server address.
 		proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
 		if err != nil {
@@ -34,8 +34,8 @@ func init() {
 			log.Fatalf("invalid exception send through address: %v", err)
 		}
 		apps := strings.Split(*args.ExceptionApps, ",")
-		tcpHandler := d.NewTCPHandler(proxyTCPHandler, apps, sendThrough)
-		udpHandler := d.NewUDPHandler(proxyUDPHandler, apps, sendThrough, *args.UdpTimeout)
+		tcpHandler := exception.NewTCPHandler(proxyTCPHandler, apps, sendThrough)
+		udpHandler := exception.NewUDPHandler(proxyUDPHandler, apps, sendThrough, *args.UdpTimeout)
 
 		core.RegisterTCPConnHandler(tcpHandler)
 		core.RegisterUDPConnHandler(udpHandler)
