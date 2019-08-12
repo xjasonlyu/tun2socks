@@ -19,10 +19,10 @@ func output(p *C.struct_pbuf) C.err_t {
 		buf := (*[1 << 30]byte)(unsafe.Pointer(p.payload))[:totlen:totlen]
 		OutputFn(buf[:totlen])
 	} else {
-		buf := NewBytes(totlen)
+		buf := newBytes(totlen)
 		C.pbuf_copy_partial(p, unsafe.Pointer(&buf[0]), p.tot_len, 0) // data copy here!
 		OutputFn(buf[:totlen])
-		FreeBytes(buf)
+		freeBytes(buf)
 	}
 	return C.ERR_OK
 }
