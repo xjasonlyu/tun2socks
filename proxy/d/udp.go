@@ -8,17 +8,18 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
+	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/core"
 )
 
 type udpHandler struct {
-	sync.Mutex
+	timeout time.Duration
 
-	proxyHandler   core.UDPConnHandler
-	exceptionApps  []string
-	sendThrough    net.Addr
-	exceptionConns map[core.UDPConn]*net.UDPConn
-	timeout        time.Duration
+	exceptionConnMap sync.Map
+
+	exceptionApps []string
+	sendThrough   net.Addr
+	proxyHandler  core.UDPConnHandler
 }
 
 func (h *udpHandler) isExceptionApp(name string) bool {
@@ -32,20 +33,19 @@ func (h *udpHandler) isExceptionApp(name string) bool {
 
 func NewUDPHandler(proxyHandler core.UDPConnHandler, exceptionApps []string, sendThrough net.Addr, timeout time.Duration) core.UDPConnHandler {
 	return &udpHandler{
-		proxyHandler:   proxyHandler,
-		exceptionApps:  exceptionApps,
-		sendThrough:    sendThrough,
-		exceptionConns: make(map[core.UDPConn]*net.UDPConn),
-		timeout:        timeout,
+		proxyHandler:  proxyHandler,
+		exceptionApps: exceptionApps,
+		sendThrough:   sendThrough,
+		timeout:       timeout,
 	}
 }
 
 func (h *udpHandler) handleInput(conn core.UDPConn, pc *net.UDPConn) {
-	buf := core.NewBytes(core.BufSize)
+	buf := pool.BufPool.Get().([]byte)
 
 	defer func() {
 		h.Close(conn)
-		core.FreeBytes(buf)
+		pool.BufPool.Put(buf[:cap(buf)])
 	}()
 
 	for {
@@ -55,8 +55,7 @@ func (h *udpHandler) handleInput(conn core.UDPConn, pc *net.UDPConn) {
 			return
 		}
 
-		_, err = conn.WriteFrom(buf[:n], addr)
-		if err != nil {
+		if _, err := conn.WriteFrom(buf[:n], addr); err != nil {
 			return
 		}
 	}
@@ -79,14 +78,12 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		if err != nil {
 			return err
 		}
-		h.Lock()
-		h.exceptionConns[conn] = pc
-		h.Unlock()
+
+		h.exceptionConnMap.Store(conn, pc)
 
 		go h.handleInput(conn, pc)
 
 		log.Access(cmd, "direct", target.Network(), conn.LocalAddr().String(), target.String())
-
 		return nil
 	} else {
 		return h.proxyHandler.Connect(conn, target)
@@ -94,11 +91,8 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 }
 
 func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
-	h.Lock()
-	defer h.Unlock()
-
-	if pc, found := h.exceptionConns[conn]; found {
-		_, err := pc.WriteTo(data, addr)
+	if pc, ok := h.exceptionConnMap.Load(conn); ok {
+		_, err := pc.(*net.UDPConn).WriteTo(data, addr)
 		if err != nil {
 			return err
 		}
@@ -111,11 +105,8 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 func (h *udpHandler) Close(conn core.UDPConn) {
 	conn.Close()
 
-	h.Lock()
-	defer h.Unlock()
-
-	if pc, ok := h.exceptionConns[conn]; ok {
-		pc.Close()
-		delete(h.exceptionConns, conn)
+	if pc, ok := h.exceptionConnMap.Load(conn); ok {
+		pc.(*net.UDPConn).Close()
+		h.exceptionConnMap.Delete(conn)
 	}
 }
