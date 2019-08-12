@@ -13,6 +13,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/dns"
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
+	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
 )
@@ -56,11 +57,11 @@ func (h *udpHandler) handleTCP(conn core.UDPConn, c net.Conn) {
 }
 
 func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
-	buf := core.NewBytes(core.BufSize)
+	buf := pool.BufPool.Get().([]byte)
 
 	defer func() {
 		h.Close(conn)
-		core.FreeBytes(buf)
+		pool.BufPool.Put(buf[:cap(buf)])
 	}()
 
 	for {
@@ -68,7 +69,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 		n, _, err := input.ReadFrom(buf)
 		if err != nil {
 			if err, ok := err.(net.Error); !ok && !err.Timeout() {
-				log.Warnf("read remote failed: %v", err)
+				log.Warnf("failed to read UDP data from remote: %v", err)
 			}
 			return
 		}
@@ -85,7 +86,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 		}
 
 		if _, err := conn.WriteFrom(buf[int(3+len(addr)):n], resolvedAddr); err != nil {
-			log.Warnf("write local failed: %v", err)
+			log.Warnf("failed to write UDP data: %v", err)
 			return
 		}
 	}
