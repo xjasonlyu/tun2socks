@@ -8,40 +8,40 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/log"
+	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/core"
 )
 
 type udpHandler struct {
-	sync.Mutex
+	target  string
+	timeout time.Duration
 
-	timeout        time.Duration
-	udpConns       map[core.UDPConn]*net.UDPConn
-	udpTargetAddrs map[core.UDPConn]*net.UDPAddr
-	target         string
+	remoteAddrMap    sync.Map
+	remoteUDPConnMap sync.Map
 }
 
 func NewUDPHandler(target string, timeout time.Duration) core.UDPConnHandler {
 	return &udpHandler{
-		timeout:        timeout,
-		udpConns:       make(map[core.UDPConn]*net.UDPConn, 8),
-		udpTargetAddrs: make(map[core.UDPConn]*net.UDPAddr, 8),
-		target:         target,
+		target:  target,
+		timeout: timeout,
 	}
 }
 
 func (h *udpHandler) fetchUDPInput(conn core.UDPConn, pc *net.UDPConn) {
-	buf := core.NewBytes(core.BufSize)
+	buf := pool.BufPool.Get().([]byte)
 
 	defer func() {
 		h.Close(conn)
-		core.FreeBytes(buf)
+		pool.BufPool.Put(buf[:cap(buf)])
 	}()
 
 	for {
 		pc.SetDeadline(time.Now().Add(h.timeout))
 		n, addr, err := pc.ReadFromUDP(buf)
 		if err != nil {
-			// log.Printf("failed to read UDP data from remote: %v", err)
+			if err, ok := err.(net.Error); !ok && !err.Timeout() {
+				log.Warnf("failed to read UDP data from remote: %v", err)
+			}
 			return
 		}
 
@@ -60,24 +60,28 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		log.Errorf("failed to bind udp address")
 		return err
 	}
-	tgtAddr, _ := net.ResolveUDPAddr("udp", h.target)
-	h.Lock()
-	h.udpTargetAddrs[conn] = tgtAddr
-	h.udpConns[conn] = pc
-	h.Unlock()
+	targetAddr, _ := net.ResolveUDPAddr("udp", h.target)
+	h.remoteAddrMap.Store(conn, targetAddr)
+	h.remoteUDPConnMap.Store(conn, pc)
 	go h.fetchUDPInput(conn, pc)
 	log.Infof("new proxy connection for target: %s:%s", target.Network(), target.String())
 	return nil
 }
 
 func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
-	h.Lock()
-	pc, ok1 := h.udpConns[conn]
-	tgtAddr, ok2 := h.udpTargetAddrs[conn]
-	h.Unlock()
+	var pc *net.UDPConn
+	var targetAddr *net.UDPAddr
 
-	if ok1 && ok2 {
-		_, err := pc.WriteToUDP(data, tgtAddr)
+	if value, ok := h.remoteAddrMap.Load(conn); ok {
+		targetAddr = value.(*net.UDPAddr)
+	}
+
+	if value, ok := h.remoteUDPConnMap.Load(conn); ok {
+		pc = value.(*net.UDPConn)
+	}
+
+	if pc != nil && targetAddr != nil {
+		_, err := pc.WriteToUDP(data, targetAddr)
 		if err != nil {
 			log.Warnf("failed to write UDP payload to SOCKS5 server: %v", err)
 			return errors.New("failed to write UDP data")
@@ -91,14 +95,10 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 func (h *udpHandler) Close(conn core.UDPConn) {
 	conn.Close()
 
-	h.Lock()
-	defer h.Unlock()
+	if pc, ok := h.remoteUDPConnMap.Load(conn); ok {
+		pc.(*net.UDPConn).Close()
+		h.remoteUDPConnMap.Delete(conn)
+	}
 
-	if _, ok := h.udpTargetAddrs[conn]; ok {
-		delete(h.udpTargetAddrs, conn)
-	}
-	if pc, ok := h.udpConns[conn]; ok {
-		pc.Close()
-		delete(h.udpConns, conn)
-	}
+	h.remoteAddrMap.Delete(conn)
 }
