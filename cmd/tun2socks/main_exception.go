@@ -1,4 +1,4 @@
-// +build d
+// +build exception
 
 package main
 

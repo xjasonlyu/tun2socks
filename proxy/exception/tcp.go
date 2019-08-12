@@ -1,4 +1,4 @@
-package d
+package exception
 
 import (
 	"io"
