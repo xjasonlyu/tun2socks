@@ -115,7 +115,7 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 
 		sess = &stats.Session{
 			ProcessName:   process,
-			Protocol:      "socks" + localConn.LocalAddr().Network(),
+			Protocol:      "socks:" + localConn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
 			ClientAddr:    localConn.LocalAddr().String(),
 			TargetAddr:    targetAddr,
