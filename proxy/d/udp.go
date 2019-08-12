@@ -66,14 +66,11 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	localPortInt, _ := strconv.Atoi(localPortStr)
 	cmd, err := lsof.GetCommandNameBySocket("udp", localHost, uint16(localPortInt))
 	if err != nil {
-		cmd = "unknown process"
+		cmd = "N/A"
 	}
 
 	if h.isExceptionApp(cmd) {
-		bindAddr, _ := net.ResolveUDPAddr(
-			"udp",
-			h.sendThrough.String(),
-		)
+		bindAddr, _ := net.ResolveUDPAddr("udp", h.sendThrough.String())
 		pc, err := net.ListenUDP("udp", bindAddr)
 		if err != nil {
 			return err
