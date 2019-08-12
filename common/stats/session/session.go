@@ -31,7 +31,7 @@ type simpleSessionStater struct {
 }
 
 func NewSimpleSessionStater() stats.SessionStater {
-	return new(simpleSessionStater)
+	return &simpleSessionStater{}
 }
 
 func (s *simpleSessionStater) Start() error {
