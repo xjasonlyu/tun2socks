@@ -34,33 +34,8 @@ type tcpHandler struct {
 	target string
 }
 
-type duplexConn interface {
-	net.Conn
-	CloseWrite() error
-	CloseRead() error
-}
-
 func NewTCPHandler(target string) core.TCPConnHandler {
 	return &tcpHandler{target: target}
-}
-
-func (h *tcpHandler) handleOutput(conn net.Conn, output io.WriteCloser) {
-	defer func() {
-		if tcpConn, ok := conn.(core.TCPConn); ok {
-			tcpConn.CloseRead()
-		} else {
-			conn.Close()
-		}
-		if tcpOutput, ok := output.(duplexConn); ok {
-			tcpOutput.CloseWrite()
-		} else {
-			output.Close()
-		}
-	}()
-
-	buf := pool.BufPool.Get().([]byte)
-	io.CopyBuffer(output, conn, buf)
-	pool.BufPool.Put(buf[:cap(buf)])
 }
 
 func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
