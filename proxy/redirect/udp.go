@@ -45,8 +45,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, pc *net.UDPConn) {
 			return
 		}
 
-		_, err = conn.WriteFrom(buf[:n], addr)
-		if err != nil {
+		if _, err := conn.WriteFrom(buf[:n], addr); err != nil {
 			log.Warnf("failed to write UDP data to TUN")
 			return
 		}
@@ -61,9 +60,12 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		return err
 	}
 	targetAddr, _ := net.ResolveUDPAddr("udp", h.target)
+
 	h.remoteAddrMap.Store(conn, targetAddr)
 	h.remoteUDPConnMap.Store(conn, pc)
+
 	go h.fetchUDPInput(conn, pc)
+
 	log.Infof("new proxy connection for target: %s:%s", target.Network(), target.String())
 	return nil
 }
