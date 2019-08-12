@@ -55,7 +55,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 			closeOnce()
 		} else {
 			localConn.SetDeadline(time.Now())
-			remoteConn.SetDeadline(time.Now())
 			tcpCloseRead(remoteConn)
 		}
 		wg.Done()
@@ -66,7 +65,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 		closeOnce()
 	} else {
 		localConn.SetDeadline(time.Now())
-		remoteConn.SetDeadline(time.Now())
 		tcpCloseRead(localConn)
 	}
 
