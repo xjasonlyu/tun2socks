@@ -62,6 +62,7 @@ func (s *simpleSessionStater) Start() error {
 					sess.Network,
 					date(sess.SessionStart),
 					duration(sess.SessionStart, sess.SessionClose),
+					// sess.DialerAddr,
 					sess.ClientAddr,
 					sess.TargetAddr,
 					byteCountSI(atomic.LoadInt64(&sess.UploadBytes)),
