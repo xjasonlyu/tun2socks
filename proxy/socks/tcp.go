@@ -12,6 +12,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/dns"
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
+	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
 )
@@ -51,7 +52,9 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 
 	// Up Link
 	go func() {
-		if _, err := io.Copy(remoteConn, localConn); err != nil {
+		buf := pool.BufPool.Get().([]byte)
+		defer pool.BufPool.Put(buf[:cap(buf)])
+		if _, err := io.CopyBuffer(remoteConn, localConn, buf); err != nil {
 			closeOnce()
 		} else {
 			localConn.SetDeadline(time.Now())
@@ -62,13 +65,15 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	}()
 
 	// Down Link
-	if _, err := io.Copy(localConn, remoteConn); err != nil {
+	buf := pool.BufPool.Get().([]byte)
+	if _, err := io.CopyBuffer(localConn, remoteConn, buf); err != nil {
 		closeOnce()
 	} else {
 		localConn.SetDeadline(time.Now())
 		remoteConn.SetDeadline(time.Now())
 		tcpCloseRead(localConn)
 	}
+	pool.BufPool.Put(buf[:cap(buf)])
 
 	wg.Wait() // Wait for Up Link done
 
