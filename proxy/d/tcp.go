@@ -4,9 +4,12 @@ import (
 	"io"
 	"net"
 	"strconv"
+	"sync"
+	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
+	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/core"
 )
 
@@ -28,16 +31,16 @@ import (
 // It's very important to have two default routes, and the default route to TUN should has the highest priority.
 
 type tcpHandler struct {
-	proxyHandler  core.TCPConnHandler
 	exceptionApps []string
 	sendThrough   net.Addr
+	proxyHandler  core.TCPConnHandler
 }
 
 func NewTCPHandler(proxyHandler core.TCPConnHandler, exceptionApps []string, sendThrough net.Addr) core.TCPConnHandler {
 	return &tcpHandler{
-		proxyHandler,
-		exceptionApps,
-		sendThrough,
+		exceptionApps: exceptionApps,
+		sendThrough:   sendThrough,
+		proxyHandler:  proxyHandler,
 	}
 }
 
@@ -50,19 +53,44 @@ func (h *tcpHandler) isExceptionApp(name string) bool {
 	return false
 }
 
-func (h *tcpHandler) relay(lhs, rhs net.Conn) {
-	cls := func() {
-		rhs.Close()
-		lhs.Close()
+func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
+	var once sync.Once
+	closeOnce := func() {
+		once.Do(func() {
+			localConn.Close()
+			remoteConn.Close()
+		})
 	}
 
+	// Close
+	defer closeOnce()
+
+	// WaitGroup
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	go func() {
-		io.Copy(rhs, lhs)
-		cls()
+		buf := pool.BufPool.Get().([]byte)
+		defer pool.BufPool.Put(buf[:cap(buf)])
+		if _, err := io.CopyBuffer(remoteConn, localConn, buf); err != nil {
+			closeOnce()
+		} else {
+			localConn.SetDeadline(time.Now())
+			remoteConn.SetDeadline(time.Now())
+		}
+		wg.Done()
 	}()
 
-	io.Copy(lhs, rhs)
-	cls()
+	buf := pool.BufPool.Get().([]byte)
+	if _, err := io.CopyBuffer(localConn, remoteConn, buf); err != nil {
+		closeOnce()
+	} else {
+		localConn.SetDeadline(time.Now())
+		remoteConn.SetDeadline(time.Now())
+	}
+	pool.BufPool.Put(buf[:cap(buf)])
+
+	wg.Wait() // Wait for Up Link done
 }
 
 func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
@@ -70,7 +98,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	localPortInt, _ := strconv.Atoi(localPortStr)
 	cmd, err := lsof.GetCommandNameBySocket("tcp", localHost, uint16(localPortInt))
 	if err != nil {
-		cmd = "unknown process"
+		cmd = "N/A"
 	}
 
 	if h.isExceptionApp(cmd) {

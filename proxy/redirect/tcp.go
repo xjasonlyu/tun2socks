@@ -3,8 +3,11 @@ package redirect
 import (
 	"io"
 	"net"
+	"sync"
+	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/log"
+	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/core"
 )
 
@@ -41,23 +44,6 @@ func NewTCPHandler(target string) core.TCPConnHandler {
 	return &tcpHandler{target: target}
 }
 
-func (h *tcpHandler) handleInput(conn net.Conn, input io.ReadCloser) {
-	defer func() {
-		if tcpConn, ok := conn.(core.TCPConn); ok {
-			tcpConn.CloseWrite()
-		} else {
-			conn.Close()
-		}
-		if tcpInput, ok := input.(duplexConn); ok {
-			tcpInput.CloseRead()
-		} else {
-			input.Close()
-		}
-	}()
-
-	io.Copy(conn, input)
-}
-
 func (h *tcpHandler) handleOutput(conn net.Conn, output io.WriteCloser) {
 	defer func() {
 		if tcpConn, ok := conn.(core.TCPConn); ok {
@@ -72,7 +58,9 @@ func (h *tcpHandler) handleOutput(conn net.Conn, output io.WriteCloser) {
 		}
 	}()
 
-	io.Copy(output, conn)
+	buf := pool.BufPool.Get().([]byte)
+	io.CopyBuffer(output, conn, buf)
+	pool.BufPool.Put(buf[:cap(buf)])
 }
 
 func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
@@ -80,8 +68,39 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	if err != nil {
 		return err
 	}
-	go h.handleInput(conn, c)
-	go h.handleOutput(conn, c)
+
+	// WaitGroup
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	var once sync.Once
+	relayCopy := func(dst, src net.Conn) {
+		closeOnce := func() {
+			once.Do(func() {
+				src.Close()
+				dst.Close()
+			})
+		}
+
+		// Close
+		defer closeOnce()
+
+		buf := pool.BufPool.Get().([]byte)
+		defer pool.BufPool.Put(buf[:cap(buf)])
+		if _, err := io.CopyBuffer(dst, src, buf); err != nil {
+			closeOnce()
+		} else {
+			src.SetDeadline(time.Now())
+			dst.SetDeadline(time.Now())
+		}
+		wg.Done()
+
+		wg.Wait() // Wait for another goroutine
+	}
+
+	go relayCopy(conn, c)
+	go relayCopy(c, conn)
+
 	log.Infof("new proxy connection for target: %s:%s", target.Network(), target.String())
 	return nil
 }
