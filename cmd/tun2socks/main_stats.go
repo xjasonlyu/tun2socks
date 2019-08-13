@@ -5,6 +5,7 @@ package main
 import (
 	"flag"
 
+	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/stats/session"
 )
 
@@ -19,7 +20,9 @@ func init() {
 			session.StatsVersion = version
 
 			sessionStater = session.NewSimpleSessionStater()
-			sessionStater.Start()
+			if err := sessionStater.Start(); err != nil {
+				log.Fatalf("start session stater failed: %v", err)
+			}
 		} else {
 			sessionStater = nil
 		}

@@ -97,8 +97,7 @@ func (s *simpleSessionStater) Start() error {
 	})
 	mux.HandleFunc(StatsPath, sessionStatsHandler)
 	s.server = &http.Server{Addr: StatsAddr, Handler: mux}
-	go s.server.ListenAndServe()
-	return nil
+	return s.server.ListenAndServe()
 }
 
 func (s *simpleSessionStater) Stop() error {
