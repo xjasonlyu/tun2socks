@@ -14,8 +14,8 @@ const socks5Version = 5
 
 // SOCKS request commands as defined in RFC 1928 section 4.
 const (
-	socks5Connect      = 1
-	socks5Bind         = 2
+	// socks5Connect      = 1
+	// socks5Bind         = 2
 	socks5UDPAssociate = 3
 )
 

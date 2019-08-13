@@ -16,7 +16,8 @@ func NewICMPFilter(w io.Writer) Filter {
 }
 
 func (f *icmpFilter) Write(buf []byte) (int, error) {
-	if buf[9] == packet.PROTOCOL_ICMP {
+	switch buf[9] {
+	case packet.PROTOCOL_ICMP:
 		payload := make([]byte, len(buf))
 		copy(payload, buf)
 		go func(data []byte) {
@@ -25,7 +26,7 @@ func (f *icmpFilter) Write(buf []byte) (int, error) {
 			}
 		}(payload)
 		return len(buf), nil
-	} else {
+	default:
 		return f.writer.Write(buf)
 	}
 }
