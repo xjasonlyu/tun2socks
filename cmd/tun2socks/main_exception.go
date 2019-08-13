@@ -17,7 +17,7 @@ func init() {
 	args.ExceptionApps = flag.String("exceptionApps", "", "A list of exception apps separated by commas")
 	args.ExceptionSendThrough = flag.String("exceptionSendThrough", "192.168.1.101:0", "Exception send through address")
 
-	registerHandlerCreator("socks_exception", func() {
+	registerHandlerCreator(func() {
 		// Verify proxy server address.
 		proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
 		if err != nil {
@@ -34,7 +34,7 @@ func init() {
 			log.Fatalf("invalid exception send through address: %v", err)
 		}
 		apps := strings.Split(*args.ExceptionApps, ",")
-		tcpHandler := exception.NewTCPHandler(proxyTCPHandler, apps, sendThrough)
+		tcpHandler := exception.NewTCPHandler(proxyTCPHandler, apps, sendThrough, sessionStater)
 		udpHandler := exception.NewUDPHandler(proxyUDPHandler, apps, sendThrough, *args.UdpTimeout)
 
 		core.RegisterTCPConnHandler(tcpHandler)
