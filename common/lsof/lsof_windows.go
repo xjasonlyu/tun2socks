@@ -3,7 +3,6 @@
 package lsof
 
 import (
-	"errors"
 	"fmt"
 	"syscall"
 	"unsafe"
@@ -24,7 +23,7 @@ func GetCommandNameBySocket(network string, addr string, port uint16) (string, e
 				return getNameByPid(uint32(row.OwningPid))
 			}
 		}
-		return "", errors.New("not found")
+		return "", ErrNotFound
 	case "udp":
 		var udpTable win.MIB_UDPTABLE_OWNER_PID
 		err := getUdpTable(
@@ -56,9 +55,9 @@ func GetCommandNameBySocket(network string, addr string, port uint16) (string, e
 		// 	}
 		// }
 
-		return "", errors.New("not found")
+		return "", ErrNotFound
 	default:
-		return "", errors.New("not found")
+		return "", ErrNotFound
 	}
 }
 

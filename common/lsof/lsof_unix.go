@@ -20,7 +20,7 @@ func GetCommandNameBySocket(network string, addr string, port uint16) (string, e
 		// listen on the same udp port. Moreover, if
 		// the application closes the socket immediately
 		// after sending out the packet (e.g. it just
-		// uploading data but not receving any data),
+		// uploading data but not receiving any data),
 		// we may not be able to find it.
 		pattern = fmt.Sprintf("-i%s:%d", network, port)
 	default:
@@ -38,8 +38,8 @@ func GetCommandNameBySocket(network string, addr string, port uint16) (string, e
 		// sockets in the list, just take
 		// the first one for simplicity.
 		if strings.HasPrefix(line, "c") {
-			return line[1:len(line)], nil
+			return line[1:], nil
 		}
 	}
-	return "", errors.New("not found")
+	return "", ErrNotFound
 }
