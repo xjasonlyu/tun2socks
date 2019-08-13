@@ -70,13 +70,6 @@ func addPostFlagsInitFn(fn func()) {
 	postFlagsInitFn = append(postFlagsInitFn, fn)
 }
 
-func registerHandlerCreator(creator func()) {
-	if handlerCreator != nil {
-		log.Fatalf("handlerCreator can only register once")
-	}
-	handlerCreator = creator
-}
-
 func init() {
 	// Main
 	args.Version = flag.Bool("version", false, "Print version")
