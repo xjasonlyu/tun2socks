@@ -5,7 +5,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/core"
-	. "github.com/xjasonlyu/tun2socks/proxy"
+	. "github.com/xjasonlyu/tun2socks/proxy/utils"
 )
 
 // To do a benchmark using iperf3 locally, you may follow these steps:
