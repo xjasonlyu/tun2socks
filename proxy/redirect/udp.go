@@ -52,7 +52,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, pc *net.UDPConn) {
 	}
 }
 
-func (h *udpHandler) Connect(localConn core.UDPConn, target *net.UDPAddr) error {
+func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	bindAddr := &net.UDPAddr{IP: nil, Port: 0}
 	pc, err := net.ListenUDP("udp", bindAddr)
 	if err != nil {
@@ -61,24 +61,24 @@ func (h *udpHandler) Connect(localConn core.UDPConn, target *net.UDPAddr) error 
 	}
 	targetAddr, _ := net.ResolveUDPAddr("udp", h.target)
 
-	h.remoteAddrMap.Store(localConn, targetAddr)
-	h.remoteUDPConnMap.Store(localConn, pc)
+	h.remoteAddrMap.Store(conn, targetAddr)
+	h.remoteUDPConnMap.Store(conn, pc)
 
-	go h.fetchUDPInput(localConn, pc)
+	go h.fetchUDPInput(conn, pc)
 
 	log.Infof("new proxy connection for target: %s:%s", target.Network(), target.String())
 	return nil
 }
 
-func (h *udpHandler) ReceiveTo(localConn core.UDPConn, data []byte, addr *net.UDPAddr) error {
+func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
 	var pc *net.UDPConn
 	var targetAddr *net.UDPAddr
 
-	if value, ok := h.remoteAddrMap.Load(localConn); ok {
+	if value, ok := h.remoteAddrMap.Load(conn); ok {
 		targetAddr = value.(*net.UDPAddr)
 	}
 
-	if value, ok := h.remoteUDPConnMap.Load(localConn); ok {
+	if value, ok := h.remoteUDPConnMap.Load(conn); ok {
 		pc = value.(*net.UDPConn)
 	}
 
@@ -90,7 +90,7 @@ func (h *udpHandler) ReceiveTo(localConn core.UDPConn, data []byte, addr *net.UD
 		}
 		return nil
 	} else {
-		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", localConn.LocalAddr(), addr))
+		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr))
 	}
 }
 

@@ -14,15 +14,15 @@ func NewUDPHandler() core.UDPConnHandler {
 	return &udpHandler{}
 }
 
-func (h *udpHandler) Connect(localConn core.UDPConn, target *net.UDPAddr) error {
+func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	return nil
 }
 
-func (h *udpHandler) ReceiveTo(localConn core.UDPConn, data []byte, addr *net.UDPAddr) error {
+func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
 	// Dispatch to another goroutine, otherwise will result in deadlock.
 	payload := append([]byte(nil), data...)
 	go func(b []byte) {
-		_, err := localConn.WriteFrom(b, addr)
+		_, err := conn.WriteFrom(b, addr)
 		if err != nil {
 			log.Warnf("failed to echo back data: %v", err)
 		}
