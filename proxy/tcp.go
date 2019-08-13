@@ -1,4 +1,4 @@
-package socks
+package proxy
 
 import (
 	"net"
@@ -12,7 +12,6 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
-	. "github.com/xjasonlyu/tun2socks/proxy"
 )
 
 type tcpHandler struct {
@@ -71,12 +70,12 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 	}
 
 	// set keepalive
-	TCPKeepAlive(localConn)
-	TCPKeepAlive(remoteConn)
+	tcpKeepAlive(localConn)
+	tcpKeepAlive(remoteConn)
 
 	go func() {
 		// relay connections
-		TCPRelay(localConn, remoteConn)
+		tcpRelay(localConn, remoteConn)
 
 		// remove session
 		if h.sessionStater != nil {

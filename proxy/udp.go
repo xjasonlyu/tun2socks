@@ -1,4 +1,4 @@
-package socks
+package proxy
 
 import (
 	"bytes"

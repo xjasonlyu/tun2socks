@@ -16,7 +16,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/filter"
-	"github.com/xjasonlyu/tun2socks/proxy/socks"
+	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tun"
 
 	// init logger
@@ -149,8 +149,8 @@ func main() {
 	}
 	proxyHost := proxyAddr.IP.String()
 	proxyPort := uint16(proxyAddr.Port)
-	core.RegisterTCPConnHandler(socks.NewTCPHandler(proxyHost, proxyPort, fakeDns, sessionStater))
-	core.RegisterUDPConnHandler(socks.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDns, sessionStater))
+	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDns, sessionStater))
+	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDns, sessionStater))
 
 	// Register an output callback to write packets output from lwip stack to tun
 	// device, output function should be set before input any packets.

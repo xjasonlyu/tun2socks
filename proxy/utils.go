@@ -15,26 +15,26 @@ type duplexConn interface {
 	CloseWrite() error
 }
 
-func TCPCloseRead(conn net.Conn) {
+func tcpCloseRead(conn net.Conn) {
 	if c, ok := conn.(duplexConn); ok {
 		c.CloseRead()
 	}
 }
 
-func TCPCloseWrite(conn net.Conn) {
+func tcpCloseWrite(conn net.Conn) {
 	if c, ok := conn.(duplexConn); ok {
 		c.CloseWrite()
 	}
 }
 
-func TCPKeepAlive(conn net.Conn) {
+func tcpKeepAlive(conn net.Conn) {
 	if tcp, ok := conn.(*net.TCPConn); ok {
 		tcp.SetKeepAlive(true)
 		tcp.SetKeepAlivePeriod(30 * time.Second)
 	}
 }
 
-func TCPRelay(localConn, remoteConn net.Conn) {
+func tcpRelay(localConn, remoteConn net.Conn) {
 	var once sync.Once
 	closeOnce := func() {
 		once.Do(func() {
@@ -59,7 +59,7 @@ func TCPRelay(localConn, remoteConn net.Conn) {
 		} else {
 			localConn.SetDeadline(time.Now())
 			remoteConn.SetDeadline(time.Now())
-			TCPCloseRead(remoteConn)
+			tcpCloseRead(remoteConn)
 		}
 		wg.Done()
 	}()
@@ -71,7 +71,7 @@ func TCPRelay(localConn, remoteConn net.Conn) {
 	} else {
 		localConn.SetDeadline(time.Now())
 		remoteConn.SetDeadline(time.Now())
-		TCPCloseRead(localConn)
+		tcpCloseRead(localConn)
 	}
 	pool.BufPool.Put(buf[:cap(buf)])
 
