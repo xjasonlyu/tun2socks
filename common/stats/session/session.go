@@ -30,7 +30,9 @@ type simpleSessionStater struct {
 }
 
 func NewSimpleSessionStater() stats.SessionStater {
-	return &simpleSessionStater{}
+	return &simpleSessionStater{
+		completedSessionQueue: queue.New(maxCompletedSessions),
+	}
 }
 
 func (s *simpleSessionStater) Start() {
