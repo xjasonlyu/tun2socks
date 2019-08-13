@@ -12,11 +12,13 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/dns"
 	"github.com/xjasonlyu/tun2socks/common/log"
-	_ "github.com/xjasonlyu/tun2socks/common/log/simple"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/filter"
 	"github.com/xjasonlyu/tun2socks/tun"
+
+	// init logger
+	_ "github.com/xjasonlyu/tun2socks/common/log/simple"
 )
 
 const MTU = 1500
