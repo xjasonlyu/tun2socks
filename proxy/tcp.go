@@ -1,13 +1,16 @@
 package proxy
 
 import (
+	"io"
 	"net"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/dns"
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
+	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/proxy/socks"
@@ -30,7 +33,59 @@ func NewTCPHandler(proxyHost string, proxyPort int, fakeDns dns.FakeDns, session
 	}
 }
 
-func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
+func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
+	var once sync.Once
+	closeOnce := func() {
+		once.Do(func() {
+			localConn.Close()
+			remoteConn.Close()
+		})
+	}
+
+	// Close
+	defer closeOnce()
+
+	// WaitGroup
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	// Up Link
+	go func() {
+		buf := pool.BufPool.Get().([]byte)
+		defer pool.BufPool.Put(buf[:cap(buf)])
+		if _, err := io.CopyBuffer(remoteConn, localConn, buf); err != nil {
+			closeOnce()
+		} else {
+			localConn.SetDeadline(time.Now())
+			remoteConn.SetDeadline(time.Now())
+			tcpCloseRead(remoteConn)
+		}
+		wg.Done()
+	}()
+
+	// Down Link
+	buf := pool.BufPool.Get().([]byte)
+	if _, err := io.CopyBuffer(localConn, remoteConn, buf); err != nil {
+		closeOnce()
+	} else {
+		localConn.SetDeadline(time.Now())
+		remoteConn.SetDeadline(time.Now())
+		tcpCloseRead(localConn)
+	}
+	pool.BufPool.Put(buf[:cap(buf)])
+
+	wg.Wait() // Wait for Up Link done
+
+	// Remove session
+	if h.sessionStater != nil {
+		h.sessionStater.RemoveSession(localConn)
+	}
+}
+
+func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
+	// Alias
+	var localConn = conn
+
 	// Replace with a domain name if target address IP is a fake IP.
 	var targetHost = target.IP.String()
 	if h.fakeDns != nil {
@@ -66,20 +121,13 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 		remoteConn = stats.NewSessionConn(remoteConn, sess)
 	}
 
-	// set keepalive
+	// Set keepalive
 	tcpKeepAlive(localConn)
 	tcpKeepAlive(remoteConn)
 
-	go func() {
-		// relay connections
-		tcpRelay(localConn, remoteConn)
+	// Relay connections
+	go h.relay(localConn, remoteConn)
 
-		// remove session
-		if h.sessionStater != nil {
-			h.sessionStater.RemoveSession(localConn)
-		}
-	}()
-
-	log.Access(process, "proxy", target.Network(), localConn.LocalAddr().String(), targetAddr)
+	log.Access(process, "proxy", "tcp", localConn.LocalAddr().String(), targetAddr)
 	return nil
 }

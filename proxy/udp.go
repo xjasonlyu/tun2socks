@@ -117,7 +117,14 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	return nil
 }
 
-func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) error {
+func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) (err error) {
+	// Close if return error
+	defer func() {
+		if err != nil {
+			h.Close(conn)
+		}
+	}()
+
 	var remoteAddr net.Addr
 	var remoteConn net.PacketConn
 
@@ -130,12 +137,10 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 	}
 
 	if remoteAddr == nil || remoteConn == nil {
-		h.Close(conn)
 		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr))
 	}
 
-	if _, err := remoteConn.WriteTo(data, remoteAddr); err != nil {
-		h.Close(conn)
+	if _, err = remoteConn.WriteTo(data, remoteAddr); err != nil {
 		return errors.New(fmt.Sprintf("write remote failed: %v", err))
 	}
 
@@ -143,6 +148,7 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
+	// Close
 	conn.Close()
 
 	if remoteConn, ok := h.remoteConnMap.Load(conn); ok {
@@ -152,6 +158,7 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 
 	h.remoteAddrMap.Delete(conn)
 
+	// Remove session
 	if h.sessionStater != nil {
 		h.sessionStater.RemoveSession(conn)
 	}
