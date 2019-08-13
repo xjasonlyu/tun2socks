@@ -94,7 +94,9 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 
 func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	if target == nil {
-		return h.connectInternal(conn, "")
+		// return h.connectInternal(conn, "")
+		log.Warnf("UDP target is invalid: %s", conn.LocalAddr().String())
+		return errors.New("UDP target is invalid")
 	}
 
 	// Replace with a domain name if target address IP is a fake IP.
@@ -163,19 +165,12 @@ func (h *udpHandler) connectInternal(conn core.UDPConn, targetAddr string) error
 		return err
 	}
 
-	var process string
+	// Get name of the process.
+	var process = lsof.GetProcessName(conn.LocalAddr())
 	if h.sessionStater != nil {
-		// Get name of the process.
-		localHost, localPortStr, _ := net.SplitHostPort(conn.LocalAddr().String())
-		localPortInt, _ := strconv.Atoi(localPortStr)
-		process, err = lsof.GetCommandNameBySocket(conn.LocalAddr().Network(), localHost, uint16(localPortInt))
-		if err != nil {
-			process = "N/A"
-		}
-
 		sess := &stats.Session{
 			ProcessName:   process,
-			Protocol:      "socks:" + conn.LocalAddr().Network(),
+			Network:       conn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
 			ClientAddr:    conn.LocalAddr().String(),
 			TargetAddr:    targetAddr,

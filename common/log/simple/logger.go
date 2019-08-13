@@ -6,6 +6,10 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/log"
 )
 
+func init() {
+	log.RegisterLogger(NewSimpleLogger())
+}
+
 type simpleLogger struct {
 	level log.Level
 }
@@ -48,8 +52,4 @@ func (l *simpleLogger) Fatalf(msg string, args ...interface{}) {
 
 func (l *simpleLogger) output(msg string, args ...interface{}) {
 	goLog.Printf(msg, args...)
-}
-
-func init() {
-	log.RegisterLogger(NewSimpleLogger())
 }

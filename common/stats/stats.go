@@ -17,7 +17,6 @@ type SessionStater interface {
 
 type Session struct {
 	ProcessName   string
-	Proxy         string
 	Network       string
 	DialerAddr    string
 	ClientAddr    string

@@ -1,3 +1,0 @@
-// +build proxy
-
-package main

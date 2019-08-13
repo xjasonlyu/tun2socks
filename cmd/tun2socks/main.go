@@ -48,7 +48,6 @@ type CmdArgs struct {
 
 	// Proxy
 	ProxyServer *string
-	ExcludeApps *string
 	UdpTimeout  *time.Duration
 
 	// FakeDNS

@@ -51,15 +51,14 @@ func (s *simpleSessionStater) Start() error {
 				return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
 			})
 			_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-			_, _ = fmt.Fprintf(w, "<tr><td>Process</td><td>Proxy</td><td>Network</td><td>Date</td><td>Duration</td><td>Client Addr</td><td>Target Addr</td><td>Upload</td><td>Download</td></tr>")
+			_, _ = fmt.Fprintf(w, "<tr><td>Process</td><td>Network</td><td>Date</td><td>Duration</td><td>Client Addr</td><td>Target Addr</td><td>Upload</td><td>Download</td></tr>")
 			sort.Slice(sessions, func(i, j int) bool {
 				return sessions[i].SessionStart.After(sessions[j].SessionStart)
 			})
 
 			for _, sess := range sessions {
-				_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
+				_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
 					process(sess.ProcessName),
-					sess.Proxy,
 					sess.Network,
 					date(sess.SessionStart),
 					duration(sess.SessionStart, sess.SessionClose),
