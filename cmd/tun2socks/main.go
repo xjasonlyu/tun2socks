@@ -26,15 +26,6 @@ const MTU = 1500
 var (
 	version     = "unknown version"
 	description = "A tun2socks implementation written in Go."
-
-	args = new(CmdArgs)
-
-	handlerCreator  func()
-	postFlagsInitFn []func()
-
-	lwipWriter    io.Writer
-	fakeDns       dns.FakeDns
-	sessionStater stats.SessionStater
 )
 
 type CmdArgs struct {
@@ -64,6 +55,17 @@ type CmdArgs struct {
 	StatsAddr *string
 }
 
+var (
+	args = new(CmdArgs)
+
+	handlerCreator  func()
+	postFlagsInitFn []func()
+
+	lwipWriter    io.Writer
+	fakeDns       dns.FakeDns
+	sessionStater stats.SessionStater
+)
+
 func addPostFlagsInitFn(fn func()) {
 	postFlagsInitFn = append(postFlagsInitFn, fn)
 }
@@ -75,25 +77,24 @@ func registerHandlerCreator(creator func()) {
 	handlerCreator = creator
 }
 
-func showVersion() {
-	fmt.Println("Go-tun2socks", version)
-	fmt.Println(description)
-}
-
-func main() {
+func init() {
 	args.Version = flag.Bool("version", false, "Print version")
-	args.DelayICMP = flag.Int("delayICMP", 1, "Delay ICMP packets for a short period of time, in milliseconds")
+	args.LogLevel = flag.String("loglevel", "info", "Logging level. (info, warning, error, debug, silent)")
 	args.TunName = flag.String("tunName", "tun0", "TUN interface name")
 	args.TunAddr = flag.String("tunAddr", "240.0.0.2", "TUN interface address")
 	args.TunGw = flag.String("tunGw", "240.0.0.1", "TUN interface gateway")
 	args.TunMask = flag.String("tunMask", "255.255.255.0", "TUN interface netmask, it should be a prefix length (a number) for IPv6 address")
 	args.TunDns = flag.String("tunDns", "1.1.1.1", "DNS resolvers for TUN interface (Windows Only)")
-	args.LogLevel = flag.String("loglevel", "info", "Logging level. (info, warning, error, debug, silent)")
+	args.DelayICMP = flag.Int("delayICMP", 1, "Delay ICMP packets for a short period of time, in milliseconds")
+}
 
+func main() {
+	// Parse args
 	flag.Parse()
 
 	if *args.Version {
-		showVersion()
+		fmt.Println("Go-tun2socks", version)
+		fmt.Println(description)
 		os.Exit(0)
 	}
 
