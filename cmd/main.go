@@ -80,7 +80,7 @@ func init() {
 
 	// Proxy
 	args.ProxyServer = flag.String("proxyServer", "", "Proxy server address")
-	args.UdpTimeout = flag.Duration("udpTimeout", 60*time.Second, "UDP session timeout")
+	args.UdpTimeout = flag.Duration("udpTimeout", 30*time.Second, "UDP session timeout")
 }
 
 func main() {
@@ -134,7 +134,7 @@ func main() {
 		log.Fatalf("invalid proxy server address: %v", err)
 	}
 	proxyHost := proxyAddr.IP.String()
-	proxyPort := uint16(proxyAddr.Port)
+	proxyPort := proxyAddr.Port
 	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDns, sessionStater))
 	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDns, sessionStater))
 

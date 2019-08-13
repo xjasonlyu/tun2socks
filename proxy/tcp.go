@@ -5,24 +5,23 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/net/proxy"
-
 	"github.com/xjasonlyu/tun2socks/common/dns"
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
+	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
 
 type tcpHandler struct {
 	proxyHost string
-	proxyPort uint16
+	proxyPort int
 
 	fakeDns       dns.FakeDns
 	sessionStater stats.SessionStater
 }
 
-func NewTCPHandler(proxyHost string, proxyPort uint16, fakeDns dns.FakeDns, sessionStater stats.SessionStater) core.TCPConnHandler {
+func NewTCPHandler(proxyHost string, proxyPort int, fakeDns dns.FakeDns, sessionStater stats.SessionStater) core.TCPConnHandler {
 	return &tcpHandler{
 		proxyHost:     proxyHost,
 		proxyPort:     proxyPort,
@@ -32,11 +31,6 @@ func NewTCPHandler(proxyHost string, proxyPort uint16, fakeDns dns.FakeDns, sess
 }
 
 func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
-	dialer, err := proxy.SOCKS5("tcp", core.ParseTCPAddr(h.proxyHost, h.proxyPort).String(), nil, nil)
-	if err != nil {
-		return err
-	}
-
 	// Replace with a domain name if target address IP is a fake IP.
 	var targetHost = target.IP.String()
 	if h.fakeDns != nil {
@@ -45,9 +39,12 @@ func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
 		}
 	}
 
+	proxyAddr := net.JoinHostPort(h.proxyHost, strconv.Itoa(h.proxyPort))
 	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
-	remoteConn, err := dialer.Dial("tcp", targetAddr)
+	// Dial
+	remoteConn, err := socks.Dial(proxyAddr, targetAddr)
 	if err != nil {
+		log.Warnf("Dial %v error: %v", proxyAddr, err)
 		return err
 	}
 
