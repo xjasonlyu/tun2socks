@@ -10,6 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/xjasonlyu/tun2socks/common/log"
+	"github.com/xjasonlyu/tun2socks/common/queue"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 )
 
@@ -23,11 +24,9 @@ var (
 )
 
 type simpleSessionStater struct {
-	sync.Mutex
-
-	server            *http.Server
-	activeSessionMap  sync.Map
-	completedSessions []*stats.Session
+	server                *http.Server
+	activeSessionMap      sync.Map
+	completedSessionQueue *queue.Queue
 }
 
 func NewSimpleSessionStater() stats.SessionStater {
@@ -40,10 +39,16 @@ func (s *simpleSessionStater) Start() {
 		// Make a snapshot.
 		var activeSessions []*stats.Session
 		s.activeSessionMap.Range(func(key, value interface{}) bool {
-			sess := value.(*stats.Session)
-			activeSessions = append(activeSessions, sess)
+			activeSessions = append(activeSessions, value.(*stats.Session))
 			return true
 		})
+
+		var completedSessions []*stats.Session
+		for _, item := range s.completedSessionQueue.Copy() {
+			if sess, ok := item.(*stats.Session); ok {
+				completedSessions = append(completedSessions, sess)
+			}
+		}
 
 		tablePrint := func(w io.Writer, sessions []*stats.Session) {
 			// Sort by session start time.
@@ -85,8 +90,8 @@ func (s *simpleSessionStater) Start() {
 		_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(activeSessions))
 		tablePrint(w, activeSessions)
 		_, _ = fmt.Fprintf(w, "<br/><br/>")
-		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(s.completedSessions))
-		tablePrint(w, s.completedSessions)
+		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(completedSessions))
+		tablePrint(w, completedSessions)
 		_, _ = fmt.Fprintf(w, "</html>")
 		_ = w.Flush()
 	}
@@ -118,12 +123,10 @@ func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
 func (s *simpleSessionStater) RemoveSession(key interface{}) {
 	if sess, ok := s.activeSessionMap.Load(key); ok {
 		// move to completed sessions
-		s.Lock()
-		s.completedSessions = append(s.completedSessions, sess.(*stats.Session))
-		if len(s.completedSessions) > maxCompletedSessions {
-			s.completedSessions = s.completedSessions[1:]
+		s.completedSessionQueue.Put(sess)
+		if s.completedSessionQueue.Len() > maxCompletedSessions {
+			s.completedSessionQueue.Pop()
 		}
-		s.Unlock()
 		// delete
 		s.activeSessionMap.Delete(key)
 	}
