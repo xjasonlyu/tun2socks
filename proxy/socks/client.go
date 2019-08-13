@@ -87,12 +87,15 @@ func (c *socksUDPConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 
 func (c *socksUDPConn) ReadFrom(b []byte) (int, net.Addr, error) {
 	n, a, e := c.PacketConn.ReadFrom(b)
+	if e != nil {
+		return 0, nil, e
+	}
 	addr, payload, err := DecodeUDPPacket(b)
 	if err != nil {
 		return 0, nil, err
 	}
 	copy(b, payload)
-	return n - len(addr) - 3, a, e
+	return n - len(addr) - 3, a, nil
 }
 
 func (c *socksUDPConn) Close() error {
