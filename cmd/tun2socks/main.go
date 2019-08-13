@@ -47,17 +47,16 @@ type CmdArgs struct {
 	LogLevel  *string
 
 	// Proxy
-	ProxyServer          *string
-	ExceptionApps        *string
-	ExceptionSendThrough *string
-	UdpTimeout           *time.Duration
+	ProxyServer *string
+	ExcludeApps *string
+	UdpTimeout  *time.Duration
 
 	// FakeDNS
 	EnableFakeDns *bool
+	DnsCacheSize  *int
 	FakeIPRange   *string
 	FakeDnsAddr   *string
 	FakeDnsHosts  *string
-	DnsCacheSize  *int
 
 	// Stats
 	Stats     *bool

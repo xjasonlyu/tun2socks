@@ -10,10 +10,10 @@ import (
 
 func init() {
 	args.EnableFakeDns = flag.Bool("fakeDns", false, "Enable fake DNS")
+	args.DnsCacheSize = flag.Int("dnsCacheSize", 100, "Size of DNS LRU Cache")
 	args.FakeDnsAddr = flag.String("fakeDnsAddr", ":53", "Listen address of fake DNS")
 	args.FakeIPRange = flag.String("fakeIPRange", "198.18.0.1/16", "Fake IP CIDR range for DNS")
 	args.FakeDnsHosts = flag.String("fakeDnsHosts", "", "DNS hosts mapping, e.g. 'example.com=1.1.1.1,example.net=2.2.2.2'")
-	args.DnsCacheSize = flag.Int("dnsCacheSize", 100, "Size of DNS LRU Cache")
 
 	addPostFlagsInitFn(func() {
 		if *args.EnableFakeDns {
