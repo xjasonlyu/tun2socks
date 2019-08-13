@@ -1,14 +1,11 @@
 package redirect
 
 import (
-	"io"
 	"net"
-	"sync"
-	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/log"
-	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/core"
+	. "github.com/xjasonlyu/tun2socks/proxy"
 )
 
 // To do a benchmark using iperf3 locally, you may follow these steps:
@@ -38,43 +35,17 @@ func NewTCPHandler(target string) core.TCPConnHandler {
 	return &tcpHandler{target: target}
 }
 
-func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
-	c, err := net.Dial("tcp", h.target)
+func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
+	remoteConn, err := net.Dial("tcp", h.target)
 	if err != nil {
 		return err
 	}
 
-	// WaitGroup
-	var wg sync.WaitGroup
-	wg.Add(2)
+	// set keepalive
+	TCPKeepAlive(localConn)
+	TCPKeepAlive(remoteConn)
 
-	var once sync.Once
-	relayCopy := func(dst, src net.Conn) {
-		closeOnce := func() {
-			once.Do(func() {
-				src.Close()
-				dst.Close()
-			})
-		}
-
-		// Close
-		defer closeOnce()
-
-		buf := pool.BufPool.Get().([]byte)
-		defer pool.BufPool.Put(buf[:cap(buf)])
-		if _, err := io.CopyBuffer(dst, src, buf); err != nil {
-			closeOnce()
-		} else {
-			src.SetDeadline(time.Now())
-			dst.SetDeadline(time.Now())
-		}
-		wg.Done()
-
-		wg.Wait() // Wait for another goroutine
-	}
-
-	go relayCopy(conn, c)
-	go relayCopy(c, conn)
+	go TCPRelay(localConn, remoteConn)
 
 	log.Infof("new proxy connection for target: %s:%s", target.Network(), target.String())
 	return nil

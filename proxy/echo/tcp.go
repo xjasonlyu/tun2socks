@@ -16,11 +16,11 @@ func NewTCPHandler() core.TCPConnHandler {
 	return &tcpHandler{}
 }
 
-func (h *tcpHandler) echoBack(conn net.Conn) {
-	io.Copy(conn, conn)
+func (h *tcpHandler) echoBack(localConn net.Conn) {
+	io.Copy(localConn, localConn)
 }
 
-func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
-	go h.echoBack(conn)
+func (h *tcpHandler) Handle(localConn net.Conn, target *net.TCPAddr) error {
+	go h.echoBack(localConn)
 	return nil
 }
