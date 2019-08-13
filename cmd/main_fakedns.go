@@ -1,4 +1,4 @@
-// +build fakedns
+// +build fakeDNS
 
 package main
 

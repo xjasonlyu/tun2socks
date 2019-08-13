@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"os/signal"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/filter"
+	"github.com/xjasonlyu/tun2socks/proxy/socks"
 	"github.com/xjasonlyu/tun2socks/tun"
 
 	// init logger
@@ -26,10 +28,19 @@ const MTU = 1500
 var (
 	version     = "unknown version"
 	description = "A tun2socks implementation written in Go."
+
+	args = new(CmdArgs)
+
+	handlerCreator  func()
+	postFlagsInitFn []func()
+
+	lwipWriter    io.Writer
+	fakeDns       dns.FakeDns
+	sessionStater stats.SessionStater
 )
 
 type CmdArgs struct {
-	// Built-in
+	// Main
 	Version   *bool
 	DelayICMP *int
 	TunName   *string
@@ -55,17 +66,6 @@ type CmdArgs struct {
 	StatsAddr *string
 }
 
-var (
-	args = new(CmdArgs)
-
-	handlerCreator  func()
-	postFlagsInitFn []func()
-
-	lwipWriter    io.Writer
-	fakeDns       dns.FakeDns
-	sessionStater stats.SessionStater
-)
-
 func addPostFlagsInitFn(fn func()) {
 	postFlagsInitFn = append(postFlagsInitFn, fn)
 }
@@ -78,6 +78,7 @@ func registerHandlerCreator(creator func()) {
 }
 
 func init() {
+	// Main
 	args.Version = flag.Bool("version", false, "Print version")
 	args.LogLevel = flag.String("loglevel", "info", "Logging level. (info, warning, error, debug, silent)")
 	args.TunName = flag.String("tunName", "tun0", "TUN interface name")
@@ -86,6 +87,10 @@ func init() {
 	args.TunMask = flag.String("tunMask", "255.255.255.0", "TUN interface netmask, it should be a prefix length (a number) for IPv6 address")
 	args.TunDns = flag.String("tunDns", "1.1.1.1", "DNS resolvers for TUN interface (Windows Only)")
 	args.DelayICMP = flag.Int("delayICMP", 1, "Delay ICMP packets for a short period of time, in milliseconds")
+
+	// Proxy
+	args.ProxyServer = flag.String("proxyServer", "", "Proxy server address")
+	args.UdpTimeout = flag.Duration("udpTimeout", 60*time.Second, "UDP session timeout")
 }
 
 func main() {
@@ -138,11 +143,14 @@ func main() {
 	}
 
 	// Register TCP and UDP handlers to handle accepted connections.
-	if handlerCreator != nil {
-		handlerCreator()
-	} else {
-		log.Fatalf("no handlerCreator registered")
+	proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
+	if err != nil {
+		log.Fatalf("invalid proxy server address: %v", err)
 	}
+	proxyHost := proxyAddr.IP.String()
+	proxyPort := uint16(proxyAddr.Port)
+	core.RegisterTCPConnHandler(socks.NewTCPHandler(proxyHost, proxyPort, fakeDns, sessionStater))
+	core.RegisterUDPConnHandler(socks.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDns, sessionStater))
 
 	// Register an output callback to write packets output from lwip stack to tun
 	// device, output function should be set before input any packets.
