@@ -31,7 +31,6 @@ var (
 
 	args = new(CmdArgs)
 
-	handlerCreator  func()
 	postFlagsInitFn []func()
 
 	lwipWriter    io.Writer
@@ -41,14 +40,13 @@ var (
 
 type CmdArgs struct {
 	// Main
-	Version   *bool
-	DelayICMP *int
-	TunName   *string
-	TunAddr   *string
-	TunGw     *string
-	TunMask   *string
-	TunDns    *string
-	LogLevel  *string
+	Version  *bool
+	TunName  *string
+	TunAddr  *string
+	TunGw    *string
+	TunMask  *string
+	TunDns   *string
+	LogLevel *string
 
 	// Proxy
 	ProxyServer *string
@@ -79,7 +77,6 @@ func init() {
 	args.TunGw = flag.String("tunGw", "240.0.0.1", "TUN interface gateway")
 	args.TunMask = flag.String("tunMask", "255.255.255.0", "TUN interface netmask, it should be a prefix length (a number) for IPv6 address")
 	args.TunDns = flag.String("tunDns", "1.1.1.1", "DNS resolvers for TUN interface (Windows Only)")
-	args.DelayICMP = flag.Int("delayICMP", 1, "Delay ICMP packets for a short period of time, in milliseconds")
 
 	// Proxy
 	args.ProxyServer = flag.String("proxyServer", "", "Proxy server address")
@@ -127,13 +124,9 @@ func main() {
 	}
 
 	// Setup TCP/IP stack.
-	lwipWriter = core.NewLWIPStack().(io.Writer)
-
-	// Wrap a writer to delay ICMP packets if delay time is not zero.
-	if *args.DelayICMP > 0 {
-		log.Infof("ICMP packets will be delayed for %dms", *args.DelayICMP)
-		lwipWriter = filter.NewICMPFilter(lwipWriter, *args.DelayICMP).(io.Writer)
-	}
+	// Wrap a writer to delay ICMP packets.
+	w := core.NewLWIPStack().(io.Writer)
+	lwipWriter = filter.NewICMPFilter(w).(io.Writer)
 
 	// Register TCP and UDP handlers to handle accepted connections.
 	proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
@@ -153,8 +146,7 @@ func main() {
 
 	// Copy packets from tun device to lwip stack, it's the main loop.
 	go func() {
-		_, err := io.CopyBuffer(lwipWriter, tunDev, make([]byte, MTU))
-		if err != nil {
+		if _, err := io.CopyBuffer(lwipWriter, tunDev, make([]byte, MTU)); err != nil {
 			log.Fatalf("copying data failed: %v", err)
 		}
 	}()

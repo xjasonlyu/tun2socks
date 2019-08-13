@@ -34,7 +34,7 @@ func NewSimpleSessionStater() stats.SessionStater {
 	return &simpleSessionStater{}
 }
 
-func (s *simpleSessionStater) Start() error {
+func (s *simpleSessionStater) Start() {
 	log.Debugf("Start session stater")
 	sessionStatsHandler := func(resp http.ResponseWriter, req *http.Request) {
 		// Make a snapshot.
@@ -97,12 +97,11 @@ func (s *simpleSessionStater) Start() error {
 	mux.HandleFunc(StatsPath, sessionStatsHandler)
 	s.server = &http.Server{Addr: StatsAddr, Handler: mux}
 	go s.server.ListenAndServe()
-	return nil
 }
 
-func (s *simpleSessionStater) Stop() error {
+func (s *simpleSessionStater) Stop() {
 	log.Debugf("Stop session stater")
-	return s.server.Close()
+	s.server.Close()
 }
 
 func (s *simpleSessionStater) AddSession(key interface{}, session *stats.Session) {

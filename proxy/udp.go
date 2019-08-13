@@ -42,6 +42,9 @@ func NewUDPHandler(proxyHost string, proxyPort uint16, timeout time.Duration, fa
 }
 
 func (h *udpHandler) handleTCP(conn core.UDPConn, c net.Conn) {
+	// keep tcp connection alive
+	tcpKeepAlive(c)
+
 	for {
 		// clear timeout settings
 		c.SetDeadline(time.Time{})
@@ -74,7 +77,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 			return
 		}
 
-		if n < 4 {
+		if n < 5 {
 			log.Warnf("short udp packet length: %d", n)
 			return
 		}
@@ -85,7 +88,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 			return
 		}
 
-		if _, err := conn.WriteFrom(buf[int(3+len(addr)):n], resolvedAddr); err != nil {
+		if _, err := conn.WriteFrom(buf[3+len(addr):n], resolvedAddr); err != nil {
 			log.Warnf("failed to write UDP data: %v", err)
 			return
 		}
@@ -94,7 +97,6 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn) {
 
 func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	if target == nil {
-		// return h.connectInternal(conn, "")
 		log.Warnf("UDP target is invalid: %s", conn.LocalAddr().String())
 		return errors.New("UDP target is invalid")
 	}
