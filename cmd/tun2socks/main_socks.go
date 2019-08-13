@@ -16,7 +16,7 @@ func init() {
 	args.ProxyServer = flag.String("proxyServer", "1.2.3.4:1087", "Proxy server address")
 	args.UdpTimeout = flag.Duration("udpTimeout", 1*time.Minute, "UDP session timeout")
 
-	registerHandlerCreator("socks", func() {
+	registerHandlerCreator(func() {
 		// Verify proxy server address.
 		proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
 		if err != nil {

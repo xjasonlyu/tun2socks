@@ -15,11 +15,13 @@ func init() {
 
 	addPostFlagsInitFn(func() {
 		if *args.Stats {
+			sessionStater = session.NewSimpleSessionStater()
+
 			// stats variables
 			session.StatsAddr = *args.StatsAddr
 			session.StatsVersion = version
 
-			sessionStater = session.NewSimpleSessionStater()
+			// start session stater
 			if err := sessionStater.Start(); err != nil {
 				log.Fatalf("start session stater failed: %v", err)
 			}
