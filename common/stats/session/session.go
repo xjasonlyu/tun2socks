@@ -63,7 +63,7 @@ func (s *simpleSessionStater) sessionStatsHandler(resp http.ResponseWriter, req 
 
 		for _, sess := range sessions {
 			_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
-				process(sess.Process),
+				sess.Process,
 				sess.Network,
 				date(sess.SessionStart),
 				duration(sess.SessionStart, sess.SessionClose),

@@ -20,13 +20,6 @@ func now() string {
 	return time.Now().Format("2006-01-02 15:04:05")
 }
 
-func process(name string) string {
-	if name == "" {
-		return "N/A"
-	}
-	return name
-}
-
 func duration(start, end time.Time) string {
 	var t time.Duration
 	if end.IsZero() {
