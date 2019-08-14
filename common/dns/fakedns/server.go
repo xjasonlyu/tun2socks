@@ -29,7 +29,6 @@ func (s *Server) ServeDNS(w D.ResponseWriter, r *D.Msg) {
 		D.HandleFailed(w, r)
 		return
 	}
-
 	s.h(w, r)
 }
 

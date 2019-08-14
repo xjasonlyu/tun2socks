@@ -3,6 +3,7 @@ package proxy
 import (
 	"errors"
 	"fmt"
+	"github.com/xjasonlyu/tun2socks/common/log"
 	"io"
 	"io/ioutil"
 	"net"
@@ -28,6 +29,7 @@ func lookupHost(fakeDNS dns.FakeDNS, target net.Addr) (targetHost string, err er
 	targetHost = targetIP.String()
 	// Replace with a domain name if target address IP is a fake IP
 	if fakeDNS != nil {
+		log.Warnf("lookup dns: %v", targetHost)
 		if host, exist := fakeDNS.IPToHost(targetIP); exist {
 			targetHost = host
 		}
