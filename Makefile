@@ -1,18 +1,18 @@
 NAME=tun2socks
-BUILDDIR=$(shell pwd)/build
-CMDDIR=$(shell pwd)/cmd
+BUILD_DIR=$(shell pwd)/build
+CMD_DIR=$(shell pwd)/cmd
 VERSION=$(shell git describe --tags --long || echo "unknown version")
+BUILD_TIME=$(shell date -u)
 BUILD_TAGS='fakeDNS stats'
-BUILD_LDFLAGS='-s -w -X "main.version=$(VERSION)"'
-DEBUG_BUILD_LDFLAGS='-s -w -X "main.version=$(VERSION)-debug"'
+BUILD_LDFLAGS='-s -w -X "github.com/xjasonlyu/tun2socks/constant.Version=$(VERSION)" -X "github.com/xjasonlyu/tun2socks/constant.BuildTime=$(BUILD_TIME)"'
 
 all: build
 
 build:
-	cd $(CMDDIR) && go build -ldflags $(BUILD_LDFLAGS) -v -tags $(BUILD_TAGS) -o $(BUILDDIR)/$(NAME)
+	cd $(CMD_DIR) && go build -ldflags $(BUILD_LDFLAGS) -v -tags $(BUILD_TAGS) -o $(BUILD_DIR)/$(NAME)
 
 debug:
-	cd $(CMDDIR) && go build -ldflags $(DEBUG_BUILD_LDFLAGS) -v -tags $(BUILD_TAGS) -race -o $(BUILDDIR)/$(NAME)
+	cd $(CMD_DIR) && go build -ldflags $(BUILD_LDFLAGS) -v -tags $(BUILD_TAGS) -race -o $(BUILD_DIR)/$(NAME)
 
 clean:
-	rm -rf $(BUILDDIR)
+	rm -rf $(BUILD_DIR)
