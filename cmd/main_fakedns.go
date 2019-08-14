@@ -18,9 +18,10 @@ func init() {
 
 	addPostFlagsInitFn(func() {
 		if *args.EnableFakeDNS {
-			fakeDNS, err := fakedns.NewServer(*args.FakeIPRange, *args.FakeDNSHosts, *args.DNSCacheSize)
-			if err != nil {
+			if f, err := fakedns.NewServer(*args.FakeIPRange, *args.FakeDNSHosts, *args.DNSCacheSize); err != nil {
 				log.Fatalf("create fake dns server failed: %v", err)
+			} else {
+				fakeDNS = f
 			}
 
 			// Set fakeDNS variables

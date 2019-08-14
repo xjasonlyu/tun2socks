@@ -85,9 +85,6 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	// Alias
 	var localConn = conn
 
-	if h.fakeDNS == nil {
-		log.Warnf("fakedns is nil")
-	}
 	// Lookup fakeDNS host record
 	targetHost, err := lookupHost(h.fakeDNS, target)
 	if err != nil {
