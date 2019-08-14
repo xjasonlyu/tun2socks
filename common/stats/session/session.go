@@ -9,10 +9,10 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/queue"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	C "github.com/xjasonlyu/tun2socks/constant"
+	"github.com/xjasonlyu/tun2socks/log"
 )
 
 const maxCompletedSessions = 100

@@ -8,11 +8,11 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/dns"
-	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
+	"github.com/xjasonlyu/tun2socks/log"
 )
 
 type tcpHandler struct {

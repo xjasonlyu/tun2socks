@@ -12,18 +12,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/filter"
+	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tun"
 
 	D "github.com/xjasonlyu/tun2socks/common/dns"
 	S "github.com/xjasonlyu/tun2socks/common/stats"
 	C "github.com/xjasonlyu/tun2socks/constant"
-
-	// init logger
-	_ "github.com/xjasonlyu/tun2socks/common/log/simple"
 )
 
 const MTU = 1500

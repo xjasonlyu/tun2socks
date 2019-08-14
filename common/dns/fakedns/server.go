@@ -6,7 +6,7 @@ import (
 
 	D "github.com/miekg/dns"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
-	"github.com/xjasonlyu/tun2socks/common/log"
+	"github.com/xjasonlyu/tun2socks/log"
 )
 
 const (

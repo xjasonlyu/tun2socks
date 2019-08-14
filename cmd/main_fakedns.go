@@ -6,7 +6,7 @@ import (
 	"flag"
 
 	"github.com/xjasonlyu/tun2socks/common/dns/fakedns"
-	"github.com/xjasonlyu/tun2socks/common/log"
+	"github.com/xjasonlyu/tun2socks/log"
 )
 
 func init() {
