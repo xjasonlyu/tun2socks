@@ -75,7 +75,7 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	// Dial
 	remoteConn, remoteAddr, err := dialUDP(proxyAddr, targetAddr)
 	if err != nil {
-		log.Infof("DialUDP %v: %v", proxyAddr, err)
+		log.Infof("DialUDP: %v", err)
 		return err
 	}
 

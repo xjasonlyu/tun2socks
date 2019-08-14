@@ -97,7 +97,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	// Dial
 	remoteConn, err := dial(proxyAddr, targetAddr)
 	if err != nil {
-		log.Infof("Dial %v: %v", proxyAddr, err)
+		log.Infof("Dial: %v", err)
 		return err
 	}
 
