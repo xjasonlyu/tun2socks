@@ -6,11 +6,16 @@ import (
 
 	D "github.com/miekg/dns"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
+	"github.com/xjasonlyu/tun2socks/common/log"
 )
 
 const (
 	dnsFakeTTL    uint32 = 1
 	dnsDefaultTTL uint32 = 600
+)
+
+var (
+	ServeAddr = "127.0.0.1:5353"
 )
 
 type Server struct {
@@ -28,13 +33,14 @@ func (s *Server) ServeDNS(w D.ResponseWriter, r *D.Msg) {
 	s.h(w, r)
 }
 
-func (s *Server) StartServer(addr string) error {
-	_, port, err := net.SplitHostPort(addr)
+func (s *Server) Start() error {
+	log.Debugf("Start fake DNS server")
+	_, port, err := net.SplitHostPort(ServeAddr)
 	if port == "0" || port == "" || err != nil {
 		return errors.New("address format error")
 	}
 
-	udpAddr, err := net.ResolveUDPAddr("udp", addr)
+	udpAddr, err := net.ResolveUDPAddr("udp", ServeAddr)
 	if err != nil {
 		return err
 	}
@@ -44,10 +50,14 @@ func (s *Server) StartServer(addr string) error {
 		return err
 	}
 
-	s.Server = &D.Server{Addr: addr, PacketConn: p, Handler: s}
+	s.Server = &D.Server{Addr: ServeAddr, PacketConn: p, Handler: s}
 	go s.ActivateAndServe()
-
 	return nil
+}
+
+func (s *Server) Stop() error {
+	log.Debugf("Stop fake DNS server")
+	return s.Shutdown()
 }
 
 func (s *Server) IPToHost(ip net.IP) (string, bool) {

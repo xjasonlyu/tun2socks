@@ -29,12 +29,10 @@ var (
 	version     = "unknown version"
 	description = "A tun2socks implementation written in Go."
 
-	args = new(CmdArgs)
-
+	args            = new(CmdArgs)
 	postFlagsInitFn []func()
 
-	lwipWriter    io.Writer
-	fakeDns       dns.FakeDns
+	fakeDNS       dns.FakeDNS
 	sessionStater stats.SessionStater
 )
 
@@ -45,7 +43,7 @@ type CmdArgs struct {
 	TunAddr  *string
 	TunGw    *string
 	TunMask  *string
-	TunDns   *string
+	TunDNS   *string
 	LogLevel *string
 
 	// Proxy
@@ -53,11 +51,11 @@ type CmdArgs struct {
 	UdpTimeout  *time.Duration
 
 	// FakeDNS
-	EnableFakeDns *bool
-	DnsCacheSize  *int
+	EnableFakeDNS *bool
+	DNSCacheSize  *int
 	FakeIPRange   *string
-	FakeDnsAddr   *string
-	FakeDnsHosts  *string
+	FakeDNSAddr   *string
+	FakeDNSHosts  *string
 
 	// Stats
 	Stats     *bool
@@ -76,7 +74,7 @@ func init() {
 	args.TunAddr = flag.String("tunAddr", "240.0.0.2", "TUN interface address")
 	args.TunGw = flag.String("tunGw", "240.0.0.1", "TUN interface gateway")
 	args.TunMask = flag.String("tunMask", "255.255.255.0", "TUN interface netmask, it should be a prefix length (a number) for IPv6 address")
-	args.TunDns = flag.String("tunDns", "1.1.1.1", "DNS resolvers for TUN interface (Windows Only)")
+	args.TunDNS = flag.String("tunDNS", "1.1.1.1", "DNS resolvers for TUN interface (Windows Only)")
 
 	// Proxy
 	args.ProxyServer = flag.String("proxyServer", "", "Proxy server address")
@@ -117,16 +115,16 @@ func main() {
 	}
 
 	// Open the tun device.
-	dnsServers := strings.Split(*args.TunDns, ",")
+	dnsServers := strings.Split(*args.TunDNS, ",")
 	tunDev, err := tun.OpenTunDevice(*args.TunName, *args.TunAddr, *args.TunGw, *args.TunMask, dnsServers)
 	if err != nil {
 		log.Fatalf("failed to open tun device: %v", err)
 	}
 
 	// Setup TCP/IP stack.
+	var lwipWriter = core.NewLWIPStack().(io.Writer)
 	// Wrap a writer to delay ICMP packets.
-	w := core.NewLWIPStack().(io.Writer)
-	lwipWriter = filter.NewICMPFilter(w).(io.Writer)
+	lwipWriter = filter.NewICMPFilter(lwipWriter).(io.Writer)
 
 	// Register TCP and UDP handlers to handle accepted connections.
 	proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
@@ -135,8 +133,8 @@ func main() {
 	}
 	proxyHost := proxyAddr.IP.String()
 	proxyPort := proxyAddr.Port
-	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDns, sessionStater))
-	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDns, sessionStater))
+	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDNS, sessionStater))
+	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDNS, sessionStater))
 
 	// Register an output callback to write packets output from lwip stack to tun
 	// device, output function should be set before input any packets.
@@ -157,6 +155,12 @@ func main() {
 	signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP)
 	<-osSignals
 
+	// Stop fakeDNS server
+	if fakeDNS != nil {
+		fakeDNS.Stop()
+	}
+
+	// Stop session stater
 	if sessionStater != nil {
 		sessionStater.Stop()
 	}

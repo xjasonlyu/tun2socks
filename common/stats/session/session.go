@@ -17,8 +17,8 @@ import (
 const maxCompletedSessions = 100
 
 var (
-	StatsAddr = "localhost:6001"
-	StatsPath = "/stats/session/plain"
+	ServeAddr = "localhost:6001"
+	ServePath = "/stats/session/plain"
 
 	StatsVersion = ""
 )
@@ -98,20 +98,21 @@ table, th, td {
 	_ = w.Flush()
 }
 
-func (s *simpleSessionStater) Start() {
+func (s *simpleSessionStater) Start() error {
 	log.Debugf("Start session stater")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, StatsPath, 301)
+		http.Redirect(w, r, ServePath, 301)
 	})
-	mux.HandleFunc(StatsPath, s.sessionStatsHandler)
-	s.server = &http.Server{Addr: StatsAddr, Handler: mux}
+	mux.HandleFunc(ServePath, s.sessionStatsHandler)
+	s.server = &http.Server{Addr: ServeAddr, Handler: mux}
 	go s.server.ListenAndServe()
+	return nil
 }
 
-func (s *simpleSessionStater) Stop() {
+func (s *simpleSessionStater) Stop() error {
 	log.Debugf("Stop session stater")
-	s.server.Close()
+	return s.server.Close()
 }
 
 func (s *simpleSessionStater) AddSession(key interface{}, session *stats.Session) {

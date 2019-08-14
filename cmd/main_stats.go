@@ -17,7 +17,7 @@ func init() {
 			sessionStater = session.NewSimpleSessionStater()
 
 			// stats variables
-			session.StatsAddr = *args.StatsAddr
+			session.ServeAddr = *args.StatsAddr
 			session.StatsVersion = version
 
 			// start session stater
