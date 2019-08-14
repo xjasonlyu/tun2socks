@@ -49,6 +49,10 @@ func Fatalf(format string, v ...interface{}) {
 	log.Fatalf(format, v...)
 }
 
+func Access(process, outbound, network, local, target string) {
+	Infof("[%v] [%v] [%v] %s --> %s", outbound, network, process, local, target)
+}
+
 func SetLevel(newLevel Level) {
 	level = newLevel
 }
