@@ -4,8 +4,9 @@ CMD_DIR=$(shell pwd)/cmd
 VERSION=$(shell git describe --tags --long || echo "unknown version")
 BUILD_TIME=$(shell date -u)
 BUILD_TAGS='fakeDNS stats'
-GOBUILD=go build -ldflags -s -w -X "github.com/xjasonlyu/tun2socks/constant.Version=$(VERSION)" \
-        -X "github.com/xjasonlyu/tun2socks/constant.BuildTime=$(BUILD_TIME)"
+GOBUILD=go build -ldflags '-X "github.com/xjasonlyu/tun2socks/constant.Version=$(VERSION)" \
+        -X "github.com/xjasonlyu/tun2socks/constant.BuildTime=$(BUILD_TIME)" \
+        -w -s'
 
 all: build
 
