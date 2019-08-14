@@ -1,7 +1,6 @@
 package proxy
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -14,7 +13,6 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
-	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
 
 type udpHandler struct {
@@ -65,26 +63,17 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn, addr
 }
 
 func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
-	if target == nil {
-		log.Warnf("UDP target is invalid: %s", conn.LocalAddr().String())
-		return errors.New("UDP target is invalid")
-	}
-
-	// Replace with a domain name if target address IP is a fake IP.
-	var targetHost = target.IP.String()
-	if h.fakeDns != nil {
-		if host, exist := h.fakeDns.IPToHost(target.IP); exist {
-			targetHost = host
-		}
-	}
-	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
-	if len(targetAddr) == 0 {
-		return errors.New("target address is empty")
+	// Lookup fakeDNS host record
+	targetHost, err := lookupHost(h.fakeDns, target)
+	if err != nil {
+		log.Warnf("lookup target host error: %v", err)
+		return err
 	}
 
 	proxyAddr := net.JoinHostPort(h.proxyHost, strconv.Itoa(h.proxyPort))
+	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
 	// Dial
-	remoteConn, remoteAddr, err := socks.DialUDP(proxyAddr, targetAddr)
+	remoteConn, remoteAddr, err := dialUDP(proxyAddr, targetAddr)
 	if err != nil {
 		log.Warnf("DialUDP %v error: %v", proxyAddr, err)
 		return err
@@ -137,11 +126,11 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 	}
 
 	if remoteAddr == nil || remoteConn == nil {
-		return errors.New(fmt.Sprintf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr))
+		return fmt.Errorf("proxy connection %v->%v does not exists", conn.LocalAddr(), addr)
 	}
 
 	if _, err = remoteConn.WriteTo(data, remoteAddr); err != nil {
-		return errors.New(fmt.Sprintf("write remote failed: %v", err))
+		return fmt.Errorf("write remote failed: %v", err)
 	}
 
 	return nil

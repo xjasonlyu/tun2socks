@@ -13,7 +13,6 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
-	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
 
 type tcpHandler struct {
@@ -86,18 +85,17 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	// Alias
 	var localConn = conn
 
-	// Replace with a domain name if target address IP is a fake IP.
-	var targetHost = target.IP.String()
-	if h.fakeDns != nil {
-		if host, exist := h.fakeDns.IPToHost(target.IP); exist {
-			targetHost = host
-		}
+	// Lookup fakeDNS host record
+	targetHost, err := lookupHost(h.fakeDns, target)
+	if err != nil {
+		log.Warnf("lookup target host error: %v", err)
+		return err
 	}
 
 	proxyAddr := net.JoinHostPort(h.proxyHost, strconv.Itoa(h.proxyPort))
 	targetAddr := net.JoinHostPort(targetHost, strconv.Itoa(target.Port))
 	// Dial
-	remoteConn, err := socks.Dial(proxyAddr, targetAddr)
+	remoteConn, err := dial(proxyAddr, targetAddr)
 	if err != nil {
 		log.Warnf("Dial %v error: %v", proxyAddr, err)
 		return err
