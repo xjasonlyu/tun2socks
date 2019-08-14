@@ -80,7 +80,7 @@ func init() {
 
 	// Proxy
 	args.ProxyServer = flag.String("proxyServer", "", "Proxy server address")
-	args.UdpTimeout = flag.Duration("udpTimeout", 60*time.Second, "UDP session timeout")
+	args.UdpTimeout = flag.Duration("udpTimeout", 30*time.Second, "UDP session timeout")
 }
 
 func main() {

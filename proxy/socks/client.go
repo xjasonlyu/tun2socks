@@ -16,7 +16,12 @@ func Dial(proxy, target string) (net.Conn, error) {
 		return nil, fmt.Errorf("%s connect error", proxy)
 	}
 
-	if _, err := ClientHandshake(c, ParseAddr(target), CmdConnect); err != nil {
+	targetAddr := ParseAddr(target)
+	if targetAddr == nil {
+		return nil, fmt.Errorf("target address parse error")
+	}
+
+	if _, err := ClientHandshake(c, targetAddr, CmdConnect); err != nil {
 		return nil, err
 	}
 	return c, nil
@@ -39,18 +44,19 @@ func DialUDP(proxy, target string) (_ net.PacketConn, _ net.Addr, err error) {
 		}
 	}()
 
-	bindAddr, err := ClientHandshake(c, ParseAddr(target), CmdUDPAssociate)
+	targetAddr := ParseAddr(target)
+	if targetAddr == nil {
+		err = fmt.Errorf("target address parse error")
+		return
+	}
+
+	bindAddr, err := ClientHandshake(c, targetAddr, CmdUDPAssociate)
 	if err != nil {
 		err = fmt.Errorf("%v client hanshake error", err)
 		return
 	}
 
 	addr, err := net.ResolveUDPAddr("udp", bindAddr.String())
-	if err != nil {
-		return
-	}
-
-	targetAddr, err := net.ResolveUDPAddr("udp", target)
 	if err != nil {
 		return
 	}
@@ -74,11 +80,11 @@ func DialUDP(proxy, target string) (_ net.PacketConn, _ net.Addr, err error) {
 type socksUDPConn struct {
 	net.PacketConn
 	tcpConn    net.Conn
-	targetAddr net.Addr
+	targetAddr Addr
 }
 
 func (c *socksUDPConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
-	packet, err := EncodeUDPPacket(c.targetAddr.String(), b)
+	packet, err := EncodeUDPPacket(c.targetAddr, b)
 	if err != nil {
 		return
 	}
