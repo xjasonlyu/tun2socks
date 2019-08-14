@@ -16,7 +16,7 @@ type SessionStater interface {
 }
 
 type Session struct {
-	ProcessName   string
+	Process       string
 	Network       string
 	DialerAddr    string
 	ClientAddr    string
@@ -30,22 +30,21 @@ type Session struct {
 // Track SessionConn
 type SessionConn struct {
 	net.Conn
-	*Session
-
-	once sync.Once
+	once    sync.Once
+	session *Session
 }
 
 func NewSessionConn(conn net.Conn, session *Session) net.Conn {
 	return &SessionConn{
 		Conn:    conn,
-		Session: session,
+		session: session,
 	}
 }
 
 func (c *SessionConn) Read(b []byte) (n int, err error) {
 	n, err = c.Conn.Read(b)
 	if n > 0 {
-		atomic.AddInt64(&c.DownloadBytes, int64(n))
+		atomic.AddInt64(&c.session.DownloadBytes, int64(n))
 	}
 	return
 }
@@ -53,14 +52,14 @@ func (c *SessionConn) Read(b []byte) (n int, err error) {
 func (c *SessionConn) Write(b []byte) (n int, err error) {
 	n, err = c.Conn.Write(b)
 	if n > 0 {
-		atomic.AddInt64(&c.UploadBytes, int64(n))
+		atomic.AddInt64(&c.session.UploadBytes, int64(n))
 	}
 	return
 }
 
 func (c *SessionConn) Close() error {
 	c.once.Do(func() {
-		c.SessionClose = time.Now()
+		c.session.SessionClose = time.Now()
 	})
 	return c.Conn.Close()
 }
@@ -68,22 +67,21 @@ func (c *SessionConn) Close() error {
 // Track SessionPacketConn
 type SessionPacketConn struct {
 	net.PacketConn
-	*Session
-
-	once sync.Once
+	once    sync.Once
+	session *Session
 }
 
 func NewSessionPacketConn(conn net.PacketConn, session *Session) net.PacketConn {
 	return &SessionPacketConn{
 		PacketConn: conn,
-		Session:    session,
+		session:    session,
 	}
 }
 
 func (c *SessionPacketConn) ReadFrom(b []byte) (n int, addr net.Addr, err error) {
 	n, addr, err = c.PacketConn.ReadFrom(b)
 	if n > 0 {
-		atomic.AddInt64(&c.DownloadBytes, int64(n))
+		atomic.AddInt64(&c.session.DownloadBytes, int64(n))
 	}
 	return
 }
@@ -91,14 +89,14 @@ func (c *SessionPacketConn) ReadFrom(b []byte) (n int, addr net.Addr, err error)
 func (c *SessionPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	n, err = c.PacketConn.WriteTo(b, addr)
 	if n > 0 {
-		atomic.AddInt64(&c.UploadBytes, int64(n))
+		atomic.AddInt64(&c.session.UploadBytes, int64(n))
 	}
 	return
 }
 
 func (c *SessionPacketConn) Close() error {
 	c.once.Do(func() {
-		c.SessionClose = time.Now()
+		c.session.SessionClose = time.Now()
 	})
 	return c.PacketConn.Close()
 }

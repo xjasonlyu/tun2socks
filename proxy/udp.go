@@ -83,7 +83,7 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	var process = lsof.GetProcessName(conn.LocalAddr())
 	if h.sessionStater != nil {
 		sess := &stats.Session{
-			ProcessName:   process,
+			Process:       process,
 			Network:       conn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
 			ClientAddr:    conn.LocalAddr().String(),

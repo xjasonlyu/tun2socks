@@ -35,73 +35,80 @@ func NewSimpleSessionStater() stats.SessionStater {
 	}
 }
 
-func (s *simpleSessionStater) Start() {
-	log.Debugf("Start session stater")
-	sessionStatsHandler := func(resp http.ResponseWriter, req *http.Request) {
-		// Make a snapshot.
-		var activeSessions []*stats.Session
-		s.activeSessionMap.Range(func(key, value interface{}) bool {
-			activeSessions = append(activeSessions, value.(*stats.Session))
-			return true
+func (s *simpleSessionStater) sessionStatsHandler(resp http.ResponseWriter, req *http.Request) {
+	// Slice of active sessions
+	var activeSessions []*stats.Session
+	s.activeSessionMap.Range(func(key, value interface{}) bool {
+		activeSessions = append(activeSessions, value.(*stats.Session))
+		return true
+	})
+
+	// Slice of completed sessions
+	var completedSessions []*stats.Session
+	for _, item := range s.completedSessionQueue.Copy() {
+		if sess, ok := item.(*stats.Session); ok {
+			completedSessions = append(completedSessions, sess)
+		}
+	}
+
+	tablePrint := func(w io.Writer, sessions []*stats.Session) {
+		// Sort by session start time.
+		sort.Slice(sessions, func(i, j int) bool {
+			return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
+		})
+		_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
+		_, _ = fmt.Fprintf(w, "<tr><td>Process</td><td>Network</td><td>Date</td><td>Duration</td><td>Client Addr</td><td>Target Addr</td><td>Upload</td><td>Download</td></tr>")
+		sort.Slice(sessions, func(i, j int) bool {
+			return sessions[i].SessionStart.After(sessions[j].SessionStart)
 		})
 
-		var completedSessions []*stats.Session
-		for _, item := range s.completedSessionQueue.Copy() {
-			if sess, ok := item.(*stats.Session); ok {
-				completedSessions = append(completedSessions, sess)
-			}
+		for _, sess := range sessions {
+			_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
+				process(sess.Process),
+				sess.Network,
+				date(sess.SessionStart),
+				duration(sess.SessionStart, sess.SessionClose),
+				// sess.DialerAddr,
+				sess.ClientAddr,
+				sess.TargetAddr,
+				byteCountSI(atomic.LoadInt64(&sess.UploadBytes)),
+				byteCountSI(atomic.LoadInt64(&sess.DownloadBytes)),
+			)
 		}
+		_, _ = fmt.Fprintf(w, "</table>")
+	}
 
-		tablePrint := func(w io.Writer, sessions []*stats.Session) {
-			// Sort by session start time.
-			sort.Slice(sessions, func(i, j int) bool {
-				return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
-			})
-			_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-			_, _ = fmt.Fprintf(w, "<tr><td>Process</td><td>Network</td><td>Date</td><td>Duration</td><td>Client Addr</td><td>Target Addr</td><td>Upload</td><td>Download</td></tr>")
-			sort.Slice(sessions, func(i, j int) bool {
-				return sessions[i].SessionStart.After(sessions[j].SessionStart)
-			})
-
-			for _, sess := range sessions {
-				_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
-					process(sess.ProcessName),
-					sess.Network,
-					date(sess.SessionStart),
-					duration(sess.SessionStart, sess.SessionClose),
-					// sess.DialerAddr,
-					sess.ClientAddr,
-					sess.TargetAddr,
-					byteCountSI(atomic.LoadInt64(&sess.UploadBytes)),
-					byteCountSI(atomic.LoadInt64(&sess.DownloadBytes)),
-				)
-			}
-			_, _ = fmt.Fprintf(w, "</table>")
-		}
-
-		w := bufio.NewWriter(resp)
-		_, _ = fmt.Fprintf(w, "<html>")
-		_, _ = fmt.Fprintf(w, `<head><style>table, th, td {
+	w := bufio.NewWriter(resp)
+	_, _ = fmt.Fprintf(w, "<html>")
+	_, _ = fmt.Fprintf(w, `<head>
+<style>
+table, th, td {
   border: 1px solid black;
   border-collapse: collapse;
   text-align: right;
   padding: 4;
-}</style><title>Go-tun2socks Sessions</title></head>`)
-		_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", StatsVersion)
-		_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
-		_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(activeSessions))
-		tablePrint(w, activeSessions)
-		_, _ = fmt.Fprintf(w, "<br/><br/>")
-		_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(completedSessions))
-		tablePrint(w, completedSessions)
-		_, _ = fmt.Fprintf(w, "</html>")
-		_ = w.Flush()
-	}
+}</style>
+<title>Go-tun2socks Sessions</title>
+<meta http-equiv="refresh" content="1" >
+</head>`)
+	_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", StatsVersion)
+	_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
+	_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(activeSessions))
+	tablePrint(w, activeSessions)
+	_, _ = fmt.Fprintf(w, "<br/><br/>")
+	_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(completedSessions))
+	tablePrint(w, completedSessions)
+	_, _ = fmt.Fprintf(w, "</html>")
+	_ = w.Flush()
+}
+
+func (s *simpleSessionStater) Start() {
+	log.Debugf("Start session stater")
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, StatsPath, 301)
 	})
-	mux.HandleFunc(StatsPath, sessionStatsHandler)
+	mux.HandleFunc(StatsPath, s.sessionStatsHandler)
 	s.server = &http.Server{Addr: StatsAddr, Handler: mux}
 	go s.server.ListenAndServe()
 }

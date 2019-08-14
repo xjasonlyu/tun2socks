@@ -105,7 +105,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	var process = lsof.GetProcessName(localConn.LocalAddr())
 	if h.sessionStater != nil {
 		sess := &stats.Session{
-			ProcessName:   process,
+			Process:       process,
 			Network:       localConn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
 			ClientAddr:    localConn.LocalAddr().String(),
