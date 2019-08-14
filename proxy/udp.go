@@ -117,12 +117,12 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 	var remoteAddr net.Addr
 	var remoteConn net.PacketConn
 
-	if value, ok := h.remoteConnMap.Load(conn); ok {
-		remoteConn = value.(net.PacketConn)
-	}
-
 	if value, ok := h.remoteAddrMap.Load(conn); ok {
 		remoteAddr = value.(net.Addr)
+	}
+
+	if value, ok := h.remoteConnMap.Load(conn); ok {
+		remoteConn = value.(net.PacketConn)
 	}
 
 	if remoteAddr == nil || remoteConn == nil {
@@ -137,15 +137,18 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
-	// Close
-	conn.Close()
-
+	// Load from remoteConnMap
 	if remoteConn, ok := h.remoteConnMap.Load(conn); ok {
 		remoteConn.(net.PacketConn).Close()
-		h.remoteConnMap.Delete(conn)
+	} else {
+		return
 	}
 
 	h.remoteAddrMap.Delete(conn)
+	h.remoteConnMap.Delete(conn)
+
+	// Close
+	conn.Close()
 
 	// Remove session
 	if h.sessionStater != nil {
