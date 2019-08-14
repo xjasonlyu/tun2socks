@@ -80,17 +80,13 @@ func (s *simpleSessionStater) sessionStatsHandler(resp http.ResponseWriter, req 
 
 	w := bufio.NewWriter(resp)
 	_, _ = fmt.Fprintf(w, "<html>")
-	_, _ = fmt.Fprintf(w, `<head>
-<style>
+	_, _ = fmt.Fprintf(w, `<head><style>
 table, th, td {
   border: 1px solid black;
   border-collapse: collapse;
   text-align: right;
   padding: 4;
-}</style>
-<title>Go-tun2socks Sessions</title>
-<meta http-equiv="refresh" content="1" >
-</head>`)
+}</style><title>Go-tun2socks Sessions</title></head>`)
 	_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", StatsVersion)
 	_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
 	_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(activeSessions))
