@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
@@ -80,12 +81,18 @@ func init() {
 	args.UdpTimeout = flag.Duration("udpTimeout", 30*time.Second, "UDP session timeout")
 }
 
+func showVersion() {
+	version := strings.Split(C.Version, "-")
+	fmt.Printf("Go-tun2socks %s (%s)\n", version[0], version[1])
+	fmt.Printf("%s/%s, %s, %s\n", runtime.GOOS, runtime.GOARCH, runtime.Version(), version[2])
+}
+
 func main() {
 	// Parse args
 	flag.Parse()
 
 	if *args.Version {
-		fmt.Println("Go-tun2socks", C.Version, C.BuildTime)
+		showVersion()
 		os.Exit(0)
 	}
 
