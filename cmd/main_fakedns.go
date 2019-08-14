@@ -4,9 +4,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 
 	"github.com/xjasonlyu/tun2socks/common/dns/fakedns"
-	"github.com/xjasonlyu/tun2socks/log"
 )
 
 func init() {
@@ -21,7 +21,7 @@ func init() {
 			var err error
 			fakeDNS, err = fakedns.NewServer(*args.FakeIPRange, *args.FakeDNSHosts, *args.DNSCacheSize)
 			if err != nil {
-				log.Fatalf("create fake dns server failed: %v", err)
+				panic(fmt.Errorf("create fake dns server failed: %v", err))
 			}
 
 			// Set fakeDNS variables
