@@ -13,7 +13,7 @@ import (
 )
 
 // DNS lookup
-func lookupHost(fakeDns dns.FakeDns, target net.Addr) (targetHost string, err error) {
+func lookupHost(fakeDNS dns.FakeDNS, target net.Addr) (targetHost string, err error) {
 	var targetIP net.IP
 	switch addr := target.(type) {
 	case *net.TCPAddr:
@@ -27,8 +27,8 @@ func lookupHost(fakeDns dns.FakeDns, target net.Addr) (targetHost string, err er
 
 	targetHost = targetIP.String()
 	// Replace with a domain name if target address IP is a fake IP
-	if fakeDns != nil {
-		if host, exist := fakeDns.IPToHost(targetIP); exist {
+	if fakeDNS != nil {
+		if host, exist := fakeDNS.IPToHost(targetIP); exist {
 			targetHost = host
 		}
 	}

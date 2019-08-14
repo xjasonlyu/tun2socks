@@ -19,15 +19,15 @@ type tcpHandler struct {
 	proxyHost string
 	proxyPort int
 
-	fakeDns       dns.FakeDns
+	fakeDNS       dns.FakeDNS
 	sessionStater stats.SessionStater
 }
 
-func NewTCPHandler(proxyHost string, proxyPort int, fakeDns dns.FakeDns, sessionStater stats.SessionStater) core.TCPConnHandler {
+func NewTCPHandler(proxyHost string, proxyPort int, fakeDNS dns.FakeDNS, sessionStater stats.SessionStater) core.TCPConnHandler {
 	return &tcpHandler{
 		proxyHost:     proxyHost,
 		proxyPort:     proxyPort,
-		fakeDns:       fakeDns,
+		fakeDNS:       fakeDNS,
 		sessionStater: sessionStater,
 	}
 }
@@ -86,7 +86,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	var localConn = conn
 
 	// Lookup fakeDNS host record
-	targetHost, err := lookupHost(h.fakeDns, target)
+	targetHost, err := lookupHost(h.fakeDNS, target)
 	if err != nil {
 		log.Warnf("lookup target host error: %v", err)
 		return err

@@ -23,15 +23,15 @@ type udpHandler struct {
 	remoteAddrMap sync.Map
 	remoteConnMap sync.Map
 
-	fakeDns       dns.FakeDns
+	fakeDNS       dns.FakeDNS
 	sessionStater stats.SessionStater
 }
 
-func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, fakeDns dns.FakeDns, sessionStater stats.SessionStater) core.UDPConnHandler {
+func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, fakeDNS dns.FakeDNS, sessionStater stats.SessionStater) core.UDPConnHandler {
 	return &udpHandler{
 		proxyHost:     proxyHost,
 		proxyPort:     proxyPort,
-		fakeDns:       fakeDns,
+		fakeDNS:       fakeDNS,
 		sessionStater: sessionStater,
 		timeout:       timeout,
 	}
@@ -64,7 +64,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn, addr
 
 func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	// Lookup fakeDNS host record
-	targetHost, err := lookupHost(h.fakeDns, target)
+	targetHost, err := lookupHost(h.fakeDNS, target)
 	if err != nil {
 		log.Warnf("lookup target host error: %v", err)
 		return err
