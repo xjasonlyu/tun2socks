@@ -12,6 +12,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/log"
 	"github.com/xjasonlyu/tun2socks/common/queue"
 	"github.com/xjasonlyu/tun2socks/common/stats"
+	C "github.com/xjasonlyu/tun2socks/constant"
 )
 
 const maxCompletedSessions = 100
@@ -19,8 +20,6 @@ const maxCompletedSessions = 100
 var (
 	ServeAddr = "localhost:6001"
 	ServePath = "/stats/session/plain"
-
-	StatsVersion = ""
 )
 
 type simpleSessionStater struct {
@@ -87,7 +86,7 @@ table, th, td {
   text-align: right;
   padding: 4;
 }</style><title>Go-tun2socks Sessions</title></head>`)
-	_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", StatsVersion)
+	_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", C.Version)
 	_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
 	_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(activeSessions))
 	tablePrint(w, activeSessions)
