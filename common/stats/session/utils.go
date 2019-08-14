@@ -27,12 +27,19 @@ func process(name string) string {
 	return name
 }
 
-func duration(start, end time.Time) time.Duration {
+func duration(start, end time.Time) (t time.Duration) {
 	if end.IsZero() {
-		return time.Now().Sub(start).Round(time.Millisecond)
+		t = time.Now().Sub(start)
 	} else {
-		return end.Sub(start).Round(time.Millisecond)
+		t = end.Sub(start)
 	}
+
+	if t < 1*time.Second {
+		t = t.Round(time.Millisecond)
+	} else {
+		t = t.Round(time.Second)
+	}
+	return
 }
 
 func uptime() string {
