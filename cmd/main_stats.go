@@ -9,18 +9,18 @@ import (
 )
 
 func init() {
-	args.Stats = flag.Bool("stats", false, "Enable statistics")
+	args.Stats = flag.Bool("stats", false, "Enable session statistics")
 	args.StatsAddr = flag.String("statsAddr", "localhost:6001", "Listen address of stats, open in your browser to view statistics")
 
 	addPostFlagsInitFn(func() {
 		if *args.Stats {
 			sessionStater = session.NewSimpleSessionStater()
 
-			// stats variables
+			// Set stats variables
 			session.ServeAddr = *args.StatsAddr
 			session.StatsVersion = version
 
-			// start session stater
+			// Start session stater
 			sessionStater.Start()
 		} else {
 			sessionStater = nil

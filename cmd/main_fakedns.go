@@ -6,6 +6,7 @@ import (
 	"flag"
 
 	"github.com/xjasonlyu/tun2socks/common/dns/fakedns"
+	"github.com/xjasonlyu/tun2socks/common/log"
 )
 
 func init() {
@@ -17,16 +18,16 @@ func init() {
 
 	addPostFlagsInitFn(func() {
 		if *args.EnableFakeDNS {
-			fakeDNSServer, err := fakedns.NewServer(*args.FakeIPRange, *args.FakeDNSHosts, *args.DNSCacheSize)
+			fakeDNS, err := fakedns.NewServer(*args.FakeIPRange, *args.FakeDNSHosts, *args.DNSCacheSize)
 			if err != nil {
-				panic("create fake dns server error")
+				log.Fatalf("create fake dns server failed: %v", err)
 			}
 
+			// Set fakeDNS variables
 			fakedns.ServeAddr = *args.FakeDNSAddr
-			if err := fakeDNSServer.Start(); err != nil {
-				panic("cannot start fake dns server")
-			}
-			fakeDNS = fakeDNSServer
+
+			// Start fakeDNS server
+			fakeDNS.Start()
 		} else {
 			fakeDNS = nil
 		}

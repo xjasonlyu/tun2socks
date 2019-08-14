@@ -11,13 +11,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/dns"
 	"github.com/xjasonlyu/tun2socks/common/log"
-	"github.com/xjasonlyu/tun2socks/common/stats"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/filter"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tun"
+
+	D "github.com/xjasonlyu/tun2socks/common/dns"
+	S "github.com/xjasonlyu/tun2socks/common/stats"
 
 	// init logger
 	_ "github.com/xjasonlyu/tun2socks/common/log/simple"
@@ -32,8 +33,8 @@ var (
 	args            = new(CmdArgs)
 	postFlagsInitFn []func()
 
-	fakeDNS       dns.FakeDNS
-	sessionStater stats.SessionStater
+	fakeDNS       D.FakeDNS
+	sessionStater S.SessionStater
 )
 
 type CmdArgs struct {
