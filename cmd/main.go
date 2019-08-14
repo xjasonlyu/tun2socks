@@ -79,7 +79,7 @@ func init() {
 }
 
 func showVersion() {
-	version := strings.Split(C.Version, "-")
+	version := strings.Split(C.Version[1:], "-")
 	fmt.Printf("Go-tun2socks %s (%s)\n", version[0], version[1])
 	fmt.Printf("%s/%s, %s, %s\n", runtime.GOOS, runtime.GOARCH, runtime.Version(), version[2])
 }
