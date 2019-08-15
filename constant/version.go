@@ -1,5 +1,5 @@
 package constant
 
 var (
-	Version = "version-build-tag"
+	Version = "v0.0.0-0-00000000"
 )
