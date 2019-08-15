@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 
 	"github.com/xjasonlyu/tun2socks/common/queue"
-	"github.com/xjasonlyu/tun2socks/common/stats"
+	"github.com/xjasonlyu/tun2socks/component/stats"
 	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/log"
 )
