@@ -65,13 +65,13 @@ func addPostFlagsInitFn(fn func()) {
 
 func init() {
 	// Main
-	args.Version = flag.Bool("version", false, "Print version")
-	args.LogLevel = flag.String("loglevel", "info", "Logging level. (info, warning, error, debug, silent)")
-	args.TunName = flag.String("tunName", "tun0", "TUN interface name")
+	args.Version = flag.Bool("version", false, "Show version")
+	args.LogLevel = flag.String("loglevel", "info", "Logging level [info, warning, error, debug, silent]")
+	args.TunName = flag.String("tunName", "utun0", "TUN interface name")
 	args.TunAddr = flag.String("tunAddr", "240.0.0.2", "TUN interface address")
 	args.TunGw = flag.String("tunGw", "240.0.0.1", "TUN interface gateway")
 	args.TunMask = flag.String("tunMask", "255.255.255.0", "TUN interface netmask, it should be a prefix length (a number) for IPv6 address")
-	args.TunDNS = flag.String("tunDNS", "1.1.1.1", "DNS resolvers for TUN interface (Windows Only)")
+	args.TunDNS = flag.String("tunDNS", "", "DNS resolvers for TUN interface (Windows Only)")
 
 	// Proxy
 	args.ProxyServer = flag.String("proxyServer", "", "Proxy server address")
