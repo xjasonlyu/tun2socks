@@ -85,7 +85,7 @@ func showVersion() {
 }
 
 func main() {
-	// Parse args
+	// Parse arguments
 	flag.Parse()
 
 	if *args.Version {
@@ -93,14 +93,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	// Initialization ops after parsing flags.
-	for _, fn := range postFlagsInitFn {
-		if fn != nil {
-			fn()
-		}
-	}
-
-	// Set log level.
+	// Set log level
 	switch strings.ToLower(*args.LogLevel) {
 	case "debug":
 		log.SetLevel(log.DEBUG)
@@ -116,6 +109,21 @@ func main() {
 		panic("unsupported logging level")
 	}
 
+	// Initialization modules
+	for _, fn := range postFlagsInitFn {
+		if fn != nil {
+			fn()
+		}
+	}
+
+	// Resolve proxy address
+	proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
+	if err != nil {
+		log.Fatalf("invalid proxy server address: %v", err)
+	}
+	proxyHost := proxyAddr.IP.String()
+	proxyPort := proxyAddr.Port
+
 	// Open the tun device.
 	dnsServers := strings.Split(*args.TunDNS, ",")
 	tunDev, err := tun.OpenTunDevice(*args.TunName, *args.TunAddr, *args.TunGw, *args.TunMask, dnsServers)
@@ -129,12 +137,6 @@ func main() {
 	lwipWriter = filter.NewICMPFilter(lwipWriter).(io.Writer)
 
 	// Register TCP and UDP handlers to handle accepted connections.
-	proxyAddr, err := net.ResolveTCPAddr("tcp", *args.ProxyServer)
-	if err != nil {
-		log.Fatalf("invalid proxy server address: %v", err)
-	}
-	proxyHost := proxyAddr.IP.String()
-	proxyPort := proxyAddr.Port
 	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDNS, sessionStater))
 	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDNS, sessionStater))
 
