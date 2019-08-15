@@ -5,7 +5,7 @@ package main
 import (
 	"flag"
 
-	"github.com/xjasonlyu/tun2socks/common/stats/session"
+	"github.com/xjasonlyu/tun2socks/component/stats/session"
 )
 
 func init() {

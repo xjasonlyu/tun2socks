@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/dns"
+	"github.com/xjasonlyu/tun2socks/component/dns"
 	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
 
