@@ -6,6 +6,7 @@ import (
 	"flag"
 
 	"github.com/xjasonlyu/tun2socks/component/stats/session"
+	"github.com/xjasonlyu/tun2socks/log"
 )
 
 func init() {
@@ -20,7 +21,10 @@ func init() {
 			session.ServeAddr = *args.StatsAddr
 
 			// Start session stater
-			sessionStater.Start()
+			if err := sessionStater.Start(); err != nil {
+				log.Fatalf("Start session stater failed: %v", err)
+			}
+			log.Infof("Session stater serving at %v", session.ServeAddr)
 		} else {
 			sessionStater = nil
 		}

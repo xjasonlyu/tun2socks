@@ -1,7 +1,6 @@
 package fakedns
 
 import (
-	"fmt"
 	"net"
 	"strings"
 
@@ -78,28 +77,6 @@ func withHost(hosts *trie.Trie, next handler) handler {
 		w.WriteMsg(msg)
 		return
 	}
-}
-
-func lineToHosts(str string) *trie.Trie {
-	// trim `'` `"` ` ` char
-	str = strings.Trim(str, "' \"")
-	if str == "" {
-		return nil
-	}
-	tree := trie.New()
-	s := strings.Split(str, ",")
-	for _, host := range s {
-		m := strings.Split(host, "=")
-		if len(m) != 2 {
-			continue
-		}
-		domain := strings.TrimSpace(m[0])
-		target := strings.TrimSpace(m[1])
-		if err := tree.Insert(domain, net.ParseIP(target)); err != nil {
-			panic(fmt.Sprintf("add hosts error: %v", err))
-		}
-	}
-	return tree
 }
 
 func newHandler(hosts *trie.Trie, pool *fakeip.Pool) handler {

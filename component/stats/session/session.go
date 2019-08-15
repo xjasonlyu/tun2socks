@@ -2,8 +2,10 @@ package session
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"sort"
 	"sync"
@@ -11,7 +13,6 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/queue"
 	C "github.com/xjasonlyu/tun2socks/constant"
-	"github.com/xjasonlyu/tun2socks/log"
 )
 
 const maxCompletedSessions = 100
@@ -97,19 +98,35 @@ table, th, td {
 }
 
 func (s *simpleSessionStater) Start() error {
-	log.Debugf("Start session stater")
+	_, port, err := net.SplitHostPort(ServeAddr)
+	if port == "0" || port == "" || err != nil {
+		return errors.New("address format error")
+	}
+
+	tcpAddr, err := net.ResolveTCPAddr("tcp", ServeAddr)
+	if err != nil {
+		return err
+	}
+
+	c, err := net.ListenTCP("tcp", tcpAddr)
+	if err != nil {
+		return err
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, ServePath, 301)
 	})
 	mux.HandleFunc(ServePath, s.sessionStatsHandler)
 	s.server = &http.Server{Addr: ServeAddr, Handler: mux}
-	go s.server.ListenAndServe()
+	go func() {
+		s.server.Serve(c)
+	}()
+
 	return nil
 }
 
 func (s *simpleSessionStater) Stop() error {
-	log.Debugf("Stop session stater")
 	return s.server.Close()
 }
 
