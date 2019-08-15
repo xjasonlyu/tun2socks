@@ -11,6 +11,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/component/dns"
 	"github.com/xjasonlyu/tun2socks/component/stats"
+	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
 )
@@ -82,7 +83,7 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	// Get name of the process.
 	var process = lsof.GetProcessName(conn.LocalAddr())
 	if h.sessionStater != nil {
-		sess := &stats.Session{
+		sess := &C.Session{
 			Process:       process,
 			Network:       conn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
@@ -94,7 +95,7 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		}
 		h.sessionStater.AddSession(conn, sess)
 
-		remoteConn = stats.NewSessionPacketConn(remoteConn, sess)
+		remoteConn = C.NewSessionPacketConn(remoteConn, sess)
 	}
 
 	h.remoteAddrMap.Store(conn, remoteAddr)

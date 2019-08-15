@@ -10,7 +10,6 @@ import (
 	"sync/atomic"
 
 	"github.com/xjasonlyu/tun2socks/common/queue"
-	"github.com/xjasonlyu/tun2socks/component/stats"
 	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/log"
 )
@@ -28,7 +27,7 @@ type simpleSessionStater struct {
 	completedSessionQueue *queue.Queue
 }
 
-func NewSimpleSessionStater() stats.SessionStater {
+func NewSimpleSessionStater() *simpleSessionStater {
 	return &simpleSessionStater{
 		completedSessionQueue: queue.New(maxCompletedSessions),
 	}
@@ -36,21 +35,21 @@ func NewSimpleSessionStater() stats.SessionStater {
 
 func (s *simpleSessionStater) sessionStatsHandler(resp http.ResponseWriter, req *http.Request) {
 	// Slice of active sessions
-	var activeSessions []*stats.Session
+	var activeSessions []*C.Session
 	s.activeSessionMap.Range(func(key, value interface{}) bool {
-		activeSessions = append(activeSessions, value.(*stats.Session))
+		activeSessions = append(activeSessions, value.(*C.Session))
 		return true
 	})
 
 	// Slice of completed sessions
-	var completedSessions []*stats.Session
+	var completedSessions []*C.Session
 	for _, item := range s.completedSessionQueue.Copy() {
-		if sess, ok := item.(*stats.Session); ok {
+		if sess, ok := item.(*C.Session); ok {
 			completedSessions = append(completedSessions, sess)
 		}
 	}
 
-	tablePrint := func(w io.Writer, sessions []*stats.Session) {
+	tablePrint := func(w io.Writer, sessions []*C.Session) {
 		// Sort by session start time.
 		sort.Slice(sessions, func(i, j int) bool {
 			return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
@@ -114,13 +113,13 @@ func (s *simpleSessionStater) Stop() error {
 	return s.server.Close()
 }
 
-func (s *simpleSessionStater) AddSession(key interface{}, session *stats.Session) {
+func (s *simpleSessionStater) AddSession(key interface{}, session *C.Session) {
 	s.activeSessionMap.Store(key, session)
 }
 
-func (s *simpleSessionStater) GetSession(key interface{}) *stats.Session {
+func (s *simpleSessionStater) GetSession(key interface{}) *C.Session {
 	if sess, ok := s.activeSessionMap.Load(key); ok {
-		return sess.(*stats.Session)
+		return sess.(*C.Session)
 	}
 	return nil
 }

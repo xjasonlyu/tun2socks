@@ -11,6 +11,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/component/dns"
 	"github.com/xjasonlyu/tun2socks/component/stats"
+	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
 )
@@ -104,7 +105,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	// Get name of the process.
 	var process = lsof.GetProcessName(localConn.LocalAddr())
 	if h.sessionStater != nil {
-		sess := &stats.Session{
+		sess := &C.Session{
 			Process:       process,
 			Network:       localConn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
@@ -116,7 +117,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 		}
 		h.sessionStater.AddSession(localConn, sess)
 
-		remoteConn = stats.NewSessionConn(remoteConn, sess)
+		remoteConn = C.NewSessionConn(remoteConn, sess)
 	}
 
 	// Set keepalive
