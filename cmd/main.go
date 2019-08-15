@@ -124,29 +124,29 @@ func main() {
 	proxyHost := proxyAddr.IP.String()
 	proxyPort := proxyAddr.Port
 
-	// Open the tun device.
+	// Open the tun device
 	dnsServers := strings.Split(*args.TunDNS, ",")
 	tunDev, err := tun.OpenTunDevice(*args.TunName, *args.TunAddr, *args.TunGw, *args.TunMask, dnsServers)
 	if err != nil {
 		log.Fatalf("failed to open tun device: %v", err)
 	}
 
-	// Setup TCP/IP stack.
+	// Setup TCP/IP stack
 	var lwipWriter = core.NewLWIPStack().(io.Writer)
-	// Wrap a writer to delay ICMP packets.
+	// Wrap a writer to delay ICMP packets
 	lwipWriter = filter.NewICMPFilter(lwipWriter).(io.Writer)
 
-	// Register TCP and UDP handlers to handle accepted connections.
+	// Register TCP and UDP handlers to handle accepted connections
 	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDNS, sessionStater))
 	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDNS, sessionStater))
 
 	// Register an output callback to write packets output from lwip stack to tun
-	// device, output function should be set before input any packets.
+	// device, output function should be set before input any packets
 	core.RegisterOutputFn(func(data []byte) (int, error) {
 		return tunDev.Write(data)
 	})
 
-	// Copy packets from tun device to lwip stack, it's the main loop.
+	// Copy packets from tun device to lwip stack, it's the main loop
 	go func() {
 		if _, err := io.CopyBuffer(lwipWriter, tunDev, make([]byte, MTU)); err != nil {
 			log.Fatalf("copying data failed: %v", err)
