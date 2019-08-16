@@ -10,6 +10,7 @@ import (
 	"sort"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/queue"
 	C "github.com/xjasonlyu/tun2socks/constant"
@@ -96,11 +97,11 @@ table, th, td {
 	// Statistics table
 	_, _ = fmt.Fprintf(w, "<p>Statistics</p>")
 	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh</th><th>Uptime</th><th>Upload</th><th>Download</th><th>Total Traffic</th></tr>\n")
+	_, _ = fmt.Fprintf(w, "<tr><th align=\"center\">Latest Refresh</th><th>Uptime</th><th>Total Traffic</th><th>Upload</th><th>Download</th></tr>\n")
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
 	_, _ = fmt.Fprintf(w, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
-		now(),
+		date(time.Now()),
 		uptime(),
 		byteCountSI(trafficUp+trafficDown),
 		byteCountSI(trafficUp),
