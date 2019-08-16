@@ -38,7 +38,7 @@ func platform() string {
 	if err != nil {
 		return "N/A"
 	}
-	return fmt.Sprintf("%s", h.Platform)
+	return fmt.Sprintf("%s", h.PlatformVersion)
 }
 
 func mem() string {

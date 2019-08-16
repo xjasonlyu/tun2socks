@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"github.com/xjasonlyu/tun2socks/common/queue"
+	C "github.com/xjasonlyu/tun2socks/constant"
 	"io"
 	"net"
 	"net/http"
@@ -12,9 +14,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/xjasonlyu/tun2socks/common/queue"
-	C "github.com/xjasonlyu/tun2socks/constant"
 )
 
 const maxCompletedSessions = 100
@@ -98,15 +97,15 @@ table, th, td {
 	// Statistics table
 	_, _ = fmt.Fprintf(w, "<p>Statistics (%d)</p>", runtime.NumGoroutine())
 	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-	_, _ = fmt.Fprintf(w, "<tr><th>Platform</th><th>CPU</th><th>Mem</th><th>Disk</th><th>Last Refresh Time</th><th>Uptime</th><th>Total</th><th>Upload</th><th>Download</th></tr>\n")
+	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh Time</th><th>Platform</th><th>CPU</th><th>Mem</th><th>Disk</th><th>Uptime</th><th>Total</th><th>Upload</th><th>Download</th></tr>\n")
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
 	_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
+		date(time.Now()),
 		platform(),
 		cpu(),
 		mem(),
 		disk(),
-		date(time.Now()),
 		uptime(),
 		byteCountSI(trafficUp+trafficDown),
 		byteCountSI(trafficUp),
