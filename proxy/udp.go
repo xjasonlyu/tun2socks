@@ -10,7 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	D "github.com/xjasonlyu/tun2socks/component/fakedns"
-	"github.com/xjasonlyu/tun2socks/component/stats"
+	S "github.com/xjasonlyu/tun2socks/component/session"
 	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
@@ -24,17 +24,17 @@ type udpHandler struct {
 	remoteAddrMap sync.Map
 	remoteConnMap sync.Map
 
-	fakeDNS       D.FakeDNS
-	sessionStater stats.SessionStater
+	fakeDNS D.FakeDNS
+	monitor S.Monitor
 }
 
-func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, fakeDNS D.FakeDNS, sessionStater stats.SessionStater) core.UDPConnHandler {
+func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, fakeDNS D.FakeDNS, monitor S.Monitor) core.UDPConnHandler {
 	return &udpHandler{
-		proxyHost:     proxyHost,
-		proxyPort:     proxyPort,
-		fakeDNS:       fakeDNS,
-		sessionStater: sessionStater,
-		timeout:       timeout,
+		proxyHost: proxyHost,
+		proxyPort: proxyPort,
+		fakeDNS:   fakeDNS,
+		monitor:   monitor,
+		timeout:   timeout,
 	}
 }
 
@@ -82,8 +82,8 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 
 	// Get name of the process
 	var process = lsof.GetProcessName(conn.LocalAddr())
-	if h.sessionStater != nil {
-		sess := &C.Session{
+	if h.monitor != nil {
+		session := &S.Session{
 			Process:       process,
 			Network:       conn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
@@ -93,9 +93,9 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
 		}
-		h.sessionStater.AddSession(conn, sess)
+		h.monitor.AddSession(conn, session)
 
-		remoteConn = C.NewSessionPacketConn(remoteConn, sess)
+		remoteConn = &S.PacketConn{Session: session, PacketConn: remoteConn}
 	}
 
 	h.remoteAddrMap.Store(conn, remoteAddr)
@@ -152,7 +152,7 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 	conn.Close()
 
 	// Remove session
-	if h.sessionStater != nil {
-		h.sessionStater.RemoveSession(conn)
+	if h.monitor != nil {
+		h.monitor.RemoveSession(conn)
 	}
 }

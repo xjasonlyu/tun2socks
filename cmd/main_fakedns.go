@@ -1,4 +1,4 @@
-// +build fakeDNS
+// +build fakedns
 
 package main
 
@@ -15,7 +15,7 @@ func init() {
 	args.FakeIPRange = flag.String("fakeIPRange", "198.18.0.0/15", "Fake IP CIDR range for DNS")
 	args.FakeDNSHosts = flag.String("fakeDNSHosts", "", "DNS hosts mapping, e.g. 'example.com=1.1.1.1,example.net=2.2.2.2'")
 
-	addPostFlagsInitFn(func() {
+	registerInitFn(func() {
 		if *args.EnableFakeDNS {
 			var err error
 			fakeDNS, err = fakedns.NewServer(*args.FakeIPRange, *args.FakeDNSHosts)
@@ -28,7 +28,7 @@ func init() {
 
 			// Start fakeDNS server
 			if err := fakeDNS.Start(); err != nil {
-				log.Fatalf("Start fake DNS server failed: %v", err)
+				log.Fatalf("Start fake DNS failed: %v", err)
 			}
 			log.Infof("Fake DNS serving at %v", fakedns.ServeAddr)
 		} else {

@@ -19,38 +19,38 @@ const maxCompletedSessions = 100
 
 var (
 	ServeAddr = "localhost:6001"
-	ServePath = "/stats/session/plain"
+	ServePath = "/session/plain"
 )
 
-type simpleSessionStater struct {
+type Server struct {
 	server                *http.Server
 	activeSessionMap      sync.Map
 	completedSessionQueue *queue.Queue
 }
 
-func NewSimpleSessionStater() *simpleSessionStater {
-	return &simpleSessionStater{
+func NewServer() *Server {
+	return &Server{
 		completedSessionQueue: queue.New(maxCompletedSessions),
 	}
 }
 
-func (s *simpleSessionStater) sessionStatsHandler(resp http.ResponseWriter, req *http.Request) {
+func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 	// Slice of active sessions
-	var activeSessions []*C.Session
+	var activeSessions []*Session
 	s.activeSessionMap.Range(func(key, value interface{}) bool {
-		activeSessions = append(activeSessions, value.(*C.Session))
+		activeSessions = append(activeSessions, value.(*Session))
 		return true
 	})
 
 	// Slice of completed sessions
-	var completedSessions []*C.Session
+	var completedSessions []*Session
 	for _, item := range s.completedSessionQueue.Copy() {
-		if sess, ok := item.(*C.Session); ok {
+		if sess, ok := item.(*Session); ok {
 			completedSessions = append(completedSessions, sess)
 		}
 	}
 
-	tablePrint := func(w io.Writer, sessions []*C.Session) {
+	tablePrint := func(w io.Writer, sessions []*Session) {
 		// Sort by session start time.
 		sort.Slice(sessions, func(i, j int) bool {
 			return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
@@ -97,7 +97,7 @@ table, th, td {
 	_ = w.Flush()
 }
 
-func (s *simpleSessionStater) Start() error {
+func (s *Server) Start() error {
 	_, port, err := net.SplitHostPort(ServeAddr)
 	if port == "0" || port == "" || err != nil {
 		return errors.New("address format error")
@@ -117,7 +117,7 @@ func (s *simpleSessionStater) Start() error {
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, ServePath, 301)
 	})
-	mux.HandleFunc(ServePath, s.sessionStatsHandler)
+	mux.HandleFunc(ServePath, s.handler)
 	s.server = &http.Server{Addr: ServeAddr, Handler: mux}
 	go func() {
 		s.server.Serve(c)
@@ -126,22 +126,22 @@ func (s *simpleSessionStater) Start() error {
 	return nil
 }
 
-func (s *simpleSessionStater) Stop() error {
+func (s *Server) Stop() error {
 	return s.server.Close()
 }
 
-func (s *simpleSessionStater) AddSession(key interface{}, session *C.Session) {
+func (s *Server) AddSession(key interface{}, session *Session) {
 	s.activeSessionMap.Store(key, session)
 }
 
-func (s *simpleSessionStater) GetSession(key interface{}) *C.Session {
+func (s *Server) GetSession(key interface{}) *Session {
 	if sess, ok := s.activeSessionMap.Load(key); ok {
-		return sess.(*C.Session)
+		return sess.(*Session)
 	}
 	return nil
 }
 
-func (s *simpleSessionStater) RemoveSession(key interface{}) {
+func (s *Server) RemoveSession(key interface{}) {
 	if sess, ok := s.activeSessionMap.Load(key); ok {
 		// move to completed sessions
 		s.completedSessionQueue.Put(sess)

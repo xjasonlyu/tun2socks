@@ -10,7 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	D "github.com/xjasonlyu/tun2socks/component/fakedns"
-	"github.com/xjasonlyu/tun2socks/component/stats"
+	S "github.com/xjasonlyu/tun2socks/component/session"
 	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
@@ -20,16 +20,16 @@ type tcpHandler struct {
 	proxyHost string
 	proxyPort int
 
-	fakeDNS       D.FakeDNS
-	sessionStater stats.SessionStater
+	fakeDNS D.FakeDNS
+	monitor S.Monitor
 }
 
-func NewTCPHandler(proxyHost string, proxyPort int, fakeDNS D.FakeDNS, sessionStater stats.SessionStater) core.TCPConnHandler {
+func NewTCPHandler(proxyHost string, proxyPort int, fakeDNS D.FakeDNS, monitor S.Monitor) core.TCPConnHandler {
 	return &tcpHandler{
-		proxyHost:     proxyHost,
-		proxyPort:     proxyPort,
-		fakeDNS:       fakeDNS,
-		sessionStater: sessionStater,
+		proxyHost: proxyHost,
+		proxyPort: proxyPort,
+		fakeDNS:   fakeDNS,
+		monitor:   monitor,
 	}
 }
 
@@ -77,8 +77,8 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	wg.Wait() // Wait for Up Link done
 
 	// Remove session
-	if h.sessionStater != nil {
-		h.sessionStater.RemoveSession(localConn)
+	if h.monitor != nil {
+		h.monitor.RemoveSession(localConn)
 	}
 }
 
@@ -104,8 +104,8 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 
 	// Get name of the process
 	var process = lsof.GetProcessName(localConn.LocalAddr())
-	if h.sessionStater != nil {
-		sess := &C.Session{
+	if h.monitor != nil {
+		session := &S.Session{
 			Process:       process,
 			Network:       localConn.LocalAddr().Network(),
 			DialerAddr:    remoteConn.LocalAddr().String(),
@@ -115,9 +115,9 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
 		}
-		h.sessionStater.AddSession(localConn, sess)
+		h.monitor.AddSession(localConn, session)
 
-		remoteConn = C.NewSessionConn(remoteConn, sess)
+		remoteConn = &S.Conn{Session: session, Conn: remoteConn}
 	}
 
 	// Set keepalive

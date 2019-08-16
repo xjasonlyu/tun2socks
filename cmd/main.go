@@ -12,25 +12,26 @@ import (
 	"syscall"
 	"time"
 
+	D "github.com/xjasonlyu/tun2socks/component/fakedns"
+	S "github.com/xjasonlyu/tun2socks/component/session"
 	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/filter"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tun"
-
-	D "github.com/xjasonlyu/tun2socks/component/fakedns"
-	S "github.com/xjasonlyu/tun2socks/component/stats"
 )
 
 const MTU = 1500
 
 var (
-	args            = new(CmdArgs)
-	postFlagsInitFn []func()
+	args = new(CmdArgs)
 
-	fakeDNS       D.FakeDNS
-	sessionStater S.SessionStater
+	// Modules init func
+	registeredInitFn []func()
+
+	fakeDNS D.FakeDNS
+	monitor S.Monitor
 )
 
 type CmdArgs struct {
@@ -53,13 +54,13 @@ type CmdArgs struct {
 	FakeDNSAddr   *string
 	FakeDNSHosts  *string
 
-	// Stats
-	Stats     *bool
-	StatsAddr *string
+	// Session Stats
+	EnableStats *bool
+	StatsAddr   *string
 }
 
-func addPostFlagsInitFn(fn func()) {
-	postFlagsInitFn = append(postFlagsInitFn, fn)
+func registerInitFn(fn func()) {
+	registeredInitFn = append(registeredInitFn, fn)
 }
 
 func init() {
@@ -109,7 +110,7 @@ func main() {
 	}
 
 	// Initialization modules
-	for _, fn := range postFlagsInitFn {
+	for _, fn := range registeredInitFn {
 		if fn != nil {
 			fn()
 		}
@@ -136,8 +137,8 @@ func main() {
 	lwipWriter = filter.NewICMPFilter(lwipWriter).(io.Writer)
 
 	// Register TCP and UDP handlers to handle accepted connections.
-	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDNS, sessionStater))
-	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDNS, sessionStater))
+	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDNS, monitor))
+	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDNS, monitor))
 
 	// Register an output callback to write packets output from lwip stack to tun
 	// device, output function should be set before input any packets.
@@ -164,7 +165,7 @@ func main() {
 	}
 
 	// Stop session stater
-	if sessionStater != nil {
-		sessionStater.Stop()
+	if monitor != nil {
+		monitor.Stop()
 	}
 }
