@@ -26,7 +26,7 @@ func lookupHost(fakeDNS D.FakeDNS, target net.Addr) (targetHost string, err erro
 	}
 
 	targetHost = targetIP.String()
-	// Replace with a domain name if target address IP is a fake IP
+	// Replace with a domain name if target address IP is a fake IP.
 	if fakeDNS != nil {
 		if host, exist := fakeDNS.IPToHost(targetIP); exist {
 			targetHost = host
