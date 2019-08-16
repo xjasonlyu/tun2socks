@@ -23,7 +23,7 @@ var (
 )
 
 type Server struct {
-	server                *http.Server
+	*http.Server
 	activeSessionMap      sync.Map
 	completedSessionQueue *queue.Queue
 }
@@ -118,16 +118,16 @@ func (s *Server) Start() error {
 		http.Redirect(w, r, ServePath, 301)
 	})
 	mux.HandleFunc(ServePath, s.handler)
-	s.server = &http.Server{Addr: ServeAddr, Handler: mux}
+	s.Server = &http.Server{Addr: ServeAddr, Handler: mux}
 	go func() {
-		s.server.Serve(c)
+		s.Serve(c)
 	}()
 
 	return nil
 }
 
 func (s *Server) Stop() error {
-	return s.server.Close()
+	return s.Close()
 }
 
 func (s *Server) AddSession(key interface{}, session *Session) {
