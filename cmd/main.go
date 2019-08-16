@@ -49,7 +49,6 @@ type CmdArgs struct {
 
 	// FakeDNS
 	EnableFakeDNS *bool
-	DNSCacheSize  *int
 	FakeIPRange   *string
 	FakeDNSAddr   *string
 	FakeDNSHosts  *string
