@@ -24,6 +24,10 @@ var (
 
 type Server struct {
 	*http.Server
+
+	trafficUp   int64
+	trafficDown int64
+
 	activeSessionMap      sync.Map
 	completedSessionQueue *queue.Queue
 }
@@ -45,8 +49,8 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 	// Slice of completed sessions
 	var completedSessions []*Session
 	for _, item := range s.completedSessionQueue.Copy() {
-		if sess, ok := item.(*Session); ok {
-			completedSessions = append(completedSessions, sess)
+		if session, ok := item.(*Session); ok {
+			completedSessions = append(completedSessions, session)
 		}
 	}
 
@@ -61,17 +65,17 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 			return sessions[i].SessionStart.After(sessions[j].SessionStart)
 		})
 
-		for _, sess := range sessions {
+		for _, session := range sessions {
 			_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
-				sess.Process,
-				sess.Network,
-				date(sess.SessionStart),
-				duration(sess.SessionStart, sess.SessionClose),
-				// sess.DialerAddr,
-				sess.ClientAddr,
-				sess.TargetAddr,
-				byteCountSI(atomic.LoadInt64(&sess.UploadBytes)),
-				byteCountSI(atomic.LoadInt64(&sess.DownloadBytes)),
+				session.Process,
+				session.Network,
+				date(session.SessionStart),
+				duration(session.SessionStart, session.SessionClose),
+				// session.DialerAddr,
+				session.ClientAddr,
+				session.TargetAddr,
+				byteCountSI(atomic.LoadInt64(&session.UploadBytes)),
+				byteCountSI(atomic.LoadInt64(&session.DownloadBytes)),
 			)
 		}
 		_, _ = fmt.Fprintf(w, "</table>")
@@ -88,10 +92,17 @@ table, th, td {
 }</style><title>Go-tun2socks Sessions</title></head>`)
 	_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", C.Version)
 	_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
-	_, _ = fmt.Fprintf(w, "<p>Active sessions %d</p>", len(activeSessions))
+	_, _ = fmt.Fprintf(w, "<p>Traffic</p>")
+	trafficUp := atomic.LoadInt64(&s.trafficUp)
+	trafficDown := atomic.LoadInt64(&s.trafficDown)
+	_, _ = fmt.Fprintf(w, "<tr><td>Total</td><td>%s</td><td>Up</td><td>%s</td><td>Down</td><td>%s</td></tr>",
+		byteCountSI(trafficUp+trafficDown),
+		byteCountSI(trafficUp),
+		byteCountSI(trafficDown),
+	)
+	_, _ = fmt.Fprintf(w, "<p>Active sessions: %d</p>", len(activeSessions))
 	tablePrint(w, activeSessions)
-	_, _ = fmt.Fprintf(w, "<br/><br/>")
-	_, _ = fmt.Fprintf(w, "<p>Recently completed sessions %d</p>", len(completedSessions))
+	_, _ = fmt.Fprintf(w, "<p>Recently completed sessions: %d</p>", len(completedSessions))
 	tablePrint(w, completedSessions)
 	_, _ = fmt.Fprintf(w, "</html>")
 	_ = w.Flush()
@@ -131,17 +142,23 @@ func (s *Server) Stop() error {
 }
 
 func (s *Server) AddSession(key interface{}, session *Session) {
-	s.activeSessionMap.Store(key, session)
+	if session != nil {
+		s.activeSessionMap.Store(key, session)
+	}
 }
 
 func (s *Server) RemoveSession(key interface{}) {
-	if sess, ok := s.activeSessionMap.Load(key); ok {
+	if item, ok := s.activeSessionMap.Load(key); ok {
+		session := item.(*Session)
+		// delete first
+		s.activeSessionMap.Delete(key)
+		// record up & down traffic
+		atomic.AddInt64(&s.trafficUp, atomic.LoadInt64(&session.UploadBytes))
+		atomic.AddInt64(&s.trafficDown, atomic.LoadInt64(&session.DownloadBytes))
 		// move to completed sessions
-		s.completedSessionQueue.Put(sess)
+		s.completedSessionQueue.Put(session)
 		if s.completedSessionQueue.Len() > maxCompletedSessions {
 			s.completedSessionQueue.Pop()
 		}
-		// delete
-		s.activeSessionMap.Delete(key)
 	}
 }
