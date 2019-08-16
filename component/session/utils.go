@@ -16,12 +16,18 @@ func init() {
 }
 
 func cpu() string {
-	c, _ := C.Percent(0, false)
+	c, err := C.Percent(0, false)
+	if err != nil || len(c) != 1 {
+		return "N/A"
+	}
 	return fmt.Sprintf("%.1f%%", c[0])
 }
 
 func mem() string {
-	m, _ := M.VirtualMemory()
+	m, err := M.VirtualMemory()
+	if err != nil {
+		return "N/A"
+	}
 	return fmt.Sprintf("%.1f%%", m.UsedPercent)
 }
 
