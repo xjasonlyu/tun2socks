@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -19,35 +18,18 @@ import (
 type udpHandler struct {
 	proxyHost string
 	proxyPort int
-
 	timeout   time.Duration
-	hijackDNS []string
 
 	remoteAddrMap sync.Map
 	remoteConnMap sync.Map
 }
 
-func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, hijackDNS string) core.UDPConnHandler {
+func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration) core.UDPConnHandler {
 	return &udpHandler{
 		proxyHost: proxyHost,
 		proxyPort: proxyPort,
 		timeout:   timeout,
-		hijackDNS: strings.Split(hijackDNS, ","),
 	}
-}
-
-func (h *udpHandler) isHijacked(target *net.UDPAddr) bool {
-	for _, addr := range h.hijackDNS {
-		host, port, err := net.SplitHostPort(addr)
-		if err != nil {
-			continue
-		}
-		portInt, _ := strconv.Atoi(port)
-		if (host == "*" && portInt == target.Port) || addr == target.String() {
-			return true
-		}
-	}
-	return false
 }
 
 func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn, addr *net.UDPAddr) {
@@ -77,7 +59,7 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn, addr
 
 func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 	// Check hijackDNS
-	if h.isHijacked(target) {
+	if isHijacked(target) {
 		return nil
 	}
 
@@ -132,7 +114,7 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 	}()
 
 	// Check hijackDNS
-	if h.isHijacked(addr) {
+	if isHijacked(addr) {
 		resp, err := fakeDNS.Resolve(data)
 		if err != nil {
 			return fmt.Errorf("hijack DNS request error: %v", err)

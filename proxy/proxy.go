@@ -3,22 +3,60 @@ package proxy
 import (
 	"errors"
 	"net"
+	"strconv"
+	"strings"
 
 	D "github.com/xjasonlyu/tun2socks/component/fakedns"
 	S "github.com/xjasonlyu/tun2socks/component/session"
 )
 
 var (
-	fakeDNS D.FakeDNS
 	monitor S.Monitor
+
+	fakeDNS   D.FakeDNS
+	hijackDNS []string
 )
 
-func RegisterFakeDNS(d D.FakeDNS) {
-	fakeDNS = d
-}
-
+// Register Monitor
 func RegisterMonitor(m S.Monitor) {
 	monitor = m
+}
+
+// Session Operation
+func addSession(key interface{}, session *S.Session) {
+	if monitor != nil {
+		monitor.AddSession(key, session)
+	}
+}
+
+func removeSession(key interface{}) {
+	if monitor != nil {
+		monitor.RemoveSession(key)
+	}
+}
+
+// Register FakeDNS
+func RegisterFakeDNS(d D.FakeDNS, h string) {
+	fakeDNS = d
+	hijackDNS = strings.Split(h, ",")
+}
+
+// Check target if is hijacked address.
+func isHijacked(target *net.UDPAddr) bool {
+	if hijackDNS == nil {
+		return false
+	}
+	for _, addr := range hijackDNS {
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			continue
+		}
+		portInt, _ := strconv.Atoi(port)
+		if (host == "*" && portInt == target.Port) || addr == target.String() {
+			return true
+		}
+	}
+	return false
 }
 
 // DNS lookup
@@ -42,17 +80,4 @@ func lookupHost(target net.Addr) (targetHost string, err error) {
 		}
 	}
 	return
-}
-
-// Session Operation
-func addSession(key interface{}, session *S.Session) {
-	if monitor != nil {
-		monitor.AddSession(key, session)
-	}
-}
-
-func removeSession(key interface{}) {
-	if monitor != nil {
-		monitor.RemoveSession(key)
-	}
 }
