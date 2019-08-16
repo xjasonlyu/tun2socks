@@ -8,7 +8,7 @@ type FakeDNS interface {
 	Start() error
 	Stop() error
 
-	// Generate a fake dns response for the specify request.
+	// Resolve a fake dns response for the specify request.
 	Resolve([]byte) ([]byte, error)
 
 	// IPToHost returns the corresponding domain for the given IP.

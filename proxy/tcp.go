@@ -81,7 +81,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	// Lookup fakeDNS host record
 	targetHost, err := lookupHost(target)
 	if err != nil {
-		log.Warnf("lookup target host error: %v", err)
+		log.Warnf("lookup target host: %v", err)
 		return err
 	}
 

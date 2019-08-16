@@ -54,6 +54,7 @@ type CmdArgs struct {
 	FakeIPRange   *string
 	FakeDNSAddr   *string
 	FakeDNSHosts  *string
+	HijackDNS     *string
 
 	// Session Stats
 	EnableStats *bool
@@ -142,7 +143,7 @@ func main() {
 	proxy.RegisterMonitor(monitor)
 	// Register TCP and UDP handlers to handle accepted connections.
 	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort))
-	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout))
+	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, *args.HijackDNS))
 
 	// Register an output callback to write packets output from lwip stack to tun
 	// device, output function should be set before input any packets.

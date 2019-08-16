@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -18,18 +19,35 @@ import (
 type udpHandler struct {
 	proxyHost string
 	proxyPort int
+
 	timeout   time.Duration
+	hijackDNS []string
 
 	remoteAddrMap sync.Map
 	remoteConnMap sync.Map
 }
 
-func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration) core.UDPConnHandler {
+func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, hijackDNS string) core.UDPConnHandler {
 	return &udpHandler{
 		proxyHost: proxyHost,
 		proxyPort: proxyPort,
 		timeout:   timeout,
+		hijackDNS: strings.Split(hijackDNS, ","),
 	}
+}
+
+func (h *udpHandler) isHijacked(target *net.UDPAddr) bool {
+	for _, addr := range h.hijackDNS {
+		host, port, err := net.SplitHostPort(addr)
+		if err != nil {
+			continue
+		}
+		portInt, _ := strconv.Atoi(port)
+		if (host == "*" && portInt == target.Port) || addr == target.String() {
+			return true
+		}
+	}
+	return false
 }
 
 func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn, addr *net.UDPAddr) {
@@ -58,14 +76,15 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn, addr
 }
 
 func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
-	if target.Port == 53 {
+	// Check hijackDNS
+	if h.isHijacked(target) {
 		return nil
 	}
 
 	// Lookup fakeDNS host record
 	targetHost, err := lookupHost(target)
 	if err != nil {
-		log.Warnf("lookup target host error: %v", err)
+		log.Warnf("lookup target host: %v", err)
 		return err
 	}
 
@@ -105,10 +124,18 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 }
 
 func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) (err error) {
-	if addr.Port == 53 {
+	// Close if return error
+	defer func() {
+		if err != nil {
+			h.Close(conn)
+		}
+	}()
+
+	// Check hijackDNS
+	if h.isHijacked(addr) {
 		resp, err := fakeDNS.Resolve(data)
 		if err != nil {
-			log.Warnf("hijack DNS: %v", err)
+			return fmt.Errorf("hijack DNS request error: %v", err)
 		} else {
 			if _, err = conn.WriteFrom(resp, addr); err != nil {
 				return fmt.Errorf("write dns answer failed: %v", err)
@@ -117,13 +144,6 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 			return nil
 		}
 	}
-
-	// Close if return error
-	defer func() {
-		if err != nil {
-			h.Close(conn)
-		}
-	}()
 
 	var remoteAddr net.Addr
 	var remoteConn net.PacketConn
