@@ -9,11 +9,11 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/pool"
-	D "github.com/xjasonlyu/tun2socks/component/fakedns"
-	S "github.com/xjasonlyu/tun2socks/component/session"
-	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
+
+	D "github.com/xjasonlyu/tun2socks/component/fakedns"
+	S "github.com/xjasonlyu/tun2socks/component/session"
 )
 
 type udpHandler struct {
