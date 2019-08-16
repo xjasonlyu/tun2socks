@@ -4,12 +4,25 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	C "github.com/shirou/gopsutil/cpu"
+	M "github.com/shirou/gopsutil/mem"
 )
 
 var startTime time.Time
 
 func init() {
 	startTime = time.Now()
+}
+
+func cpu() string {
+	c, _ := C.Percent(0, false)
+	return fmt.Sprintf("%.1f%%", c[0])
+}
+
+func mem() string {
+	m, _ := M.VirtualMemory()
+	return fmt.Sprintf("%.1f%%", m.UsedPercent)
 }
 
 func date(t time.Time) string {
