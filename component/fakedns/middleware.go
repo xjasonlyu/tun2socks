@@ -9,28 +9,31 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
 )
 
-type handler func(w D.ResponseWriter, r *D.Msg)
+func fakeResolve(pool *fakeip.Pool, r *D.Msg) *D.Msg {
+	q := r.Question[0]
+	host := strings.TrimRight(q.Name, ".")
 
-func withFakeIP(pool *fakeip.Pool) handler {
+	rr := &D.A{}
+	rr.Hdr = D.RR_Header{Name: q.Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL}
+	ip := pool.Lookup(host)
+	rr.A = ip
+	msg := r.Copy()
+	msg.Answer = []D.RR{rr}
+
+	setMsgTTL(msg, dnsFakeTTL)
+	msg.SetReply(r)
+	return msg
+}
+
+func withFakeIP(pool *fakeip.Pool) D.HandlerFunc {
 	return func(w D.ResponseWriter, r *D.Msg) {
-		q := r.Question[0]
-		host := strings.TrimRight(q.Name, ".")
-
-		rr := &D.A{}
-		rr.Hdr = D.RR_Header{Name: q.Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL}
-		ip := pool.Lookup(host)
-		rr.A = ip
-		msg := r.Copy()
-		msg.Answer = []D.RR{rr}
-
-		setMsgTTL(msg, dnsFakeTTL)
-		msg.SetReply(r)
+		msg := fakeResolve(pool, r)
 		w.WriteMsg(msg)
 		return
 	}
 }
 
-func withHost(hosts *trie.Trie, next handler) handler {
+func withHost(hosts *trie.Trie, next D.HandlerFunc) D.HandlerFunc {
 	if hosts == nil {
 		panic("dns/withHost: hosts should not be nil")
 	}
@@ -79,7 +82,7 @@ func withHost(hosts *trie.Trie, next handler) handler {
 	}
 }
 
-func newHandler(hosts *trie.Trie, pool *fakeip.Pool) handler {
+func newHandler(hosts *trie.Trie, pool *fakeip.Pool) D.HandlerFunc {
 	if hosts != nil {
 		return withHost(hosts, withFakeIP(pool))
 	}

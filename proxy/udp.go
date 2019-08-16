@@ -58,6 +58,10 @@ func (h *udpHandler) fetchUDPInput(conn core.UDPConn, input net.PacketConn, addr
 }
 
 func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
+	if target.Port == 53 {
+		return nil
+	}
+
 	// Lookup fakeDNS host record
 	targetHost, err := lookupHost(target)
 	if err != nil {
@@ -101,6 +105,19 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 }
 
 func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr) (err error) {
+	if addr.Port == 53 {
+		resp, err := fakeDNS.Resolve(data)
+		if err != nil {
+			log.Warnf("hijack DNS: %v", err)
+		} else {
+			if _, err = conn.WriteFrom(resp, addr); err != nil {
+				return fmt.Errorf("write dns answer failed: %v", err)
+			}
+			h.Close(conn)
+			return nil
+		}
+	}
+
 	// Close if return error
 	defer func() {
 		if err != nil {
@@ -131,6 +148,9 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 }
 
 func (h *udpHandler) Close(conn core.UDPConn) {
+	// Close
+	conn.Close()
+
 	// Load from remoteConnMap
 	if remoteConn, ok := h.remoteConnMap.Load(conn); ok {
 		remoteConn.(net.PacketConn).Close()
@@ -140,9 +160,6 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 
 	h.remoteAddrMap.Delete(conn)
 	h.remoteConnMap.Delete(conn)
-
-	// Close
-	conn.Close()
 
 	// Remove session
 	removeSession(conn)

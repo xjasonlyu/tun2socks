@@ -26,7 +26,7 @@ var (
 type Server struct {
 	*D.Server
 	p *fakeip.Pool
-	h handler
+	h D.HandlerFunc
 }
 
 func (s *Server) ServeDNS(w D.ResponseWriter, r *D.Msg) {
@@ -67,6 +67,34 @@ func (s *Server) Stop() error {
 
 func (s *Server) IPToHost(ip net.IP) (string, bool) {
 	return s.p.LookBack(ip)
+}
+
+func (s *Server) Resolve(request []byte) ([]byte, error) {
+	if err := D.IsMsg(request); err != nil {
+		return nil, err
+	}
+
+	req := new(D.Msg)
+	if err := req.Unpack(request); err != nil {
+		return nil, errors.New("cannot handle dns query: failed to unpack")
+	}
+
+	qtype := req.Question[0].Qtype
+	if qtype != D.TypeA && qtype != D.TypeAAAA {
+		return nil, errors.New("cannot handle dns query: not A/AAAA QType")
+	}
+
+	qclass := req.Question[0].Qclass
+	if qclass != D.ClassINET {
+		return nil, errors.New("cannot handle dns query: not ClassINET")
+	}
+
+	msg := fakeResolve(s.p, req)
+	resp, err := msg.Pack()
+	if err != nil {
+		return nil, fmt.Errorf("failed to pack dns answer: %v", err)
+	}
+	return resp, nil
 }
 
 func NewServer(fakeIPRange, hosts string) (*Server, error) {
