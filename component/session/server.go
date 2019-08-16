@@ -59,7 +59,7 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 		sort.Slice(sessions, func(i, j int) bool {
 			return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
 		})
-		_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\"> align=\"right\"")
+		_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
 		_, _ = fmt.Fprintf(w, "<tr><th>Process</th><th>Network</th><th>Date</th><th>Duration</th><th>Client Addr</th><th>Target Addr</th><th>Upload</th><th>Download</th></tr>\n")
 		sort.Slice(sessions, func(i, j int) bool {
 			return sessions[i].SessionStart.After(sessions[j].SessionStart)
@@ -95,8 +95,8 @@ table, th, td {
 
 	// Statistics table
 	_, _ = fmt.Fprintf(w, "<p>Statistics</p>")
-	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\" align=\"center\">")
-	_, _ = fmt.Fprintf(w, "<tr><th>Now</th><th>Uptime</th><th>Upload</th><th>Download</th><th>Total</th></tr>\n")
+	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
+	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh</th><th>Uptime</th><th>Upload</th><th>Download</th><th>Total Traffic</th></tr>\n")
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
 	_, _ = fmt.Fprintf(w, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",

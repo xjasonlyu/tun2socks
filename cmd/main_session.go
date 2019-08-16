@@ -17,10 +17,10 @@ func init() {
 		if *args.EnableStats {
 			monitor = session.NewServer()
 
-			// Set stats variables
+			// Set session variables
 			session.ServeAddr = *args.StatsAddr
 
-			// Start session stater
+			// Start session monitor
 			if err := monitor.Start(); err != nil {
 				log.Fatalf("Start session monitor failed: %v", err)
 			}
