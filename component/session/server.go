@@ -92,20 +92,19 @@ table, th, td {
   text-align: right;
   padding: 4;
 }</style><title>Go-tun2socks Monitor</title></head>`)
-	_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", C.Version)
 
 	// Statistics table
 	_, _ = fmt.Fprintf(w, "<p>Statistics (%d)</p>", runtime.NumGoroutine())
 	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh Time</th><th>Platform Version</th><th>CPU</th><th>Mem</th><th>Disk</th><th>Uptime</th><th>Total</th><th>Upload</th><th>Download</th></tr>\n")
+	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh Time</th><th>Platform Version</th><th>Go-tun2socks Version</th><th>CPU</th><th>Mem</th><th>Uptime</th><th>Total</th><th>Upload</th><th>Download</th></tr>\n")
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
 	_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
 		date(time.Now()),
 		platform(),
+		C.Version,
 		cpu(),
 		mem(),
-		disk(),
 		uptime(),
 		byteCountSI(trafficUp+trafficDown),
 		byteCountSI(trafficUp),

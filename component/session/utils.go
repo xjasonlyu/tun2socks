@@ -6,7 +6,6 @@ import (
 	"time"
 
 	C "github.com/shirou/gopsutil/cpu"
-	D "github.com/shirou/gopsutil/disk"
 	H "github.com/shirou/gopsutil/host"
 	M "github.com/shirou/gopsutil/mem"
 )
@@ -23,14 +22,6 @@ func cpu() string {
 		return "N/A"
 	}
 	return fmt.Sprintf("%.1f%%", c[0])
-}
-
-func disk() string {
-	d, err := D.Usage("/")
-	if err != nil {
-		return "N/A"
-	}
-	return fmt.Sprintf("%.1f%%", d.UsedPercent)
 }
 
 func platform() string {
