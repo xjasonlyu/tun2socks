@@ -59,14 +59,14 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 		sort.Slice(sessions, func(i, j int) bool {
 			return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
 		})
-		_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-		_, _ = fmt.Fprintf(w, "<tr><td>Process</td><td>Network</td><td>Date</td><td>Duration</td><td>Client Addr</td><td>Target Addr</td><td>Upload</td><td>Download</td></tr>")
+		_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\"> align=\"right\"")
+		_, _ = fmt.Fprintf(w, "<tr><th>Process</th><th>Network</th><th>Date</th><th>Duration</th><th>Client Addr</th><th>Target Addr</th><th>Upload</th><th>Download</th></tr>\n")
 		sort.Slice(sessions, func(i, j int) bool {
 			return sessions[i].SessionStart.After(sessions[j].SessionStart)
 		})
 
 		for _, session := range sessions {
-			_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>",
+			_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
 				session.Process,
 				session.Network,
 				date(session.SessionStart),
@@ -82,6 +82,7 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	w := bufio.NewWriter(resp)
+	// Html head
 	_, _ = fmt.Fprintf(w, "<html>")
 	_, _ = fmt.Fprintf(w, `<head><style>
 table, th, td {
@@ -89,17 +90,25 @@ table, th, td {
   border-collapse: collapse;
   text-align: right;
   padding: 4;
-}</style><title>Go-tun2socks Sessions</title></head>`)
+}</style><title>Go-tun2socks Monitor</title></head>`)
 	_, _ = fmt.Fprintf(w, "<h2>Go-tun2socks %s</h2>", C.Version)
-	_, _ = fmt.Fprintf(w, "<h3>Now: %s ; Uptime: %s</h3>", now(), uptime())
-	_, _ = fmt.Fprintf(w, "<p>Traffic</p>")
+
+	// Statistics table
+	_, _ = fmt.Fprintf(w, "<p>Statistics</p>")
+	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\" align=\"center\">")
+	_, _ = fmt.Fprintf(w, "<tr><th>Now</th><th>Uptime</th><th>Upload</th><th>Download</th><th>Total</th></tr>\n")
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
-	_, _ = fmt.Fprintf(w, "<tr><td>Total</td><td>%s</td><td>Up</td><td>%s</td><td>Down</td><td>%s</td></tr>",
+	_, _ = fmt.Fprintf(w, "<tr><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td>%s</td></tr>\n",
+		now(),
+		uptime(),
 		byteCountSI(trafficUp+trafficDown),
 		byteCountSI(trafficUp),
 		byteCountSI(trafficDown),
 	)
+	_, _ = fmt.Fprintf(w, "</table>")
+
+	// Session table
 	_, _ = fmt.Fprintf(w, "<p>Active sessions: %d</p>", len(activeSessions))
 	tablePrint(w, activeSessions)
 	_, _ = fmt.Fprintf(w, "<p>Recently completed sessions: %d</p>", len(completedSessions))
