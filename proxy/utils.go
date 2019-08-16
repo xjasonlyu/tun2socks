@@ -8,12 +8,12 @@ import (
 	"net"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/component/dns"
+	D "github.com/xjasonlyu/tun2socks/component/fakedns"
 	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
 
 // DNS lookup
-func lookupHost(fakeDNS dns.FakeDNS, target net.Addr) (targetHost string, err error) {
+func lookupHost(fakeDNS D.FakeDNS, target net.Addr) (targetHost string, err error) {
 	var targetIP net.IP
 	switch addr := target.(type) {
 	case *net.TCPAddr:

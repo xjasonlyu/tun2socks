@@ -9,7 +9,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/pool"
-	"github.com/xjasonlyu/tun2socks/component/dns"
+	D "github.com/xjasonlyu/tun2socks/component/fakedns"
 	"github.com/xjasonlyu/tun2socks/component/stats"
 	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
@@ -20,11 +20,11 @@ type tcpHandler struct {
 	proxyHost string
 	proxyPort int
 
-	fakeDNS       dns.FakeDNS
+	fakeDNS       D.FakeDNS
 	sessionStater stats.SessionStater
 }
 
-func NewTCPHandler(proxyHost string, proxyPort int, fakeDNS dns.FakeDNS, sessionStater stats.SessionStater) core.TCPConnHandler {
+func NewTCPHandler(proxyHost string, proxyPort int, fakeDNS D.FakeDNS, sessionStater stats.SessionStater) core.TCPConnHandler {
 	return &tcpHandler{
 		proxyHost:     proxyHost,
 		proxyPort:     proxyPort,

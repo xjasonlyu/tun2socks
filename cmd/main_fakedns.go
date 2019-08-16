@@ -5,7 +5,7 @@ package main
 import (
 	"flag"
 
-	"github.com/xjasonlyu/tun2socks/component/dns/fakedns"
+	"github.com/xjasonlyu/tun2socks/component/fakedns"
 	"github.com/xjasonlyu/tun2socks/log"
 )
 

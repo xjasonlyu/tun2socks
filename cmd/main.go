@@ -19,7 +19,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tun"
 
-	D "github.com/xjasonlyu/tun2socks/component/dns"
+	D "github.com/xjasonlyu/tun2socks/component/fakedns"
 	S "github.com/xjasonlyu/tun2socks/component/stats"
 )
 

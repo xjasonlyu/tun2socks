@@ -9,7 +9,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/pool"
-	"github.com/xjasonlyu/tun2socks/component/dns"
+	D "github.com/xjasonlyu/tun2socks/component/fakedns"
 	"github.com/xjasonlyu/tun2socks/component/stats"
 	C "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
@@ -24,11 +24,11 @@ type udpHandler struct {
 	remoteAddrMap sync.Map
 	remoteConnMap sync.Map
 
-	fakeDNS       dns.FakeDNS
+	fakeDNS       D.FakeDNS
 	sessionStater stats.SessionStater
 }
 
-func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, fakeDNS dns.FakeDNS, sessionStater stats.SessionStater) core.UDPConnHandler {
+func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration, fakeDNS D.FakeDNS, sessionStater stats.SessionStater) core.UDPConnHandler {
 	return &udpHandler{
 		proxyHost:     proxyHost,
 		proxyPort:     proxyPort,
