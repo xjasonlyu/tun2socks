@@ -98,14 +98,15 @@ table, th, td {
 	// Statistics table
 	_, _ = fmt.Fprintf(w, "<p>Statistics (%d)</p>", runtime.NumGoroutine())
 	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh Time</th><th>Uptime</th><th>CPU</th><th>MEM</th><th>Total</th><th>Upload</th><th>Download</th></tr>\n")
+	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh Time</th><th>Uptime</th><th>CPU</th><th>MEM</th><th>DISK</th><th>Total</th><th>Upload</th><th>Download</th></tr>\n")
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
-	_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
+	_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
 		date(time.Now()),
 		uptime(),
 		cpu(),
 		mem(),
+		disk(),
 		byteCountSI(trafficUp+trafficDown),
 		byteCountSI(trafficUp),
 		byteCountSI(trafficDown),
