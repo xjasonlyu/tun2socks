@@ -13,7 +13,6 @@ type Monitor interface {
 
 	// METHODS
 	AddSession(key interface{}, session *Session)
-	GetSession(key interface{}) *Session
 	RemoveSession(key interface{})
 }
 

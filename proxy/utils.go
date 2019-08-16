@@ -1,39 +1,14 @@
 package proxy
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
 	"time"
 
-	D "github.com/xjasonlyu/tun2socks/component/fakedns"
 	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
-
-// DNS lookup
-func lookupHost(fakeDNS D.FakeDNS, target net.Addr) (targetHost string, err error) {
-	var targetIP net.IP
-	switch addr := target.(type) {
-	case *net.TCPAddr:
-		targetIP = addr.IP
-	case *net.UDPAddr:
-		targetIP = addr.IP
-	default:
-		err = errors.New("invalid target type")
-		return
-	}
-
-	targetHost = targetIP.String()
-	// Replace with a domain name if target address IP is a fake IP.
-	if fakeDNS != nil {
-		if host, exist := fakeDNS.IPToHost(targetIP); exist {
-			targetHost = host
-		}
-	}
-	return
-}
 
 // TCP functions
 type duplexConn interface {

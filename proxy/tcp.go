@@ -12,24 +12,18 @@ import (
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
 
-	D "github.com/xjasonlyu/tun2socks/component/fakedns"
 	S "github.com/xjasonlyu/tun2socks/component/session"
 )
 
 type tcpHandler struct {
 	proxyHost string
 	proxyPort int
-
-	fakeDNS D.FakeDNS
-	monitor S.Monitor
 }
 
-func NewTCPHandler(proxyHost string, proxyPort int, fakeDNS D.FakeDNS, monitor S.Monitor) core.TCPConnHandler {
+func NewTCPHandler(proxyHost string, proxyPort int) core.TCPConnHandler {
 	return &tcpHandler{
 		proxyHost: proxyHost,
 		proxyPort: proxyPort,
-		fakeDNS:   fakeDNS,
-		monitor:   monitor,
 	}
 }
 
@@ -77,9 +71,7 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	wg.Wait() // Wait for Up Link done
 
 	// Remove session
-	if h.monitor != nil {
-		h.monitor.RemoveSession(localConn)
-	}
+	removeSession(localConn)
 }
 
 func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
@@ -87,7 +79,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 	var localConn = conn
 
 	// Lookup fakeDNS host record
-	targetHost, err := lookupHost(h.fakeDNS, target)
+	targetHost, err := lookupHost(target)
 	if err != nil {
 		log.Warnf("lookup target host error: %v", err)
 		return err
@@ -104,7 +96,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 
 	// Get name of the process
 	var process = lsof.GetProcessName(localConn.LocalAddr())
-	if h.monitor != nil {
+	if monitor != nil {
 		session := &S.Session{
 			Process:       process,
 			Network:       localConn.LocalAddr().Network(),
@@ -115,8 +107,7 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 			DownloadBytes: 0,
 			SessionStart:  time.Now(),
 		}
-		h.monitor.AddSession(localConn, session)
-
+		addSession(localConn, session)
 		remoteConn = &S.Conn{Session: session, Conn: remoteConn}
 	}
 

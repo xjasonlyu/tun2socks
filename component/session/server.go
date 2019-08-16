@@ -134,13 +134,6 @@ func (s *Server) AddSession(key interface{}, session *Session) {
 	s.activeSessionMap.Store(key, session)
 }
 
-func (s *Server) GetSession(key interface{}) *Session {
-	if sess, ok := s.activeSessionMap.Load(key); ok {
-		return sess.(*Session)
-	}
-	return nil
-}
-
 func (s *Server) RemoveSession(key interface{}) {
 	if sess, ok := s.activeSessionMap.Load(key); ok {
 		// move to completed sessions

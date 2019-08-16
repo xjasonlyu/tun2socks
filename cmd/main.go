@@ -137,9 +137,12 @@ func main() {
 	// Wrap a writer to delay ICMP packets
 	lwipWriter = filter.NewICMPFilter(lwipWriter).(io.Writer)
 
+	// Register modules to proxy
+	proxy.RegisterFakeDNS(fakeDNS)
+	proxy.RegisterMonitor(monitor)
 	// Register TCP and UDP handlers to handle accepted connections.
-	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort, fakeDNS, monitor))
-	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout, fakeDNS, monitor))
+	core.RegisterTCPConnHandler(proxy.NewTCPHandler(proxyHost, proxyPort))
+	core.RegisterUDPConnHandler(proxy.NewUDPHandler(proxyHost, proxyPort, *args.UdpTimeout))
 
 	// Register an output callback to write packets output from lwip stack to tun
 	// device, output function should be set before input any packets.
