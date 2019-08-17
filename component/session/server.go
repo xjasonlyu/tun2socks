@@ -99,8 +99,13 @@ table, th, td {
 	_, _ = fmt.Fprintf(w, "<p>Statistics (%d)</p>", runtime.NumGoroutine())
 	_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
 	_, _ = fmt.Fprintf(w, "<tr><th>Last Refresh Time</th><th>Platform Version</th><th>CPU</th><th>MEM</th><th>Uptime</th><th>Total</th><th>Upload</th><th>Download</th></tr>\n")
+	// calculate traffic
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
+	for _, session := range activeSessions {
+		trafficUp += atomic.LoadInt64(&session.UploadBytes)
+		trafficDown += atomic.LoadInt64(&session.DownloadBytes)
+	}
 	_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
 		date(time.Now()),
 		platform(),
