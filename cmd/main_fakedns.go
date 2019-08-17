@@ -16,7 +16,7 @@ func init() {
 	args.FakeIPRange = flag.String("fakeIPRange", "198.18.0.0/15", "Fake IP CIDR range for DNS")
 	args.FakeDNSHosts = flag.String("fakeDNSHosts", "", "DNS hosts mapping, e.g. 'example.com=1.1.1.1,example.net=2.2.2.2'")
 	args.HijackDNS = flag.String("hijackDNS", "", "Hijack the DNS query to get a fake ip, e.g. '*:53' or '8.8.8.8:53,8.8.4.4:53'")
-	args.BackendDNS = flag.String("backendDNS", "8.8.8.8:53", "Backend DNS to resolve !TypeA or !ClassINET query. (must support tcp)")
+	args.BackendDNS = flag.String("backendDNS", "8.8.8.8:53,1.1.1.1:53", "Backend DNS to resolve !TypeA or !ClassINET query. (must support tcp)")
 
 	registerInitFn(func() {
 		if *args.EnableFakeDNS {
