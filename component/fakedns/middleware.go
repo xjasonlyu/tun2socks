@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	BackendDNS = []string{}
+	BackendDNS []string
 )
 
 func dnsExchange(r *D.Msg) (msg *D.Msg) {
