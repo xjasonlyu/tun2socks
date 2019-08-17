@@ -25,6 +25,7 @@ var (
 
 type Server struct {
 	*D.Server
+	t *trie.Trie
 	p *fakeip.Pool
 	h D.HandlerFunc
 }
@@ -79,17 +80,7 @@ func (s *Server) Resolve(request []byte) ([]byte, error) {
 		return nil, errors.New("cannot handle dns query: failed to unpack")
 	}
 
-	qtype := req.Question[0].Qtype
-	if qtype != D.TypeA && qtype != D.TypeAAAA {
-		return nil, errors.New("cannot handle dns query: not A/AAAA QType")
-	}
-
-	qclass := req.Question[0].Qclass
-	if qclass != D.ClassINET {
-		return nil, errors.New("cannot handle dns query: not ClassINET")
-	}
-
-	msg := fakeResolve(s.p, req)
+	msg := resolve(s.t, s.p, req)
 	resp, err := msg.Pack()
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack dns answer: %v", err)
@@ -108,7 +99,7 @@ func NewServer(fakeIPRange, hosts string) (*Server, error) {
 		return nil, err
 	}
 
-	hostsTree := func(str string) *trie.Trie {
+	tree := func(str string) *trie.Trie {
 		// trim `'` `"` ` ` char
 		str = strings.Trim(str, "' \"")
 		if str == "" {
@@ -130,9 +121,10 @@ func NewServer(fakeIPRange, hosts string) (*Server, error) {
 		return tree
 	}(hosts)
 
-	handler := newHandler(hostsTree, pool)
+	handler := newHandler(tree, pool)
 
 	return &Server{
+		t: tree,
 		p: pool,
 		h: handler,
 	}, nil
