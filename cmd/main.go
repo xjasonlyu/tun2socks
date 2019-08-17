@@ -55,6 +55,7 @@ type CmdArgs struct {
 	FakeDNSAddr   *string
 	FakeDNSHosts  *string
 	HijackDNS     *string
+	BackendDNS    *string
 
 	// Session Statistics Monitor
 	EnableMonitor *bool

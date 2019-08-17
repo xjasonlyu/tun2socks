@@ -11,20 +11,28 @@ import (
 )
 
 var (
-	nameserver = "8.8.8.8:53"
+	BackendDNS = []string{}
 )
 
-func dnsExchange(r *D.Msg) *D.Msg {
+func dnsExchange(r *D.Msg) (msg *D.Msg) {
+	defer func() {
+		if msg == nil {
+			// empty DNS response
+			rr := &D.A{}
+			rr.Hdr = D.RR_Header{Name: r.Question[0].Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL}
+			msg = r.Copy()
+			msg.Answer = []D.RR{rr}
+			setMsgTTL(msg, dnsDefaultTTL)
+		}
+	}()
+
 	c := new(D.Client)
 	c.Net = "tcp"
-	msg, _, err := c.Exchange(r, nameserver)
-	if err != nil {
-		// empty DNS response
-		rr := &D.A{}
-		rr.Hdr = D.RR_Header{Name: r.Question[0].Name, Rrtype: D.TypeA, Class: D.ClassINET, Ttl: dnsDefaultTTL}
-		msg = r.Copy()
-		msg.Answer = []D.RR{rr}
-		setMsgTTL(msg, dnsDefaultTTL)
+	for _, dns := range BackendDNS {
+		msg, _, _ = c.Exchange(r, dns)
+		if msg != nil {
+			break
+		}
 	}
 	return msg
 }
