@@ -81,6 +81,9 @@ func (s *Server) Resolve(request []byte) ([]byte, error) {
 	}
 
 	msg := resolve(s.t, s.p, req)
+	if msg == nil {
+		return nil, errors.New("cannot resolve dns query: msg is nil")
+	}
 	resp, err := msg.Pack()
 	if err != nil {
 		return nil, fmt.Errorf("failed to pack dns answer: %v", err)

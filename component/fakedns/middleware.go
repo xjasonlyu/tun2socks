@@ -14,12 +14,10 @@ var (
 	nameserver = "8.8.8.8:53"
 )
 
-func realResolve(r *D.Msg) (msg *D.Msg) {
+func dnsExchange(r *D.Msg) *D.Msg {
 	c := new(D.Client)
 	c.Net = "tcp"
-
-	var err error
-	msg, _, err = c.Exchange(r, nameserver)
+	msg, _, err := c.Exchange(r, nameserver)
 	if err != nil {
 		// empty DNS response
 		rr := &D.A{}
@@ -44,7 +42,7 @@ func resolve(hosts *trie.Trie, pool *fakeip.Pool, r *D.Msg) (msg *D.Msg) {
 
 	q := r.Question[0]
 	if q.Qtype != D.TypeA || q.Qclass != D.ClassINET {
-		return nil
+		return dnsExchange(r)
 	}
 
 	return fakeResolve(pool, r)
