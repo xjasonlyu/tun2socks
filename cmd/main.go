@@ -56,9 +56,9 @@ type CmdArgs struct {
 	FakeDNSHosts  *string
 	HijackDNS     *string
 
-	// Session Stats
-	EnableStats *bool
-	StatsAddr   *string
+	// Session Statistics Monitor
+	EnableMonitor *bool
+	MonitorAddr   *string
 }
 
 func registerInitFn(fn func()) {

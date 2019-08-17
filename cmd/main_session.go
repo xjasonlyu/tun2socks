@@ -10,15 +10,15 @@ import (
 )
 
 func init() {
-	args.EnableStats = flag.Bool("stats", false, "Enable session statistics monitor")
-	args.StatsAddr = flag.String("statsAddr", "localhost:6001", "Listen address of session monitor, open in your browser to view statistics")
+	args.EnableMonitor = flag.Bool("monitor", false, "Enable session statistics monitor")
+	args.MonitorAddr = flag.String("monitorAddr", "localhost:6001", "Listen address of session monitor, open in your browser to view statistics")
 
 	registerInitFn(func() {
-		if *args.EnableStats {
+		if *args.EnableMonitor {
 			monitor = session.NewServer()
 
 			// Set session variables
-			session.ServeAddr = *args.StatsAddr
+			session.ServeAddr = *args.MonitorAddr
 
 			// Start session monitor
 			if err := monitor.Start(); err != nil {
