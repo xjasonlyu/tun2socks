@@ -1,7 +1,6 @@
 package fakedns
 
 import (
-	"github.com/xjasonlyu/tun2socks/log"
 	"net"
 	"strings"
 
@@ -51,7 +50,6 @@ func resolve(hosts *trie.Trie, pool *fakeip.Pool, r *D.Msg) (msg *D.Msg) {
 
 	q := r.Question[0]
 	if q.Qtype != D.TypeA || q.Qclass != D.ClassINET {
-		log.Warnf("DNS: %v", q.String())
 		return dnsExchange(r)
 	}
 
