@@ -13,7 +13,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/queue"
 	C "github.com/xjasonlyu/tun2socks/constant"
 )
 
@@ -25,47 +24,38 @@ var (
 )
 
 type Server struct {
+	sync.Mutex
 	*http.Server
 
 	trafficUp   int64
 	trafficDown int64
 
-	activeSessionMap      sync.Map
-	completedSessionQueue *queue.Queue
+	activeSessionMap  sync.Map
+	completedSessions []Session
 }
 
 func NewServer() *Server {
-	return &Server{
-		completedSessionQueue: queue.New(maxCompletedSessions),
-	}
+	return &Server{}
 }
 
 func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 	// Slice of active sessions
-	var activeSessions []*Session
+	var activeSessions []Session
 	s.activeSessionMap.Range(func(key, value interface{}) bool {
-		activeSessions = append(activeSessions, value.(*Session))
+		session := value.(*Session)
+		activeSessions = append(activeSessions, *session)
 		return true
 	})
 
-	// Slice of completed sessions
-	var completedSessions []*Session
-	for _, item := range s.completedSessionQueue.Copy() {
-		if session, ok := item.(*Session); ok {
-			completedSessions = append(completedSessions, session)
-		}
-	}
+	completedSessions := append([]Session(nil), s.completedSessions...)
 
-	tablePrint := func(w io.Writer, sessions []*Session) {
+	tablePrint := func(w io.Writer, sessions []Session) {
 		// Sort by session start time.
-		sort.Slice(sessions, func(i, j int) bool {
-			return sessions[i].SessionStart.Sub(sessions[j].SessionStart) < 0
-		})
-		_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
-		_, _ = fmt.Fprintf(w, "<tr><th>Process</th><th>Network</th><th>Date</th><th>Duration</th><th>Client Addr</th><th>Target Addr</th><th>Upload</th><th>Download</th></tr>\n")
 		sort.Slice(sessions, func(i, j int) bool {
 			return sessions[i].SessionStart.After(sessions[j].SessionStart)
 		})
+		_, _ = fmt.Fprintf(w, "<table style=\"border=4px solid\">")
+		_, _ = fmt.Fprintf(w, "<tr><th>Process</th><th>Network</th><th>Date</th><th>Duration</th><th>Client Addr</th><th>Target Addr</th><th>Upload</th><th>Download</th></tr>\n")
 
 		for _, session := range sessions {
 			_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
@@ -76,8 +66,8 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 				// session.DialerAddr,
 				session.ClientAddr,
 				session.TargetAddr,
-				byteCountSI(atomic.LoadInt64(&session.UploadBytes)),
-				byteCountSI(atomic.LoadInt64(&session.DownloadBytes)),
+				byteCountSI(session.UploadBytes),
+				byteCountSI(session.DownloadBytes),
 			)
 		}
 		_, _ = fmt.Fprintf(w, "</table>")
@@ -103,8 +93,8 @@ table, th, td {
 	trafficUp := atomic.LoadInt64(&s.trafficUp)
 	trafficDown := atomic.LoadInt64(&s.trafficDown)
 	for _, session := range activeSessions {
-		trafficUp += atomic.LoadInt64(&session.UploadBytes)
-		trafficDown += atomic.LoadInt64(&session.DownloadBytes)
+		trafficUp += session.UploadBytes
+		trafficDown += session.DownloadBytes
 	}
 	_, _ = fmt.Fprintf(w, "<tr><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td><td>%v</td></tr>\n",
 		date(time.Now()),
@@ -176,9 +166,11 @@ func (s *Server) RemoveSession(key interface{}) {
 		atomic.AddInt64(&s.trafficUp, atomic.LoadInt64(&session.UploadBytes))
 		atomic.AddInt64(&s.trafficDown, atomic.LoadInt64(&session.DownloadBytes))
 		// move to completed sessions
-		s.completedSessionQueue.Put(session)
-		if s.completedSessionQueue.Len() > maxCompletedSessions {
-			s.completedSessionQueue.Pop()
+		s.Lock()
+		s.completedSessions = append(s.completedSessions, *session)
+		if len(s.completedSessions) > maxCompletedSessions {
+			s.completedSessions = s.completedSessions[1:]
 		}
+		s.Unlock()
 	}
 }
