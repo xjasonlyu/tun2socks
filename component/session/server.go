@@ -34,7 +34,7 @@ type Server struct {
 	completedSessions []Session
 }
 
-func NewServer() *Server {
+func New() *Server {
 	return &Server{}
 }
 

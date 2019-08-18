@@ -15,7 +15,7 @@ func init() {
 
 	registerInitFn(func() {
 		if *args.EnableMonitor {
-			monitor = session.NewServer()
+			monitor = session.New()
 
 			// Set session variables
 			session.ServeAddr = *args.MonitorAddr
