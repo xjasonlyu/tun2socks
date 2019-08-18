@@ -47,7 +47,11 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 		return true
 	})
 
-	completedSessions := append([]Session(nil), s.completedSessions...)
+	// Slice of completed sessions
+	s.Lock()
+	completedSessions := make([]Session, len(s.completedSessions))
+	copy(completedSessions, s.completedSessions)
+	s.Unlock()
 
 	tablePrint := func(w io.Writer, sessions []Session) {
 		// Sort by session start time.
