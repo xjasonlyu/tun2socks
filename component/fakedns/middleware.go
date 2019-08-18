@@ -6,6 +6,7 @@ import (
 
 	trie "github.com/xjasonlyu/tun2socks/common/domain-trie"
 	"github.com/xjasonlyu/tun2socks/common/fakeip"
+	"github.com/xjasonlyu/tun2socks/log"
 
 	D "github.com/miekg/dns"
 )
@@ -50,6 +51,7 @@ func resolve(hosts *trie.Trie, pool *fakeip.Pool, r *D.Msg) (msg *D.Msg) {
 
 	q := r.Question[0]
 	if q.Qtype != D.TypeA || q.Qclass != D.ClassINET {
+		log.Debugf("DNS Query: %v %v %v", q.Name, q.Qclass, q.Qtype)
 		return dnsExchange(r)
 	}
 
