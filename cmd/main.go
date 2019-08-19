@@ -70,8 +70,8 @@ func init() {
 	args.Version = flag.Bool("version", false, "Show current version of tun2socks")
 	args.LogLevel = flag.String("loglevel", "info", "Logging level [info, warning, error, debug, silent]")
 	args.TunName = flag.String("tunName", "utun0", "TUN interface name")
-	args.TunAddr = flag.String("tunAddr", "198.18.0.2", "TUN interface address")
-	args.TunGw = flag.String("tunGw", "198.18.0.1", "TUN interface gateway")
+	args.TunAddr = flag.String("tunAddr", "240.0.0.2", "TUN interface address")
+	args.TunGw = flag.String("tunGw", "240.0.0.1", "TUN interface gateway")
 	args.TunMask = flag.String("tunMask", "255.255.255.0", "TUN interface netmask")
 	args.TunDNS = flag.String("tunDNS", "8.8.8.8,8.8.4.4", "DNS resolvers for TUN interface (Windows Only)")
 
