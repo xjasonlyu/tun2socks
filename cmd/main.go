@@ -51,13 +51,11 @@ type CmdArgs struct {
 
 	// FakeDNS
 	EnableFakeDNS *bool
-	FakeIPRange   *string
-	FakeDNSAddr   *string
-	FakeDNSHosts  *string
+	Hosts         *string
 	HijackDNS     *string
 	BackendDNS    *string
 
-	// Session Statistics Monitor
+	// Session Monitor
 	EnableMonitor *bool
 	MonitorAddr   *string
 }
@@ -164,11 +162,6 @@ func main() {
 	osSignals := make(chan os.Signal, 1)
 	signal.Notify(osSignals, os.Interrupt, os.Kill, syscall.SIGTERM, syscall.SIGHUP)
 	<-osSignals
-
-	// Stop fakeDNS server
-	if fakeDNS != nil {
-		fakeDNS.Stop()
-	}
 
 	// Stop session stater
 	if monitor != nil {
