@@ -15,7 +15,7 @@ var (
 
 	fakeDNS D.FakeDNS
 	// default DNS address
-	hijackDNS = []string{}
+	hijackDNS []string
 )
 
 // Register Monitor
