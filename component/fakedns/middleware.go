@@ -112,3 +112,11 @@ func hostResolve(hosts *T.Trie, r *D.Msg) *D.Msg {
 	setMsgTTL(msg, dnsDefaultTTL)
 	return msg
 }
+
+func newHandler(hosts *T.Trie, pool *F.Pool, backendDNS []string) D.HandlerFunc {
+	return func(w D.ResponseWriter, r *D.Msg) {
+		msg := resolve(hosts, pool, backendDNS, r)
+		w.WriteMsg(msg)
+		return
+	}
+}

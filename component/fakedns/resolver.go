@@ -24,8 +24,9 @@ const (
 
 type Resolver struct {
 	b []string
-	h *T.Trie
 	p *F.Pool
+	t *T.Trie
+	h D.HandlerFunc
 
 	*D.Server
 	ServeAddr string
@@ -36,8 +37,7 @@ func (r *Resolver) ServeDNS(w D.ResponseWriter, req *D.Msg) {
 		D.HandleFailed(w, req)
 		return
 	}
-	msg := resolve(r.h, r.p, r.b, req)
-	w.WriteMsg(msg)
+	r.h(w, req)
 }
 
 func (r *Resolver) Start() error {
@@ -56,7 +56,7 @@ func (r *Resolver) Start() error {
 		return err
 	}
 
-	r.Server = &D.Server{Addr: r.ServeAddr, PacketConn: pc}
+	r.Server = &D.Server{Addr: r.ServeAddr, PacketConn: pc, Handler: r.h}
 	go func() {
 		r.ActivateAndServe()
 	}()
@@ -105,7 +105,7 @@ func NewResolver(a, h, b string) (*Resolver, error) {
 		return nil, err
 	}
 
-	hosts := func(str string) *T.Trie {
+	tree := func(str string) *T.Trie {
 		tree := T.New()
 		s := strings.Split(str, ",")
 		for _, host := range s {
@@ -122,10 +122,13 @@ func NewResolver(a, h, b string) (*Resolver, error) {
 		return tree
 	}(h)
 
+	backendDNS := strings.Split(b, ",")
+	handler := newHandler(tree, pool, backendDNS)
 	return &Resolver{
-		b:         strings.Split(b, ","),
-		h:         hosts,
+		b:         backendDNS,
 		p:         pool,
+		t:         tree,
+		h:         handler,
 		ServeAddr: a,
 	}, nil
 }
