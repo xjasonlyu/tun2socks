@@ -22,11 +22,13 @@ const (
 	dnsFakeIPRange = "198.18.0.0/15"
 )
 
+type handler = D.HandlerFunc
+
 type Resolver struct {
 	b []string
+	h handler
 	p *F.Pool
 	t *T.Trie
-	h D.HandlerFunc
 
 	*D.Server
 	ServeAddr string
@@ -86,7 +88,7 @@ func (r *Resolver) Resolve(request []byte) ([]byte, error) {
 		return nil, errors.New("cannot handle dns query: invalid question length")
 	}
 
-	msg := resolve(r.h, r.p, r.b, req)
+	msg := resolve(r.t, r.p, r.b, req)
 	if msg == nil {
 		return nil, errors.New("cannot resolve dns query: msg is nil")
 	}
@@ -126,9 +128,9 @@ func NewResolver(a, h, b string) (*Resolver, error) {
 	handler := newHandler(tree, pool, backendDNS)
 	return &Resolver{
 		b:         backendDNS,
+		h:         handler,
 		p:         pool,
 		t:         tree,
-		h:         handler,
 		ServeAddr: a,
 	}, nil
 }
