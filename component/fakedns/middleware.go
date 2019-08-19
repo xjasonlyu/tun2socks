@@ -1,8 +1,10 @@
 package fakedns
 
 import (
+	"context"
 	"net"
 	"strings"
+	"time"
 
 	D "github.com/miekg/dns"
 
@@ -25,7 +27,8 @@ func dnsExchange(backendDNS []string, r *D.Msg) (msg *D.Msg) {
 	c := new(D.Client)
 	c.Net = "tcp"
 	for _, dns := range backendDNS {
-		msg, _, _ = c.Exchange(r, dns)
+		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+		msg, _, _ = c.ExchangeContext(ctx, r, dns)
 		if msg != nil {
 			// success, exit query.
 			break
