@@ -18,15 +18,15 @@ func init() {
 
 	registerInitFn(func() {
 		if *args.EnableFakeDNS {
-			resolver, err := fakedns.NewResolver(*args.FakeDNSAddr, *args.Hosts, *args.BackendDNS)
+			var err error
+			fakeDNS, err = fakedns.NewResolver(*args.FakeDNSAddr, *args.Hosts, *args.BackendDNS)
 			if err != nil {
 				log.Fatalf("Create fake DNS server failed: %v", err)
 			}
 
-			if err := resolver.Start(); err != nil {
+			if err := fakeDNS.Start(); err != nil {
 				log.Fatalf("Start fake DNS failed: %v", err)
 			}
-			fakeDNS = resolver
 		} else {
 			fakeDNS = nil
 		}
