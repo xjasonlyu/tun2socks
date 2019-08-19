@@ -20,12 +20,12 @@ const maxCompletedSessions = 100
 
 var (
 	ServeAddr = "localhost:6001"
-	ServePath = "/session/plain"
-)
-
 type Server struct {
 	sync.Mutex
 	*http.Server
+
+	ServeAddr string
+	ServePath string
 
 	trafficUp   int64
 	trafficDown int64
@@ -34,8 +34,11 @@ type Server struct {
 	completedSessions []Session
 }
 
-func New() *Server {
-	return &Server{}
+func New(addr string) *Server {
+	return &Server{
+		ServeAddr: addr,
+		ServePath: "/session/plain",
+	}
 }
 
 func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
@@ -122,12 +125,16 @@ table, th, td {
 }
 
 func (s *Server) Start() error {
-	_, port, err := net.SplitHostPort(ServeAddr)
+	if s.ServePath == "" || s.ServePath == "/" {
+		return errors.New("invalid serve path")
+	}
+
+	_, port, err := net.SplitHostPort(s.ServeAddr)
 	if port == "0" || port == "" || err != nil {
 		return errors.New("address format error")
 	}
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp", ServeAddr)
+	tcpAddr, err := net.ResolveTCPAddr("tcp", s.ServeAddr)
 	if err != nil {
 		return err
 	}
@@ -139,10 +146,10 @@ func (s *Server) Start() error {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, ServePath, 301)
+		http.Redirect(w, r, s.ServePath, 301)
 	})
-	mux.HandleFunc(ServePath, s.handler)
-	s.Server = &http.Server{Addr: ServeAddr, Handler: mux}
+	mux.HandleFunc(s.ServePath, s.handler)
+	s.Server = &http.Server{Addr: s.ServeAddr, Handler: mux}
 	go func() {
 		s.Serve(c)
 	}()

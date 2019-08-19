@@ -15,16 +15,12 @@ func init() {
 
 	registerInitFn(func() {
 		if *args.EnableMonitor {
-			monitor = session.New()
-
-			// Set session variables
-			session.ServeAddr = *args.MonitorAddr
+			monitor = session.New(*args.MonitorAddr)
 
 			// Start session monitor
 			if err := monitor.Start(); err != nil {
 				log.Fatalf("Start session monitor failed: %v", err)
 			}
-			log.Infof("Session monitor serving at %v", session.ServeAddr)
 		} else {
 			monitor = nil
 		}
