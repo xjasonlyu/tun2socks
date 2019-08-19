@@ -1,7 +1,9 @@
 package tun
 
 import (
+	"errors"
 	"io"
+	"net"
 
 	"github.com/songgao/water"
 )
