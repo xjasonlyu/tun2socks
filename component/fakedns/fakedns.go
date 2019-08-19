@@ -5,6 +5,9 @@ import (
 )
 
 type FakeDNS interface {
+	Start() error
+	Stop() error
+
 	// Resolve a fake dns response for the specify request.
 	Resolve([]byte) ([]byte, error)
 

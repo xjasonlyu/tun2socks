@@ -26,6 +26,46 @@ type Resolver struct {
 	b []string
 	h *T.Trie
 	p *F.Pool
+
+	*D.Server
+	ServeAddr string
+}
+
+func (r *Resolver) ServeDNS(w D.ResponseWriter, req *D.Msg) {
+	if len(req.Question) == 0 {
+		D.HandleFailed(w, req)
+		return
+	}
+	msg := resolve(r.h, r.p, r.b, req)
+	w.WriteMsg(msg)
+}
+
+func (r *Resolver) Start() error {
+	_, port, err := net.SplitHostPort(r.ServeAddr)
+	if port == "0" || port == "" || err != nil {
+		return errors.New("address format error")
+	}
+
+	udpAddr, err := net.ResolveUDPAddr("udp", r.ServeAddr)
+	if err != nil {
+		return err
+	}
+
+	pc, err := net.ListenUDP("udp", udpAddr)
+	if err != nil {
+		return err
+	}
+
+	r.Server = &D.Server{Addr: r.ServeAddr, PacketConn: pc}
+	go func() {
+		r.ActivateAndServe()
+	}()
+
+	return nil
+}
+
+func (r *Resolver) Stop() error {
+	return r.Shutdown()
 }
 
 func (r *Resolver) IPToHost(ip net.IP) (string, bool) {
@@ -57,7 +97,7 @@ func (r *Resolver) Resolve(request []byte) ([]byte, error) {
 	return resp, nil
 }
 
-func NewResolver(h, b string) (*Resolver, error) {
+func NewResolver(a, h, b string) (*Resolver, error) {
 	_, ipnet, _ := net.ParseCIDR(dnsFakeIPRange)
 
 	// fake ip should start with "198.18.0.3".
@@ -84,8 +124,9 @@ func NewResolver(h, b string) (*Resolver, error) {
 	}(h)
 
 	return &Resolver{
-		b: strings.Split(b, ","),
-		h: hosts,
-		p: pool,
+		b:         strings.Split(b, ","),
+		h:         hosts,
+		p:         pool,
+		ServeAddr: a,
 	}, nil
 }
