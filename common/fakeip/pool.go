@@ -86,11 +86,15 @@ func uintToIP(v uint32) net.IP {
 }
 
 // New return Pool instance
-func New(ipnet *net.IPNet, size int) (*Pool, error) {
-	min := ipToUint(ipnet.IP) + 2
+func New(ipnet *net.IPNet, offset, size int) (*Pool, error) {
+	if offset < 2 {
+		return nil, errors.New("offset must not less than 2")
+	}
+
+	min := ipToUint(ipnet.IP) + uint32(offset)
 
 	ones, bits := ipnet.Mask.Size()
-	total := 1<<uint(bits-ones) - 2
+	total := 1<<uint(bits-ones) - uint32(offset)
 
 	if total <= 0 {
 		return nil, errors.New("ipnet don't have valid ip")
