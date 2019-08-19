@@ -13,8 +13,9 @@ import (
 var (
 	monitor S.Monitor
 
-	fakeDNS   D.FakeDNS
-	hijackDNS []string
+	fakeDNS D.FakeDNS
+	// default DNS address
+	hijackDNS = []string{"198.18.0.2:53"}
 )
 
 // Register Monitor
@@ -38,7 +39,7 @@ func removeSession(key interface{}) {
 // Register FakeDNS
 func RegisterFakeDNS(d D.FakeDNS, h string) {
 	fakeDNS = d
-	hijackDNS = strings.Split(h, ",")
+	hijackDNS = append(hijackDNS, strings.Split(h, ",")...)
 }
 
 // Check target if is hijacked address.
