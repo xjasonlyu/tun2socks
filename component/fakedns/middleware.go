@@ -4,18 +4,13 @@ import (
 	"net"
 	"strings"
 
-	trie "github.com/xjasonlyu/tun2socks/common/domain-trie"
-	"github.com/xjasonlyu/tun2socks/common/fakeip"
-	"github.com/xjasonlyu/tun2socks/log"
-
 	D "github.com/miekg/dns"
+
+	T "github.com/xjasonlyu/tun2socks/common/domain-trie"
+	F "github.com/xjasonlyu/tun2socks/common/fakeip"
 )
 
-var (
-	BackendDNS []string
-)
-
-func dnsExchange(r *D.Msg) (msg *D.Msg) {
+func dnsExchange(backendDNS []string, r *D.Msg) (msg *D.Msg) {
 	defer func() {
 		if msg == nil {
 			// empty DNS response
@@ -29,16 +24,17 @@ func dnsExchange(r *D.Msg) (msg *D.Msg) {
 
 	c := new(D.Client)
 	c.Net = "tcp"
-	for _, dns := range BackendDNS {
+	for _, dns := range backendDNS {
 		msg, _, _ = c.Exchange(r, dns)
 		if msg != nil {
+			// success, exit query.
 			break
 		}
 	}
 	return msg
 }
 
-func resolve(hosts *trie.Trie, pool *fakeip.Pool, r *D.Msg) (msg *D.Msg) {
+func resolve(hosts *T.Trie, pool *F.Pool, backendDNS []string, r *D.Msg) (msg *D.Msg) {
 	defer func() {
 		if msg != nil {
 			msg.SetReply(r)
@@ -51,14 +47,13 @@ func resolve(hosts *trie.Trie, pool *fakeip.Pool, r *D.Msg) (msg *D.Msg) {
 
 	q := r.Question[0]
 	if q.Qtype != D.TypeA || q.Qclass != D.ClassINET {
-		log.Debugf("DNS Query: %v %v %v", q.Name, q.Qclass, q.Qtype)
-		return dnsExchange(r)
+		return dnsExchange(backendDNS, r)
 	}
 
 	return fakeResolve(pool, r)
 }
 
-func fakeResolve(pool *fakeip.Pool, r *D.Msg) *D.Msg {
+func fakeResolve(pool *F.Pool, r *D.Msg) *D.Msg {
 	q := r.Question[0]
 	host := strings.TrimRight(q.Name, ".")
 
@@ -73,7 +68,7 @@ func fakeResolve(pool *fakeip.Pool, r *D.Msg) *D.Msg {
 	return msg
 }
 
-func hostResolve(hosts *trie.Trie, r *D.Msg) *D.Msg {
+func hostResolve(hosts *T.Trie, r *D.Msg) *D.Msg {
 	if hosts == nil {
 		return nil
 	}
@@ -113,12 +108,4 @@ func hostResolve(hosts *trie.Trie, r *D.Msg) *D.Msg {
 	msg.Answer = []D.RR{rr}
 	setMsgTTL(msg, dnsDefaultTTL)
 	return msg
-}
-
-func newHandler(hosts *trie.Trie, pool *fakeip.Pool) D.HandlerFunc {
-	return func(w D.ResponseWriter, r *D.Msg) {
-		msg := resolve(hosts, pool, r)
-		w.WriteMsg(msg)
-		return
-	}
 }
