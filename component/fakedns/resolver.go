@@ -60,8 +60,8 @@ func (r *Resolver) Resolve(request []byte) ([]byte, error) {
 func NewResolver(h, b string) (*Resolver, error) {
 	_, ipnet, _ := net.ParseCIDR(dnsFakeIPRange)
 
-	// fake ip should start with "198.18.0.10".
-	pool, err := F.New(ipnet, 10, dnsCacheSize)
+	// fake ip should start with "198.18.0.3".
+	pool, err := F.New(ipnet, 3, dnsCacheSize)
 	if err != nil {
 		return nil, err
 	}
