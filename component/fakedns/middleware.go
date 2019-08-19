@@ -49,7 +49,7 @@ func resolve(hosts *T.Trie, pool *F.Pool, backendDNS []string, r *D.Msg) (msg *D
 	}
 
 	q := r.Question[0]
-	if q.Qtype != D.TypeA || q.Qclass != D.ClassINET {
+	if q.Qtype != D.TypeA && q.Qtype != D.TypeAAAA {
 		return dnsExchange(backendDNS, r)
 	}
 
