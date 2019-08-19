@@ -12,7 +12,13 @@ import (
 	F "github.com/xjasonlyu/tun2socks/common/fakeip"
 )
 
-func dnsExchange(backendDNS []string, r *D.Msg) (msg *D.Msg) {
+var backendDNS []string
+
+func RegisterDNS(dns string) {
+	backendDNS = append(backendDNS, strings.Split(dns, ",")...)
+}
+
+func dnsExchange(r *D.Msg) (msg *D.Msg) {
 	defer func() {
 		if msg == nil {
 			// empty DNS response
@@ -37,7 +43,7 @@ func dnsExchange(backendDNS []string, r *D.Msg) (msg *D.Msg) {
 	return msg
 }
 
-func resolve(hosts *T.Trie, pool *F.Pool, backendDNS []string, r *D.Msg) (msg *D.Msg) {
+func resolve(hosts *T.Trie, pool *F.Pool, r *D.Msg) (msg *D.Msg) {
 	defer func() {
 		if msg != nil {
 			msg.SetReply(r)
@@ -50,7 +56,7 @@ func resolve(hosts *T.Trie, pool *F.Pool, backendDNS []string, r *D.Msg) (msg *D
 
 	q := r.Question[0]
 	if q.Qtype != D.TypeA || q.Qclass != D.ClassINET {
-		return dnsExchange(backendDNS, r)
+		return dnsExchange(r)
 	}
 
 	return fakeResolve(pool, r)
@@ -113,9 +119,9 @@ func hostResolve(hosts *T.Trie, r *D.Msg) *D.Msg {
 	return msg
 }
 
-func newHandler(hosts *T.Trie, pool *F.Pool, backendDNS []string) handler {
+func newHandler(hosts *T.Trie, pool *F.Pool) handler {
 	return func(w D.ResponseWriter, r *D.Msg) {
-		msg := resolve(hosts, pool, backendDNS, r)
+		msg := resolve(hosts, pool, r)
 		w.WriteMsg(msg)
 		return
 	}

@@ -25,7 +25,6 @@ const (
 type handler = D.HandlerFunc
 
 type Resolver struct {
-	b []string
 	h handler
 	p *F.Pool
 	t *T.Trie
@@ -88,7 +87,7 @@ func (r *Resolver) Resolve(request []byte) ([]byte, error) {
 		return nil, errors.New("cannot handle dns query: invalid question length")
 	}
 
-	msg := resolve(r.t, r.p, r.b, req)
+	msg := resolve(r.t, r.p, req)
 	if msg == nil {
 		return nil, errors.New("cannot resolve dns query: msg is nil")
 	}
@@ -99,7 +98,7 @@ func (r *Resolver) Resolve(request []byte) ([]byte, error) {
 	return resp, nil
 }
 
-func NewResolver(a, h, b string) (*Resolver, error) {
+func NewResolver(a, h string) (*Resolver, error) {
 	_, ipnet, _ := net.ParseCIDR(dnsFakeIPRange)
 
 	pool, err := F.New(ipnet, dnsCacheSize)
@@ -124,10 +123,8 @@ func NewResolver(a, h, b string) (*Resolver, error) {
 		return tree
 	}(h)
 
-	backendDNS := strings.Split(b, ",")
-	handler := newHandler(tree, pool, backendDNS)
+	handler := newHandler(tree, pool)
 	return &Resolver{
-		b:         backendDNS,
 		h:         handler,
 		p:         pool,
 		t:         tree,
