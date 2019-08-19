@@ -18,8 +18,6 @@ import (
 
 const maxCompletedSessions = 100
 
-var (
-	ServeAddr = "localhost:6001"
 type Server struct {
 	sync.Mutex
 	*http.Server
