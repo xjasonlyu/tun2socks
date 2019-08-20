@@ -20,8 +20,7 @@ type udpHandler struct {
 	proxyPort int
 	timeout   time.Duration
 
-	remoteAddrMap sync.Map
-	remoteConnMap sync.Map
+	remoteMap sync.Map
 }
 
 func NewUDPHandler(proxyHost string, proxyPort int, timeout time.Duration) core.UDPConnHandler {
@@ -96,8 +95,10 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		remoteConn = &S.PacketConn{Session: session, PacketConn: remoteConn}
 	}
 
-	h.remoteAddrMap.Store(conn, remoteAddr)
-	h.remoteConnMap.Store(conn, remoteConn)
+	h.remoteMap.Store(conn, &udpElement{
+		remoteAddr: remoteAddr,
+		remoteConn: remoteConn,
+	})
 
 	go h.fetchUDPInput(conn, remoteConn, target)
 
@@ -130,12 +131,9 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 	var remoteAddr net.Addr
 	var remoteConn net.PacketConn
 
-	if value, ok := h.remoteAddrMap.Load(conn); ok {
-		remoteAddr = value.(net.Addr)
-	}
-
-	if value, ok := h.remoteConnMap.Load(conn); ok {
-		remoteConn = value.(net.PacketConn)
+	if elm, ok := h.remoteMap.Load(conn); ok {
+		remoteAddr = elm.(*udpElement).remoteAddr
+		remoteConn = elm.(*udpElement).remoteConn
 	}
 
 	if remoteAddr == nil || remoteConn == nil {
@@ -154,14 +152,12 @@ func (h *udpHandler) Close(conn core.UDPConn) {
 	conn.Close()
 
 	// Load from remoteConnMap
-	if remoteConn, ok := h.remoteConnMap.Load(conn); ok {
-		remoteConn.(net.PacketConn).Close()
+	if elm, ok := h.remoteMap.Load(conn); ok {
+		elm.(*udpElement).remoteConn.Close()
+		h.remoteMap.Delete(conn)
 	} else {
 		return
 	}
-
-	h.remoteAddrMap.Delete(conn)
-	h.remoteConnMap.Delete(conn)
 
 	// Remove session
 	removeSession(conn)

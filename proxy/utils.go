@@ -10,6 +10,12 @@ import (
 	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
 
+// UDP util
+type udpElement struct {
+	remoteAddr net.Addr
+	remoteConn net.PacketConn
+}
+
 // TCP functions
 type duplexConn interface {
 	net.Conn
