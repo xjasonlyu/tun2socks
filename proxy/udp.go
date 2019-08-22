@@ -2,12 +2,12 @@ package proxy
 
 import (
 	"fmt"
+	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"net"
 	"strconv"
 	"sync"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/lsof"
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
@@ -78,22 +78,16 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		return err
 	}
 
-	// Get name of the process
-	var process = lsof.GetProcessName(conn.LocalAddr())
-	if monitor != nil {
-		session := &S.Session{
-			Process:       process,
-			Network:       conn.LocalAddr().Network(),
-			DialerAddr:    remoteConn.LocalAddr().String(),
-			ClientAddr:    conn.LocalAddr().String(),
-			TargetAddr:    targetAddr,
-			UploadBytes:   0,
-			DownloadBytes: 0,
-			SessionStart:  time.Now(),
-		}
-		addSession(conn, session)
-		remoteConn = &S.PacketConn{Session: session, PacketConn: remoteConn}
+	var session = &S.Session{
+		Network:       conn.LocalAddr().Network(),
+		DialerAddr:    remoteConn.LocalAddr().String(),
+		ClientAddr:    conn.LocalAddr().String(),
+		TargetAddr:    targetAddr,
+		UploadBytes:   0,
+		DownloadBytes: 0,
+		SessionStart:  time.Now(),
 	}
+	remoteConn = &S.PacketConn{Session: session, PacketConn: remoteConn}
 
 	h.remoteMap.Store(conn, &udpElement{
 		remoteAddr: remoteAddr,
@@ -102,7 +96,16 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 
 	go h.fetchUDPInput(conn, remoteConn, target)
 
-	log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
+	go func() {
+		// Get name of the process
+		var process = lsof.GetProcessName(conn.LocalAddr())
+		if monitor != nil {
+			session.Process = process
+			addSession(conn, session)
+		}
+		log.Access(process, "proxy", "udp", conn.LocalAddr().String(), targetAddr)
+	}()
+
 	return nil
 }
 

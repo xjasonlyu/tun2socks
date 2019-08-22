@@ -94,22 +94,16 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 		return err
 	}
 
-	// Get name of the process
-	var process = lsof.GetProcessName(localConn.LocalAddr())
-	if monitor != nil {
-		session := &S.Session{
-			Process:       process,
-			Network:       localConn.LocalAddr().Network(),
-			DialerAddr:    remoteConn.LocalAddr().String(),
-			ClientAddr:    localConn.LocalAddr().String(),
-			TargetAddr:    targetAddr,
-			UploadBytes:   0,
-			DownloadBytes: 0,
-			SessionStart:  time.Now(),
-		}
-		addSession(localConn, session)
-		remoteConn = &S.Conn{Session: session, Conn: remoteConn}
+	var session = &S.Session{
+		Network:       localConn.LocalAddr().Network(),
+		DialerAddr:    remoteConn.LocalAddr().String(),
+		ClientAddr:    localConn.LocalAddr().String(),
+		TargetAddr:    targetAddr,
+		UploadBytes:   0,
+		DownloadBytes: 0,
+		SessionStart:  time.Now(),
 	}
+	remoteConn = &S.Conn{Session: session, Conn: remoteConn}
 
 	// Set keepalive
 	tcpKeepAlive(localConn)
@@ -117,6 +111,13 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 
 	// Relay connections
 	go h.relay(localConn, remoteConn)
+
+	// Get name of the process
+	var process = lsof.GetProcessName(localConn.LocalAddr())
+	if monitor != nil {
+		session.Process = process
+		addSession(localConn, session)
+	}
 
 	log.Access(process, "proxy", "tcp", localConn.LocalAddr().String(), targetAddr)
 	return nil
