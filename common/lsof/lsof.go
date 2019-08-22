@@ -12,11 +12,14 @@ var (
 )
 
 func GetProcessName(addr net.Addr) string {
-	localHost, localPortStr, _ := net.SplitHostPort(addr.String())
-	localPortInt, _ := strconv.Atoi(localPortStr)
-	process, _ := GetCommandNameBySocket(addr.Network(), localHost, uint16(localPortInt))
-	if process == "" {
-		return "N/A"
+	// set default value
+	var process = "N/A"
+	if addr != nil {
+		localHost, localPortStr, _ := net.SplitHostPort(addr.String())
+		localPortInt, _ := strconv.Atoi(localPortStr)
+		if cmd, _ := GetCommandNameBySocket(addr.Network(), localHost, uint16(localPortInt)); cmd != "" {
+			process = cmd
+		}
 	}
 	return process
 }
