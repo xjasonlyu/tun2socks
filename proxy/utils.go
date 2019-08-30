@@ -5,10 +5,24 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/proxy/socks"
 )
+
+// Error
+func isTimeout(err error) bool {
+	if netErr, ok := err.(net.Error); ok {
+		return netErr.Timeout()
+	}
+	return false
+}
+
+func isClosed(err error) bool {
+	want := "use of closed network connection"
+	return strings.Contains(err.Error(), want)
+}
 
 // UDP util
 type udpElement struct {
