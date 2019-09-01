@@ -78,9 +78,10 @@ func (h *udpHandler) Connect(conn core.UDPConn, target *net.UDPAddr) error {
 		return err
 	}
 
-	// Get name of the process
-	var process = lsof.GetProcessName(conn.LocalAddr())
+	var process = "N/A"
 	if monitor != nil {
+		// Get name of the process
+		process = lsof.GetProcessName(conn.LocalAddr())
 		session := &S.Session{
 			Process:       process,
 			Network:       conn.LocalAddr().Network(),

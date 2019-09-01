@@ -94,9 +94,10 @@ func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
 		return err
 	}
 
-	// Get name of the process
-	var process = lsof.GetProcessName(localConn.LocalAddr())
+	var process = "N/A"
 	if monitor != nil {
+		// Get name of the process
+		process = lsof.GetProcessName(localConn.LocalAddr())
 		session := &S.Session{
 			Process:       process,
 			Network:       localConn.LocalAddr().Network(),
