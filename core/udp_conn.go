@@ -16,8 +16,7 @@ import (
 type udpConnState uint
 
 const (
-	udpNewConn udpConnState = iota
-	udpConnecting
+	udpConnecting udpConnState = iota
 	udpConnected
 	udpClosed
 )
@@ -46,13 +45,10 @@ func newUDPConn(pcb *C.struct_udp_pcb, handler UDPConnHandler, localIP C.ip_addr
 		localAddr: localAddr,
 		localIP:   localIP,
 		localPort: localPort,
-		state:     udpNewConn,
-		pending:   make(chan *udpPacket, 1), // For DNS request payload.
+		state:     udpConnecting,
+		pending:   make(chan *udpPacket, 1), // To hold the first packet on the connection
 	}
 
-	conn.Lock()
-	conn.state = udpConnecting
-	conn.Unlock()
 	go func() {
 		err := handler.Connect(conn, remoteAddr)
 		if err != nil {
@@ -94,27 +90,32 @@ func (conn *udpConn) checkState() error {
 		return errors.New("connection closed")
 	case udpConnected:
 		return nil
-	case udpNewConn, udpConnecting:
+	case udpConnecting:
 		return errors.New("not connected")
 	}
 	return nil
 }
 
-func (conn *udpConn) isConnecting() bool {
+// If the connection isn't ready yet, and there is room in the queue, make a copy
+// and hold onto it until the connection is ready.
+func (conn *udpConn) enqueueEarlyPacket(data []byte, addr *net.UDPAddr) bool {
 	conn.Lock()
 	defer conn.Unlock()
-	return conn.state == udpConnecting
-}
-
-func (conn *udpConn) ReceiveTo(data []byte, addr *net.UDPAddr) error {
-	if conn.isConnecting() {
+	if conn.state == udpConnecting {
 		pkt := &udpPacket{data: append([]byte(nil), data...), addr: addr}
 		select {
 		// Data will be dropped if pending is full.
 		case conn.pending <- pkt:
-			return nil
+			return true
 		default:
 		}
+	}
+	return false
+}
+
+func (conn *udpConn) ReceiveTo(data []byte, addr *net.UDPAddr) error {
+	if conn.enqueueEarlyPacket(data, addr) {
+		return nil
 	}
 	if err := conn.checkState(); err != nil {
 		return err

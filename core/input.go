@@ -104,7 +104,7 @@ func Input(pkt []byte) (int, error) {
 
 	var buf *C.struct_pbuf
 
-	if nextProto == proto_udp && (!moreFrags(ipv, pkt) || fragOffset(ipv, pkt) > 0) {
+	if nextProto == proto_udp && !(moreFrags(ipv, pkt) || fragOffset(ipv, pkt) > 0) {
 		// Copying data is not necessary for unfragmented UDP packets, and we would like to
 		// have all data in one pbuf.
 		buf = C.pbuf_alloc_reference(unsafe.Pointer(&pkt[0]), C.u16_t(len(pkt)), C.PBUF_REF)
