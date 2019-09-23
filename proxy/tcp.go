@@ -36,8 +36,13 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 		})
 	}
 
-	// Close
-	defer closeOnce()
+	// Cleanup
+	defer func() {
+		// Close
+		closeOnce()
+		// Remove session
+		removeSession(localConn)
+	}()
 
 	// WaitGroup
 	var wg sync.WaitGroup
@@ -69,9 +74,6 @@ func (h *tcpHandler) relay(localConn, remoteConn net.Conn) {
 	pool.BufPool.Put(buf[:cap(buf)])
 
 	wg.Wait() // Wait for Up Link done
-
-	// Remove session
-	removeSession(localConn)
 }
 
 func (h *tcpHandler) Handle(conn net.Conn, target *net.TCPAddr) error {
