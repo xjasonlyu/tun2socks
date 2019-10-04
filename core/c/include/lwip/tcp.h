@@ -479,6 +479,8 @@ err_t            tcp_output  (struct tcp_pcb *pcb);
 
 err_t            tcp_tcp_get_tcp_addrinfo(struct tcp_pcb *pcb, int local, ip_addr_t *addr, u16_t *port);
 
+err_t             tcp_process_refused_data(struct tcp_pcb *pcb);
+
 #define tcp_dbg_get_tcp_state(pcb) ((pcb)->state)
 
 /* for compatibility with older implementation */

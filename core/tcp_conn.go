@@ -64,7 +64,7 @@ type tcpConn struct {
 	localAddr     *net.TCPAddr
 	connKeyArg    unsafe.Pointer
 	connKey       uint32
-	canWrite      *sync.Cond // Condition variable to implement TCP back pressure.
+	canWrite      *sync.Cond // Condition variable to implement TCP backpressure.
 	state         tcpConnState
 	sndPipeReader *io.PipeReader
 	sndPipeWriter *io.PipeWriter
@@ -116,6 +116,12 @@ func newTCPConn(pcb *C.struct_tcp_pcb, handler TCPConnHandler) (TCPConn, error) 
 			conn.Lock()
 			conn.state = tcpConnected
 			conn.Unlock()
+
+			lwipMutex.Lock()
+			if pcb.refused_data != nil {
+				C.tcp_process_refused_data(pcb)
+			}
+			lwipMutex.Unlock()
 		}
 	}()
 
@@ -133,11 +139,9 @@ func (conn *tcpConn) LocalAddr() net.Addr {
 func (conn *tcpConn) SetDeadline(t time.Time) error {
 	return nil
 }
-
 func (conn *tcpConn) SetReadDeadline(t time.Time) error {
 	return nil
 }
-
 func (conn *tcpConn) SetWriteDeadline(t time.Time) error {
 	return nil
 }
