@@ -30,7 +30,7 @@ func isIPv6(ip net.IP) bool {
 	return false
 }
 
-func OpenTunDevice(name, addr, gw, mask string, dnsServers []string) (io.ReadWriteCloser, error) {
+func OpenTunDevice(name, addr, gw, mask string, dnsServers []string, persist bool) (io.ReadWriteCloser, error) {
 	_ = dnsServers
 	tunDev, err := water.New(water.Config{
 		DeviceType: water.TUN,

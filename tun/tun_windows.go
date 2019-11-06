@@ -157,7 +157,7 @@ func getTuntapComponentId(ifaceName string) (string, string, error) {
 	return "", "", errors.New("not found component id")
 }
 
-func OpenTunDevice(name, addr, gw, mask string, dns []string) (io.ReadWriteCloser, error) {
+func OpenTunDevice(name, addr, gw, mask string, dns []string, persist bool) (io.ReadWriteCloser, error) {
 	componentId, devName, err := getTuntapComponentId(name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get component ID: %v", err)

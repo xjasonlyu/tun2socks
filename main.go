@@ -37,13 +37,14 @@ var (
 
 type CmdArgs struct {
 	// Main
-	Version  *bool
-	TunName  *string
-	TunAddr  *string
-	TunGw    *string
-	TunMask  *string
-	TunDNS   *string
-	LogLevel *string
+	Version    *bool
+	TunName    *string
+	TunAddr    *string
+	TunGw      *string
+	TunMask    *string
+	TunDNS     *string
+	TunPersist *bool
+	LogLevel   *string
 
 	// Proxy
 	ProxyServer *string
@@ -74,6 +75,7 @@ func init() {
 	args.TunGw = flag.String("tunGw", "240.0.0.1", "TUN interface gateway")
 	args.TunMask = flag.String("tunMask", "255.255.255.0", "TUN interface netmask")
 	args.TunDNS = flag.String("tunDNS", "8.8.8.8,8.8.4.4", "DNS resolvers for TUN interface (Windows Only)")
+	args.TunPersist = flag.Bool("tunPersist", false, "Persist TUN interface after the program exits or the last open file descriptor is closed (Linux only)")
 
 	// Proxy
 	args.ProxyServer = flag.String("proxyServer", "", "Proxy server address")
@@ -128,7 +130,7 @@ func main() {
 
 	// Open the tun device
 	dnsServers := strings.Split(*args.TunDNS, ",")
-	tunDev, err := tun.OpenTunDevice(*args.TunName, *args.TunAddr, *args.TunGw, *args.TunMask, dnsServers)
+	tunDev, err := tun.OpenTunDevice(*args.TunName, *args.TunAddr, *args.TunGw, *args.TunMask, dnsServers, *args.TunPersist)
 	if err != nil {
 		log.Fatalf("failed to open tun device: %v", err)
 	}
