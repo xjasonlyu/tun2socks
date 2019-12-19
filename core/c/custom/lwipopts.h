@@ -36,6 +36,7 @@
 #define NO_SYS 1
 #define LWIP_TIMERS 1
 
+#define IP_DEFAULT_TTL 64
 #define LWIP_ARP 0
 #define ARP_QUEUEING 0
 #define IP_FORWARD 0

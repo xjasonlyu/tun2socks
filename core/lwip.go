@@ -118,4 +118,7 @@ func init() {
 	// Now the loop interface is just the first element in
 	// `C.netif_list`, i.e. `*C.netif_list`.
 	lwipInit()
+
+	// Set MTU.
+	C.netif_list.mtu = 1500
 }
