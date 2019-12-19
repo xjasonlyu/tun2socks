@@ -88,7 +88,9 @@ Here is my Running Environment
 - Router Gateway: 10.0.0.1
 - Apple TV Address: 10.0.0.120
 
-My alpine `tun2socks` service example
+<details>
+    <summary>This is my alpine tun2socks service file</summary>
+
 ```sh
 #!/sbin/openrc-run
 
@@ -222,6 +224,8 @@ stop() {
 	fi
 }
 ```
+
+</details>
 
 Follow 3 Steps
 - Simply put this config in `/etc/init.d/`
