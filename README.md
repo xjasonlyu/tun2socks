@@ -5,10 +5,12 @@ A tun2socks implementation written in Go.
 forked & modified from [eycorsican/go-tun2socks](https://github.com/eycorsican/go-tun2socks)
 
 ## Preview
+
 Tun2socks status web view (`-monitor` option is required)
 ![status](./screenshot.png)
 
 ## What's the difference with the original project
+
 - Add new features (listed below)
 - Optimize handlers (e.g. new TCP/UDP proxy handler)
 - Rewrite and remove some implementations
@@ -16,12 +18,14 @@ Tun2socks status web view (`-monitor` option is required)
 ## Main Features
 
 Previous Features
-- Support both TCP and UDP
-- Support both IPv4 and IPv6
+
+- TCP and UDP support
+- IPv4 gateway support
 - Support proxy handler: `SOCKS5`
 - ICMP echoing
 
 New Features
+
 - Fake DNS (Fake IP range: `198.18.0.0/15`)
 - Backend DNS (resolve non-TypeA query)
 - Hijack DNS (force the specific DNS to get a fake address)
@@ -29,42 +33,43 @@ New Features
 - Web statistics monitor
 
 ## Tun2socks Usage
-```
+
+```text
 Usage of tun2socks:
   -backendDNS string
-    	Backend DNS to resolve non-TypeA or non-ClassINET query (must support tcp) (default "8.8.8.8:53,8.8.4.4:53")
+        Backend DNS to resolve non-TypeA or non-ClassINET query (must support tcp) (default "8.8.8.8:53,8.8.4.4:53")
   -fakeDNS
-    	Enable fake DNS
+        Enable fake DNS
   -fakeDNSAddr string
-    	Listen address of fake DNS (default ":53")
+        Listen address of fake DNS (default ":53")
   -hijackDNS string
-    	Hijack the specific DNS query to get a fake ip, e.g. '*:53', '8.8.8.8:53,8.8.4.4:53'
+        Hijack the specific DNS query to get a fake ip, e.g. '*:53', '8.8.8.8:53,8.8.4.4:53'
   -hosts string
-    	DNS hosts mapping, e.g. 'example.com=1.1.1.1,example.net=2.2.2.2'
+        DNS hosts mapping, e.g. 'example.com=1.1.1.1,example.net=2.2.2.2'
   -loglevel string
-    	Logging level [info, warning, error, debug, silent] (default "info")
+        Logging level [info, warning, error, debug, silent] (default "info")
   -monitor
-    	Enable session statistics monitor
+        Enable session statistics monitor
   -monitorAddr string
-    	Listen address of session monitor, open in your browser to view statistics (default "localhost:6001")
+        Listen address of session monitor, open in your browser to view statistics (default "localhost:6001")
   -proxyServer string
-    	Proxy server address
+        Proxy server address
   -tunAddr string
-    	TUN interface address (default "240.0.0.2")
+        TUN interface address (default "240.0.0.2")
   -tunDNS string
-    	DNS resolvers for TUN interface (Windows Only) (default "8.8.8.8,8.8.4.4")
+        DNS resolvers for TUN interface (Windows Only) (default "8.8.8.8,8.8.4.4")
   -tunGw string
-    	TUN interface gateway (default "240.0.0.1")
+        TUN interface gateway (default "240.0.0.1")
   -tunMask string
-    	TUN interface netmask (default "255.255.255.0")
+        TUN interface netmask (default "255.255.255.0")
   -tunName string
-    	TUN interface name (default "utun0")
+        TUN interface name (default "utun0")
   -tunPersist
-    	Persist TUN interface after the program exits or the last open file descriptor is closed (Linux only)
+        Persist TUN interface after the program exits or the last open file descriptor is closed (Linux only)
   -udpTimeout duration
-    	UDP session timeout (default 30s)
+        UDP session timeout (default 30s)
   -version
-    	Show current version of tun2socks
+        Show current version of tun2socks
 ```
 
 ## How to Build
@@ -79,9 +84,11 @@ make clean && make build
 ```
 
 ## My Daily Using (Alpine Demo)
+
 This project is running on my server as a second gateway, so my Apple TV and other devices could access the full internet and AD block function without complex configuration.
 
 Here is my Running Environment
+
 - Linux alpine 4.19.79-0-virt (VM)
 - Proxy Server: 10.0.0.3
 - Alpine Address: 10.0.0.2
@@ -193,13 +200,13 @@ stop_post() {
 
 start() {
     ebegin "Starting $RC_SVCNAME"
-	start-stop-daemon --start --quiet \
+    start-stop-daemon --start --quiet \
         --background --exec $command \
         --user $command_user \
         --make-pidfile --pidfile $pidfile \
         --stdout $logfile --stderr $logfile \
         -- $command_args
-	eend $?
+    eend $?
 }
 
 stop() {
@@ -210,24 +217,25 @@ stop() {
         fi
     fi
 
-	ebegin "Stopping $RC_SVCNAME"
-	start-stop-daemon --stop --quiet --exec "$command" \
-		--pidfile "$pidfile"
-	eend $?
+    ebegin "Stopping $RC_SVCNAME"
+    start-stop-daemon --stop --quiet --exec "$command" \
+        --pidfile "$pidfile"
+    eend $?
 
-	if [ "$RC_RUNLEVEL" = "shutdown" ]; then
-		_pid=$(pgrep $RC_SVCNAME)
+    if [ "$RC_RUNLEVEL" = "shutdown" ]; then
+        _pid=$(pgrep $RC_SVCNAME)
         if [ -n $_pid ]; then
             kill -9 $_pid > /dev/null 2>&1
         fi
         rm -rf $pidfile
-	fi
+    fi
 }
 ```
 
 </details>
 
 Follow 3 Steps
+
 - Simply put this config in `/etc/init.d/`
 - Give it executable permission `chmod +x tun2socks`
 - Launch the service `rc-service tun2socks start`
@@ -326,6 +334,7 @@ route add 1.2.3.4 192.168.0.1 metric 5
 This project is using a modified version of lwIP, you can checkout this repo to find out what are the changes: https://github.com/eycorsican/lwip (original author)
 
 ## Many thanks to the following projects
+
 - https://savannah.nongnu.org/projects/lwip
 - https://github.com/ambrop72/badvpn
 - https://github.com/zhuhaow/tun2socks
