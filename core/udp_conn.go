@@ -46,7 +46,7 @@ func newUDPConn(pcb *C.struct_udp_pcb, handler UDPConnHandler, localIP C.ip_addr
 		localIP:   localIP,
 		localPort: localPort,
 		state:     udpConnecting,
-		pending:   make(chan *udpPacket, 1), // To hold the first packet on the connection
+		pending:   make(chan *udpPacket, 64), // To hold the early packets on the connection
 	}
 
 	go func() {
@@ -68,6 +68,7 @@ func newUDPConn(pcb *C.struct_udp_pcb, handler UDPConnHandler, localIP C.ip_addr
 					}
 					continue DrainPending
 				default:
+					conn.pending = nil
 					break DrainPending
 				}
 			}

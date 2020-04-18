@@ -430,10 +430,12 @@ func (conn *tcpConn) abortInternal() {
 
 func (conn *tcpConn) Abort() {
 	conn.Lock()
-	defer conn.Unlock()
-
 	conn.state = tcpAborting
-	conn.canWrite.Broadcast()
+	conn.Unlock()
+
+	lwipMutex.Lock()
+	conn.checkState()
+	lwipMutex.Unlock()
 }
 
 func (conn *tcpConn) Err(err error) {

@@ -84,7 +84,7 @@ func peekNextProto(ipv ipver, p []byte) (proto, error) {
 	}
 }
 
-func Input(pkt []byte) (int, error) {
+func input(pkt []byte) (int, error) {
 	if len(pkt) == 0 {
 		return 0, nil
 	}
