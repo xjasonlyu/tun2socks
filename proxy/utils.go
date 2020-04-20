@@ -58,7 +58,7 @@ func tcpKeepAlive(conn net.Conn) {
 
 // Socks dialer
 func dial(proxy, target string) (net.Conn, error) {
-	c, err := net.DialTimeout("tcp", proxy, 30*time.Second)
+	c, err := net.DialTimeout("tcp", proxy, 5*time.Second)
 	if err != nil {
 		return nil, fmt.Errorf("%s connect error", proxy)
 	}
@@ -75,7 +75,7 @@ func dial(proxy, target string) (net.Conn, error) {
 }
 
 func dialUDP(proxy, target string) (_ net.PacketConn, _ net.Addr, err error) {
-	c, err := net.DialTimeout("tcp", proxy, 30*time.Second)
+	c, err := net.DialTimeout("tcp", proxy, 5*time.Second)
 	if err != nil {
 		err = fmt.Errorf("%s connect error", proxy)
 		return
