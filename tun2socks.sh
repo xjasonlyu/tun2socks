@@ -1,6 +1,6 @@
 #!/bin/sh
 
-TUN="${TUN:-utun0}"
+TUN="${TUN:-tun0}"
 ETH="${ETH:-eth0}"
 ETHGW="${ETHGW:-172.16.1.1}"
 TUNGW="${TUNGW:-240.0.0.1}"
