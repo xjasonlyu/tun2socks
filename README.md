@@ -109,6 +109,7 @@ docker run -d \
   --name tun2socks \
   --ip 10.0.0.2 \
   --privileged \
+  --sysctl net.ipv4.ip_forward=1
   xjasonlyu/tun2socks
 ```
 
