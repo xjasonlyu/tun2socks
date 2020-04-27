@@ -11,14 +11,10 @@ LOGLEVEL="${LOGLEVEL:-warning}"
 BACKENDDNS="${BACKENDDNS:-8.8.8.8:53}"
 HOSTS="${HOSTS:-localhost=127.0.0.1}"
 
-# enable ip_forward
-sysctl -w net.ipv4.ip_forward=1 &> /dev/null
-
 # create tun device
 ip tuntap add mode tun dev $TUN
 ip addr add $TUNGW/24 dev $TUN
 ip link set dev $TUN up
-echo "tun device created: $TUN"
 
 # change default gateway
 ip route del default &> /dev/null
@@ -32,7 +28,6 @@ done
 
 # DNS settings
 echo "nameserver $TUNGW" > /etc/resolv.conf
-echo "DNS settings updated"
 
 tun2socks -loglevel $LOGLEVEL \
     -tunName $TUN -proxyServer $PROXY \
