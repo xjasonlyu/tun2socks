@@ -83,6 +83,37 @@ make clean && make build
 ./bin/tun2socks -h
 ```
 
+## Running in Docker (Works in Synology NAS)
+
+Create a `macvlan` network called `switch`
+
+```sh
+docker network create -d macvlan \
+  --subnet=172.16.1.0/24 \
+  --gateway=172.16.1.1 \
+  -o parent=eth0 \
+  switch
+```
+
+Pull `tun2socks` docker image
+
+```sh
+docker pull xjasonlyu/tun2socks
+```
+
+Run `tun2socks` as a gateway (e.g. 172.16.1.2)
+
+```sh
+docker run -d \
+  --network switch \
+  --name tun2socks \
+  --ip 10.0.0.2 \
+  --privileged \
+  xjasonlyu/tun2socks
+```
+
+PS: add custom environment variables if needed
+
 ## My Daily Using (Alpine Demo)
 
 This project is running on my server as a second gateway, so my Apple TV and other devices could access the full internet and AD block function without complex configuration.
