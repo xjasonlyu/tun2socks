@@ -55,8 +55,8 @@ Create a `macvlan` network called `switch`
 
 ```sh
 docker network create -d macvlan \
-  --subnet=172.16.1.0/24 \
-  --gateway=172.16.1.1 \
+  --subnet=10.0.0.0/24 \
+  --gateway=10.0.0.1 \
   -o parent=eth0 \
   switch
 ```
@@ -67,7 +67,7 @@ Pull `tun2socks` docker image
 docker pull xjasonlyu/tun2socks
 ```
 
-Run `tun2socks` as a gateway (e.g. 172.16.1.2)
+Run `tun2socks` as a gateway (e.g. 10.0.0.2)
 
 ```sh
 docker run -d \
@@ -75,7 +75,8 @@ docker run -d \
   --name tun2socks \
   --ip 10.0.0.2 \
   --privileged \
-  --sysctl net.ipv4.ip_forward=1
+  --restart always \
+  --sysctl net.ipv4.ip_forward=1 \
   xjasonlyu/tun2socks
 ```
 
