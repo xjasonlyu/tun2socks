@@ -33,13 +33,15 @@ func dnsExchange(r *D.Msg) (msg *D.Msg) {
 	c := new(D.Client)
 	c.Net = "tcp"
 	for _, dns := range backendDNS {
-		ctx, _ := context.WithTimeout(context.Background(), time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		msg, _, _ = c.ExchangeContext(ctx, r, dns)
+		cancel() // call cancel as soon as the operations running in this Context complete
 		if msg != nil {
-			// success, exit query.
-			break
+			// success, exit query
+			goto Out
 		}
 	}
+Out:
 	return msg
 }
 
