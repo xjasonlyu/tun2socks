@@ -32,46 +32,6 @@ New Features
 - Hosts mapping (e.g. `localhost`->`127.0.0.1`)
 - Web statistics monitor
 
-## Tun2socks Usage
-
-```text
-Usage of tun2socks:
-  -backendDNS string
-        Backend DNS to resolve non-TypeA or non-ClassINET query (must support tcp) (default "8.8.8.8:53,8.8.4.4:53")
-  -fakeDNS
-        Enable fake DNS
-  -fakeDNSAddr string
-        Listen address of fake DNS (default ":53")
-  -hijackDNS string
-        Hijack the specific DNS query to get a fake ip, e.g. '*:53', '8.8.8.8:53,8.8.4.4:53'
-  -hosts string
-        DNS hosts mapping, e.g. 'example.com=1.1.1.1,example.net=2.2.2.2'
-  -loglevel string
-        Logging level [info, warning, error, debug, silent] (default "info")
-  -monitor
-        Enable session statistics monitor
-  -monitorAddr string
-        Listen address of session monitor, open in your browser to view statistics (default "localhost:6001")
-  -proxyServer string
-        Proxy server address
-  -tunAddr string
-        TUN interface address (default "240.0.0.2")
-  -tunDNS string
-        DNS resolvers for TUN interface (Windows Only) (default "8.8.8.8,8.8.4.4")
-  -tunGw string
-        TUN interface gateway (default "240.0.0.1")
-  -tunMask string
-        TUN interface netmask (default "255.255.255.0")
-  -tunName string
-        TUN interface name (default "utun0")
-  -tunPersist
-        Persist TUN interface after the program exits or the last open file descriptor is closed (Linux only)
-  -udpTimeout duration
-        UDP session timeout (default 30s)
-  -version
-        Show current version of tun2socks
-```
-
 ## How to Build
 
 `go-tun2socks` is using `cgo` and `go modules`, thus a C compiler and GO version >= 1.13 are required.
@@ -83,7 +43,13 @@ make clean && make build
 ./bin/tun2socks -h
 ```
 
-## Running in Docker (Works in Synology NAS)
+Or build via Docker
+
+```sh
+docker build -t tun2socks .
+```
+
+## Running in Docker (My Daily Workaround)
 
 Create a `macvlan` network called `switch`
 
@@ -113,9 +79,12 @@ docker run -d \
   xjasonlyu/tun2socks
 ```
 
-PS: add custom environment variables if needed
+PS:
 
-## My Daily Using (Alpine Demo)
+- Works on Synology NAS
+- Add custom environment variables if needed
+
+## Alpine VM Demo
 
 This project is running on my server as a second gateway, so my Apple TV and other devices could access the full internet and AD block function without complex configuration.
 
@@ -277,6 +246,46 @@ Finally, all you need to do is modify your internet settings.
 In this case, I just need configure my Apple TV internet settings from DHCP to Static, and change my gateway and DNS to `10.0.0.2`.
 
 Done!
+
+## Tun2socks Usage
+
+```text
+Usage of tun2socks:
+  -backendDNS string
+        Backend DNS to resolve non-TypeA or non-ClassINET query (must support tcp) (default "8.8.8.8:53,8.8.4.4:53")
+  -fakeDNS
+        Enable fake DNS
+  -fakeDNSAddr string
+        Listen address of fake DNS (default ":53")
+  -hijackDNS string
+        Hijack the specific DNS query to get a fake ip, e.g. '*:53', '8.8.8.8:53,8.8.4.4:53'
+  -hosts string
+        DNS hosts mapping, e.g. 'example.com=1.1.1.1,example.net=2.2.2.2'
+  -loglevel string
+        Logging level [info, warning, error, debug, silent] (default "info")
+  -monitor
+        Enable session statistics monitor
+  -monitorAddr string
+        Listen address of session monitor, open in your browser to view statistics (default "localhost:6001")
+  -proxyServer string
+        Proxy server address
+  -tunAddr string
+        TUN interface address (default "240.0.0.2")
+  -tunDNS string
+        DNS resolvers for TUN interface (Windows Only) (default "8.8.8.8,8.8.4.4")
+  -tunGw string
+        TUN interface gateway (default "240.0.0.1")
+  -tunMask string
+        TUN interface netmask (default "255.255.255.0")
+  -tunName string
+        TUN interface name (default "utun0")
+  -tunPersist
+        Persist TUN interface after the program exits or the last open file descriptor is closed (Linux only)
+  -udpTimeout duration
+        UDP session timeout (default 30s)
+  -version
+        Show current version of tun2socks
+```
 
 ## Run
 
