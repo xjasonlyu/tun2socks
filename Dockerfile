@@ -6,6 +6,8 @@ COPY . /tun2socks-src
 RUN apk add --update --no-cache \
     gcc git make musl-dev \
     && go mod download \
+    && go get -u github.com/gobuffalo/packr/packr \
+    && packr \
     && make build \
     && mv ./bin/tun2socks /tun2socks
 
