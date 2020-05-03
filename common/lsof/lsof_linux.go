@@ -14,8 +14,8 @@ import (
 )
 
 type addr struct {
-	ip net.IP
-	port uint16
+	ip      net.IP
+	port    uint16
 	network string
 }
 
@@ -28,9 +28,9 @@ func (a *addr) String() string {
 }
 
 type socket struct {
-	localAddr addr
+	localAddr  addr
 	remoteAddr addr
-	inode int
+	inode      int
 }
 
 func getSocketTable(network string) ([]*socket, error) {
@@ -50,7 +50,7 @@ func getSocketTable(network string) ([]*socket, error) {
 		info := make([]string, 0)
 		for _, i := range strings.Split(line, " ") {
 			if strings.TrimSpace(i) != "" {
-				info = append(info ,i)
+				info = append(info, i)
 			}
 		}
 		// length check
@@ -78,9 +78,9 @@ func getSocketTable(network string) ([]*socket, error) {
 		}
 
 		sockets = append(sockets, &socket{
-			localAddr: localAddr,
+			localAddr:  localAddr,
 			remoteAddr: remoteAddr,
-			inode: inode,
+			inode:      inode,
 		})
 	}
 
@@ -148,7 +148,7 @@ func getPIDSocketInode(pid int) ([]int, error) {
 
 	var inodeList []int
 	for _, f := range files {
-		name, err := os.Readlink(dirname +f.Name())
+		name, err := os.Readlink(dirname + f.Name())
 		if err != nil {
 			return nil, err
 		}
