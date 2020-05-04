@@ -175,10 +175,11 @@ func getPIDSocketInode(pid int) ([]int, error) {
 
 	var inodeList []int
 	var prefix = "socket:["
-	for _, f := range files {
-		name, err := os.Readlink(dirname + f.Name())
+	for _, fd := range files {
+		name, err := os.Readlink(dirname + fd.Name())
 		if err != nil {
-			return nil, err
+			// ignore error, fd may released
+			continue
 		}
 		if strings.HasPrefix(name, prefix) {
 			inode, err := strconv.Atoi(name[len(prefix) : len(name)-1])
@@ -197,7 +198,7 @@ func GetCommandNameBySocket(network string, addr string, port uint16) (comm stri
 		return
 	}
 
-	var inode int
+	var inode = -1 // negative init
 	patten := fmt.Sprintf("%s:%d", addr, port)
 	for _, socket := range socketList {
 		if patten == socket.localAddr.String() {
@@ -208,7 +209,7 @@ func GetCommandNameBySocket(network string, addr string, port uint16) (comm stri
 		}
 	}
 
-	if inode == 0 {
+	if inode == -1 {
 		return "", ErrNotFound
 	}
 
