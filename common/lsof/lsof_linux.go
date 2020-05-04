@@ -13,27 +13,27 @@ import (
 	"strings"
 )
 
-type addr struct {
+type address struct {
 	ip      net.IP
 	port    uint16
 	network string
 }
 
-func (a *addr) Network() string {
+func (a *address) Network() string {
 	return a.network
 }
 
-func (a *addr) String() string {
+func (a *address) String() string {
 	return fmt.Sprintf("%s:%d", a.ip.String(), a.port)
 }
 
 type socket struct {
-	localAddr  addr
-	remoteAddr addr
+	localAddr  address
+	remoteAddr address
 	inode      int
 }
 
-func getSocketTable(network string) ([]*socket, error) {
+func getSocketList(network string) ([]*socket, error) {
 	file := fmt.Sprintf("/proc/net/%s", network)
 	f, err := os.Open(file)
 	if err != nil {
@@ -41,7 +41,7 @@ func getSocketTable(network string) ([]*socket, error) {
 	}
 	defer f.Close()
 
-	var sockets []*socket
+	var socketList []*socket
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
@@ -57,8 +57,9 @@ func getSocketTable(network string) ([]*socket, error) {
 		if len(info) < 10 {
 			continue
 		}
-		var localAddr addr
-		var remoteAddr addr
+
+		var localAddr address
+		var remoteAddr address
 		rawLocalAddr, rawRemoteAddr, rawInode := info[1], info[2], info[9]
 		if ip, port, err := parseAddr(rawLocalAddr); err != nil {
 			continue
@@ -77,17 +78,38 @@ func getSocketTable(network string) ([]*socket, error) {
 			continue
 		}
 
-		sockets = append(sockets, &socket{
+		socketList = append(socketList, &socket{
 			localAddr:  localAddr,
 			remoteAddr: remoteAddr,
 			inode:      inode,
 		})
 	}
 
-	return sockets, nil
+	return socketList, nil
 }
 
-// IPv4 Only
+func parseIPv4(s string) (net.IP, error) {
+	if len(s) != net.IPv4len*2 {
+		return nil, fmt.Errorf("bad format: %s", s)
+	}
+	ip := make(net.IP, net.IPv4len)
+	ipNum, _ := strconv.ParseUint(s, 16, 32)
+	binary.LittleEndian.PutUint32(ip, uint32(ipNum))
+	return ip, nil
+}
+
+func parseIPv6(s string) (net.IP, error) {
+	if len(s) != net.IPv6len*2 {
+		return nil, fmt.Errorf("bad format: %s", s)
+	}
+	ip := make(net.IP, net.IPv6len)
+	for i := 0; i < net.IPv6len/4; i++ {
+		ipNum, _ := strconv.ParseUint(s[i*8:(i+1)*8], 16, 32)
+		binary.LittleEndian.PutUint32(ip[i*4:(i+1)*4], uint32(ipNum))
+	}
+	return ip, nil
+}
+
 func parseAddr(raw string) (ip net.IP, port uint16, err error) {
 	addr := strings.Split(raw, ":")
 	if len(addr) != 2 {
@@ -95,12 +117,17 @@ func parseAddr(raw string) (ip net.IP, port uint16, err error) {
 		return
 	}
 
-	ipLong, err := strconv.ParseUint(addr[0], 16, 32)
+	switch len(addr[0]) {
+	case net.IPv4len * 2:
+		ip, err = parseIPv4(addr[0])
+	case net.IPv6len * 2:
+		ip, err = parseIPv6(addr[0])
+	default:
+		err = fmt.Errorf("bad format: %s", addr[0])
+	}
 	if err != nil {
 		return
 	}
-	ip = make(net.IP, 4)
-	binary.LittleEndian.PutUint32(ip, uint32(ipLong))
 
 	portLong, err := strconv.ParseUint(addr[1], 16, 16)
 	if err != nil {
@@ -111,8 +138,8 @@ func parseAddr(raw string) (ip net.IP, port uint16, err error) {
 }
 
 func getCommandNameByPID(pid int) (string, error) {
-	file := fmt.Sprintf("/proc/%d/comm", pid)
-	name, err := ioutil.ReadFile(file)
+	comm := fmt.Sprintf("/proc/%d/comm", pid)
+	name, err := ioutil.ReadFile(comm)
 	if err != nil {
 		return "", err
 	}
@@ -147,15 +174,14 @@ func getPIDSocketInode(pid int) ([]int, error) {
 	}
 
 	var inodeList []int
+	var prefix = "socket:["
 	for _, f := range files {
 		name, err := os.Readlink(dirname + f.Name())
 		if err != nil {
 			return nil, err
 		}
-		if strings.HasPrefix(name, "socket:") {
-			name = strings.TrimPrefix(name, "socket:[")
-			name = strings.TrimSuffix(name, "]")
-			inode, err := strconv.Atoi(name)
+		if strings.HasPrefix(name, prefix) {
+			inode, err := strconv.Atoi(name[len(prefix) : len(name)-1])
 			if err != nil {
 				return nil, fmt.Errorf("unknown format: %s", name)
 			}
@@ -166,17 +192,19 @@ func getPIDSocketInode(pid int) ([]int, error) {
 }
 
 func GetCommandNameBySocket(network string, addr string, port uint16) (comm string, err error) {
-	socketTable, err := getSocketTable(network)
+	socketList, err := getSocketList(network)
 	if err != nil {
 		return
 	}
 
 	var inode int
 	patten := fmt.Sprintf("%s:%d", addr, port)
-	for _, socket := range socketTable {
+	for _, socket := range socketList {
 		if patten == socket.localAddr.String() {
 			inode = socket.inode
-			break
+			break // best match
+		} else if port == socket.localAddr.port && socket.localAddr.ip.IsUnspecified() {
+			inode = socket.inode // for udp compatible
 		}
 	}
 
@@ -186,7 +214,7 @@ func GetCommandNameBySocket(network string, addr string, port uint16) (comm stri
 
 	pidList, err := getAllPID()
 	if err != nil {
-		err = fmt.Errorf("get all PID error: %v", err)
+		err = fmt.Errorf("get all PID failed: %v", err)
 		return
 	}
 
