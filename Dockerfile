@@ -16,8 +16,7 @@ FROM alpine:latest
 COPY ./tun2socks.sh /
 COPY --from=builder /tun2socks /usr/local/bin
 
-RUN apk add --update --no-cache \
-    lsof iptables iproute2 \
+RUN apk add --update --no-cache iproute2 \
     && chmod +x /tun2socks.sh
 
 ENV TUN tun0
