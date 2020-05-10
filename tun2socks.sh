@@ -29,7 +29,7 @@ done
 # DNS settings
 echo "nameserver $TUNGW" > /etc/resolv.conf
 
-tun2socks -loglevel $LOGLEVEL \
+exec tun2socks -loglevel $LOGLEVEL \
     -tunName $TUN -proxyServer $PROXY \
     -monitor -monitorAddr $MONITOR \
     -fakeDNS -hosts $HOSTS \
