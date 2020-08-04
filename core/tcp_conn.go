@@ -430,7 +430,10 @@ func (conn *tcpConn) abortInternal() {
 
 func (conn *tcpConn) Abort() {
 	conn.Lock()
-	conn.state = tcpAborting
+	// If it's in tcpErrored state, the pcb was already freed.
+	if conn.state < tcpAborting {
+		conn.state = tcpAborting
+	}
 	conn.Unlock()
 
 	lwipMutex.Lock()

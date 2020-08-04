@@ -53,8 +53,8 @@ func udpRecvFn(arg unsafe.Pointer, pcb *C.struct_udp_pcb, p *C.struct_pbuf, addr
 	if p.tot_len == p.len {
 		buf = (*[1 << 30]byte)(unsafe.Pointer(p.payload))[:totlen:totlen]
 	} else {
-		buf = newBytes(totlen)
-		defer freeBytes(buf)
+		buf = NewBytes(totlen)
+		defer FreeBytes(buf)
 		C.pbuf_copy_partial(p, unsafe.Pointer(&buf[0]), p.tot_len, 0)
 	}
 

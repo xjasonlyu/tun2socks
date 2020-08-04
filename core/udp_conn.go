@@ -129,6 +129,9 @@ func (conn *udpConn) ReceiveTo(data []byte, addr *net.UDPAddr) error {
 }
 
 func (conn *udpConn) WriteFrom(data []byte, addr *net.UDPAddr) (int, error) {
+	if len(data) == 0 {
+		return 0, nil
+	}
 	if err := conn.checkState(); err != nil {
 		return 0, err
 	}
