@@ -44,6 +44,11 @@ func RegisterFakeDNS(d D.FakeDNS, h string) {
 
 // Check target if is hijacked address.
 func isHijacked(target *net.UDPAddr) bool {
+	if fakeDNS == nil {
+		// ignore when fake DNS disabled
+		return false
+	}
+
 	for _, addr := range hijackDNS {
 		host, port, err := net.SplitHostPort(addr)
 		if err != nil {
