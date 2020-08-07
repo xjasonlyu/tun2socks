@@ -40,5 +40,5 @@ if [ "$FAKEDNS" -ne 0 ]; then
     ARGS="$ARGS -fakeDNS -hosts $HOSTS -backendDNS $BACKENDDNS"
 fi
 
-exec /tun2socks -loglevel "$LOGLEVEL" \
+eval exec /tun2socks -loglevel "$LOGLEVEL" \
     -tunName "$TUN" -proxyServer "$PROXY" "$ARGS"
