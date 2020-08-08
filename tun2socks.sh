@@ -2,8 +2,9 @@
 
 TUN="${TUN:-tun0}"
 ETH="${ETH:-eth0}"
-ETHGW="${ETHGW:-172.16.1.1}"
-TUNGW="${TUNGW:-198.18.0.1}"
+ETHADDR="${ETHADDR:-172.16.1.1}"
+TUNADDR="${TUNADDR:-198.18.0.1}"
+TUNMASK="${TUNMASK:-255.254.0.0}"
 PROXY="${PROXY:-172.16.1.2:1080}"
 LOGLEVEL="${LOGLEVEL:-warning}"
 EXCLUDED="${EXCLUDED:-172.16.1.2/32}"
@@ -15,17 +16,17 @@ HOSTS="${HOSTS:-localhost=127.0.0.1}"
 
 # create tun device
 ip tuntap add mode tun dev "$TUN"
-ip addr add "$TUNGW"/24 dev "$TUN"
+ip addr add "$TUNADDR"/"$TUNMASK" dev "$TUN"
 ip link set dev "$TUN" up
 
 # change default gateway
 ip route del default > /dev/null
-ip route add default via "$TUNGW" dev "$TUN"
+ip route add default via "$TUNADDR" dev "$TUN"
 
 # add to ip route
 for ip in $(echo "$EXCLUDED" | tr ',' '\n')
 do
-    ip route add "$ip" via "$ETHGW"
+    ip route add "$ip" via "$ETHADDR"
 done
 
 if [ -n "$EXTRACMD" ]; then
