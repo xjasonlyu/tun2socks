@@ -9,7 +9,8 @@ PROXY="${PROXY:-172.16.1.2:1080}"
 LOGLEVEL="${LOGLEVEL:-warning}"
 EXCLUDED="${EXCLUDED:-172.16.1.2/32}"
 
-MONITOR="${MONITOR:-0.0.0.0:80}"
+MONITOR="${MONITOR:-1}"
+MONITORADDR="${MONITORADDR:-0.0.0.0:80}"
 FAKEDNS="${FAKEDNS:-1}"
 BACKENDDNS="${BACKENDDNS:-8.8.8.8:53}"
 HOSTS="${HOSTS:-localhost=127.0.0.1}"
@@ -33,8 +34,8 @@ if [ -n "$EXTRACMD" ]; then
     sh -c "$EXTRACMD"
 fi
 
-if [ -n "$MONITOR" ]; then
-    ARGS="-monitor -monitorAddr $MONITOR"
+if [ "$MONITOR" -ne 0 ]; then
+    ARGS="-monitor -monitorAddr $MONITORADDR"
 fi
 
 if [ "$FAKEDNS" -ne 0 ]; then
