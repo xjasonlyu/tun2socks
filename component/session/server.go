@@ -2,6 +2,7 @@ package session
 
 import (
 	"bufio"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -18,7 +19,7 @@ import (
 	"github.com/gobuffalo/packr"
 )
 
-const maxCompletedSessions = 100
+const maxClosedSessions = 100
 
 type Server struct {
 	sync.Mutex
@@ -30,7 +31,7 @@ type Server struct {
 	trafficDown int64
 
 	activeSessionMap  sync.Map
-	completedSessions []Session
+	closedSessionList []Session
 }
 
 func New(addr string) *Server {
@@ -39,19 +40,52 @@ func New(addr string) *Server {
 	}
 }
 
-func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
+func (s *Server) getSessions() (activeSessions, closedSessions []Session) {
 	// Slice of active sessions
-	var activeSessions []Session
 	s.activeSessionMap.Range(func(key, value interface{}) bool {
 		session := value.(*Session)
 		activeSessions = append(activeSessions, *session)
 		return true
 	})
 
-	// Slice of completed sessions
+	// Slice of closed sessions
 	s.Lock()
-	completedSessions := append([]Session(nil), s.completedSessions...)
-	s.Unlock()
+	defer s.Unlock()
+	closedSessions = append([]Session(nil), s.closedSessionList...)
+	return
+}
+
+func (s *Server) serveJSON(w http.ResponseWriter, _ *http.Request) {
+	activeSessions, closedSessions := s.getSessions()
+
+	// calculate traffic
+	trafficUp := atomic.LoadInt64(&s.trafficUp)
+	trafficDown := atomic.LoadInt64(&s.trafficDown)
+	for _, session := range activeSessions {
+		trafficUp += session.UploadBytes
+		trafficDown += session.DownloadBytes
+	}
+
+	status := &Status{
+		platform(),
+		C.Version,
+		cpu(),
+		mem(),
+		uptime(),
+		trafficUp + trafficDown,
+		trafficUp,
+		trafficDown,
+		runtime.NumGoroutine(),
+		activeSessions,
+		closedSessions,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(status)
+}
+
+func (s *Server) serveHTML(resp http.ResponseWriter, _ *http.Request) {
+	activeSessions, closedSessions := s.getSessions()
 
 	tablePrint := func(w io.Writer, sessions []Session) {
 		// Sort by session start time.
@@ -121,8 +155,8 @@ func (s *Server) handler(resp http.ResponseWriter, req *http.Request) {
 	// Session table
 	_, _ = fmt.Fprintf(w, "<h3 class=\"sub-header\">Active sessions (%d)</h3>\n", len(activeSessions))
 	tablePrint(w, activeSessions)
-	_, _ = fmt.Fprintf(w, "<h3 class=\"sub-header\">Closed sessions (%d)</h3>\n", len(completedSessions))
-	tablePrint(w, completedSessions)
+	_, _ = fmt.Fprintf(w, "<h3 class=\"sub-header\">Closed sessions (%d)</h3>\n", len(closedSessions))
+	tablePrint(w, closedSessions)
 	_, _ = fmt.Fprintf(w, "</div></body></html>\n")
 	_ = w.Flush()
 }
@@ -144,7 +178,8 @@ func (s *Server) Start() error {
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.handler)
+	mux.HandleFunc("/", s.serveHTML)
+	mux.HandleFunc("/json", s.serveJSON)
 
 	box := packr.NewBox("./css")
 	mux.Handle("/css/", http.StripPrefix("/css/", http.FileServer(box)))
@@ -175,11 +210,11 @@ func (s *Server) RemoveSession(key interface{}) {
 		// record up & down traffic
 		atomic.AddInt64(&s.trafficUp, atomic.LoadInt64(&session.UploadBytes))
 		atomic.AddInt64(&s.trafficDown, atomic.LoadInt64(&session.DownloadBytes))
-		// move to completed sessions
+		// move to closed sessions
 		s.Lock()
-		s.completedSessions = append(s.completedSessions, *session)
-		if len(s.completedSessions) > maxCompletedSessions {
-			s.completedSessions = s.completedSessions[1:]
+		s.closedSessionList = append(s.closedSessionList, *session)
+		if len(s.closedSessionList) > maxClosedSessions {
+			s.closedSessionList = s.closedSessionList[1:]
 		}
 		s.Unlock()
 	}

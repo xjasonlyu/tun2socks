@@ -16,16 +16,30 @@ type Monitor interface {
 	RemoveSession(key interface{})
 }
 
+type Status struct {
+	Platform       string    `json:"platform"`
+	Version        string    `json:"version"`
+	CPU            string    `json:"cpu"`
+	MEM            string    `json:"mem"`
+	Uptime         string    `json:"uptime"`
+	Total          int64     `json:"total"`
+	Upload         int64     `json:"upload"`
+	Download       int64     `json:"download"`
+	Goroutines     int       `json:"goroutines"`
+	ActiveSessions []Session `json:"activeSessions"`
+	ClosedSessions []Session `json:"closedSessions"`
+}
+
 type Session struct {
-	Process       string
-	Network       string
-	DialerAddr    string
-	ClientAddr    string
-	TargetAddr    string
-	UploadBytes   int64
-	DownloadBytes int64
-	SessionStart  time.Time
-	SessionClose  time.Time
+	Process       string    `json:"process"`
+	Network       string    `json:"network"`
+	DialerAddr    string    `json:"dialerAddr"`
+	ClientAddr    string    `json:"clientAddr"`
+	TargetAddr    string    `json:"targetAddr"`
+	UploadBytes   int64     `json:"upload"`
+	DownloadBytes int64     `json:"download"`
+	SessionStart  time.Time `json:"sessionStart"`
+	SessionClose  time.Time `json:"sessionClose"`
 }
 
 // Track SessionConn
