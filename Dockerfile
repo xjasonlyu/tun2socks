@@ -13,11 +13,11 @@ RUN apk add --update --no-cache \
 
 FROM alpine:latest
 
-COPY ./tun2socks.sh /
+COPY ./entrypoint.sh /
 COPY --from=builder /tun2socks-src/bin/tun2socks /tun2socks
 
 RUN apk add --update --no-cache iptables iproute2 \
-    && chmod +x /tun2socks.sh
+    && chmod +x /entrypoint.sh
 
 ENV TUN tun0
 ENV ETH eth0
@@ -34,4 +34,4 @@ ENV FAKEDNS=
 ENV BACKEND_DNS=
 ENV HOSTS=
 
-ENTRYPOINT ["/tun2socks.sh"]
+ENTRYPOINT ["/entrypoint.sh"]

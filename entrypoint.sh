@@ -2,12 +2,9 @@
 
 TUN="${TUN:-tun0}"
 ETH="${ETH:-eth0}"
-ETH_ADDR="${ETH_ADDR:-172.16.1.1}"
 TUN_ADDR="${TUN_ADDR:-198.18.0.1}"
 TUN_MASK="${TUN_MASK:-255.254.0.0}"
-PROXY="${PROXY:-172.16.1.2:1080}"
 LOGLEVEL="${LOGLEVEL:-warning}"
-EXCLUDED="${EXCLUDED:-172.16.1.2/32}"
 
 MONITOR="${MONITOR:-1}"
 MONITOR_ADDR="${MONITOR_ADDR:-0.0.0.0:80}"
@@ -25,9 +22,9 @@ ip route del default > /dev/null
 ip route add default via "$TUN_ADDR" dev "$TUN"
 
 # add to ip route
-for ip in $(echo "$EXCLUDED" | tr ',' '\n')
+for addr in $(echo "$EXCLUDED" | tr ',' '\n')
 do
-    ip route add "$ip" via "$ETH_ADDR"
+    ip route add "$addr" via "$ETH_ADDR"
 done
 
 if [ -n "$EXTRACMD" ]; then
