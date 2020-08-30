@@ -18,9 +18,13 @@ var (
 	hijackDNS []string
 )
 
-// Register Monitor
 func RegisterMonitor(m S.Monitor) {
 	monitor = m
+}
+
+func RegisterFakeDNS(d D.FakeDNS, h string) {
+	fakeDNS = d
+	hijackDNS = append(hijackDNS, strings.Split(h, ",")...)
 }
 
 // Session Operation
@@ -34,12 +38,6 @@ func removeSession(key interface{}) {
 	if monitor != nil {
 		monitor.RemoveSession(key)
 	}
-}
-
-// Register FakeDNS
-func RegisterFakeDNS(d D.FakeDNS, h string) {
-	fakeDNS = d
-	hijackDNS = append(hijackDNS, strings.Split(h, ",")...)
 }
 
 // Check target if is hijacked address.

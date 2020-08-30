@@ -120,13 +120,13 @@ func (h *udpHandler) ReceiveTo(conn core.UDPConn, data []byte, addr *net.UDPAddr
 		resp, err := fakeDNS.Resolve(data)
 		if err != nil {
 			return fmt.Errorf("hijack DNS request error: %v", err)
-		} else {
-			if _, err = conn.WriteFrom(resp, addr); err != nil {
-				return fmt.Errorf("write dns answer failed: %v", err)
-			}
-			h.Close(conn)
-			return nil
 		}
+
+		if _, err = conn.WriteFrom(resp, addr); err != nil {
+			return fmt.Errorf("write dns answer failed: %v", err)
+		}
+		h.Close(conn)
+		return nil
 	}
 
 	var remoteAddr net.Addr
