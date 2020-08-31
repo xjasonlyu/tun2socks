@@ -6,9 +6,8 @@ COPY . /tun2socks-src
 RUN apk add --update --no-cache \
     gcc git make musl-dev \
     && go mod download \
-    && go get -u github.com/gobuffalo/packr/packr \
-    && packr \
-    && make build \
+    && go get -u github.com/gobuffalo/packr/v2/packr2 \
+    && packr2 && packr2 clean && make \
     && /tun2socks-src/bin/tun2socks -version
 
 FROM alpine:latest
@@ -16,7 +15,7 @@ FROM alpine:latest
 COPY ./entrypoint.sh /
 COPY --from=builder /tun2socks-src/bin/tun2socks /tun2socks
 
-RUN apk add --update --no-cache iptables iproute2 \
+RUN apk add --update --no-cache iptables iproute2 ca-certificates\
     && chmod +x /entrypoint.sh
 
 ENV TUN tun0

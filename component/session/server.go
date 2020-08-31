@@ -16,7 +16,7 @@ import (
 
 	C "github.com/xjasonlyu/tun2socks/constant"
 
-	"github.com/gobuffalo/packr"
+	"github.com/gobuffalo/packr/v2"
 )
 
 const maxClosedSessions = 100
@@ -181,7 +181,7 @@ func (s *Server) Start() error {
 	mux.HandleFunc("/", s.serveHTML)
 	mux.HandleFunc("/json", s.serveJSON)
 
-	box := packr.NewBox("./css")
+	box := packr.New("CSSBox", "./css")
 	mux.Handle("/css/", http.StripPrefix("/css/", http.FileServer(box)))
 
 	s.Server = &http.Server{Addr: s.ServeAddr, Handler: mux}
