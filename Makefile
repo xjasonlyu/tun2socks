@@ -7,10 +7,9 @@ GOBUILD=go build -trimpath -ldflags '-s -w  -extldflags "-static" -X "github.com
 all: build
 
 build:
+	cd component/session && packr2
 	cd cmd && $(GOBUILD) -v -tags $(BUILDTAGS) -o $(BINDIR)/$(NAME)
-
-debug:
-	cd cmd && $(GOBUILD) -v -tags $(BUILDTAGS) -race -o $(BINDIR)/$(NAME)
+	cd component/session && packr2 clean
 
 clean:
 	rm -rf $(BINDIR)
