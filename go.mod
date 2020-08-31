@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/gobuffalo/packr v1.30.1
+	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/miekg/dns v1.1.31
 	github.com/shirou/gopsutil v2.20.7+incompatible
 	github.com/sirupsen/logrus v1.6.0
