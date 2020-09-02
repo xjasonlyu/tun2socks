@@ -3,8 +3,6 @@ on:
   push:
     branches:
       - master
-    tags:
-      - '*'
 jobs:
 
   build:
@@ -34,19 +32,5 @@ jobs:
       - name: Docker buildx image and push on master branch
         if: github.ref == 'refs/heads/master'
         run: |
-          docker buildx build --output "type=image,push=true" --platform=linux/amd64,linux/arm/v7,linux/arm64 --tag xjasonlyu/tun2socks:latest .
-
-      - name: Replace tag without `v`
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: actions/github-script@v3
-        id: version
-        with:
-          script: |
-            return context.payload.ref.replace(/\/?refs\/tags\/v/, '')
-          result-encoding: string
-
-      - name: Docker buildx image and push on release
-        if: startsWith(github.ref, 'refs/tags/')
-        run: |
-          docker buildx build --output "type=image,push=true" --platform=linux/amd64,linux/arm/v7,linux/arm64 --tag xjasonlyu/tun2socks:${{steps.version.outputs.result}} .
+          docker buildx build --output "type=image,push=true" --platform=linux/amd64,linux/arm/v7,linux/arm64 --tag xjasonlyu/tun2socks:$(git describe --tags --long | cut -c 2-) .
           docker buildx build --output "type=image,push=true" --platform=linux/amd64,linux/arm/v7,linux/arm64 --tag xjasonlyu/tun2socks:latest .
