@@ -7,9 +7,9 @@ require (
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gobuffalo/packr/v2 v2.8.0
 	github.com/miekg/dns v1.1.31
-	github.com/shirou/gopsutil v2.20.7+incompatible
+	github.com/shirou/gopsutil v2.20.8+incompatible
 	github.com/sirupsen/logrus v1.6.0
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/sys v0.0.0-20200828194041-157a740278f4
+	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009
 )
