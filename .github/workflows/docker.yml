@@ -1,8 +1,14 @@
 name: Publish Docker Image
+
 on:
   push:
     branches:
       - master
+    paths-ignore:
+      - '.github/**'
+      - '.gitignore'
+      - 'README.md'
+
 jobs:
 
   build:
@@ -15,22 +21,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up docker buildx
-        id: buildx
-        uses: crazy-max/ghaction-docker-buildx@v3
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
         with:
-          buildx-version: latest
-          qemu-version: latest
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Docker login
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Get Version
+        id: shell
         run: |
-          echo "${DOCKER_PASSWORD}" | docker login --username "${DOCKER_USERNAME}" --password-stdin
+          echo ::set-output name=version::$(git describe --tags --long | cut -c 2-)
 
-      - name: Docker buildx image and push on master branch
+      - name: Build and Push
         if: github.ref == 'refs/heads/master'
-        run: |
-          docker buildx build --output "type=image,push=true" --platform=linux/amd64,linux/arm/v7,linux/arm64 --tag xjasonlyu/tun2socks:$(git describe --tags --long | cut -c 2-) .
-          docker buildx build --output "type=image,push=true" --platform=linux/amd64,linux/arm/v7,linux/arm64 --tag xjasonlyu/tun2socks:latest .
+        uses: docker/build-push-action@v2
+        with:
+          push: true
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
+          tags: |
+            xjasonlyu/tun2socks:latest
+            xjasonlyu/tun2socks:${{ steps.shell.outputs.version }}
