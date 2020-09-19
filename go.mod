@@ -11,5 +11,5 @@ require (
 	github.com/sirupsen/logrus v1.6.0
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009
+	golang.org/x/sys v0.0.0-20200918174421-af09f7315aff
 )
