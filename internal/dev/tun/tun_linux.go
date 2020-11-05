@@ -19,6 +19,9 @@ func (f closeFunc) Close() error {
 func Open(name string) (ep stack.LinkEndpoint, c io.Closer, err error) {
 	var fd int
 	fd, err = tun.Open(name)
+	if err != nil {
+		return
+	}
 
 	var mtu uint32
 	mtu, err = rawfile.GetMTU(name)
