@@ -1,0 +1,35 @@
+version: '2.4'
+
+services:
+  tun2socks:
+    image: xjasonlyu/tun2socks:arm64-dev
+    cap_add:
+      - NET_ADMIN
+    devices:
+        - '/dev/net/tun:/dev/net/tun'
+    environment:
+      - GODEBUG=madvdontneed=1
+      - PROXY=
+      - LOGLEVEL=warning
+      - API=:8080
+      - DNS=
+      - HOSTS=
+      - EXCLUDED=
+      - EXTRACMD=
+    networks:
+      switch:
+        ipv4_address: 172.20.1.20
+    restart: always
+    container_name: tun2socks
+
+networks:
+  switch:
+    name: switch
+    ipam:
+      driver: default
+      config:
+        - subnet: '172.20.1.0/25'
+          gateway: 172.20.1.1
+    driver: macvlan
+    driver_opts:
+      parent: eth0
