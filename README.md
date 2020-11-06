@@ -1,15 +1,18 @@
-# tun2socks
+<h1 align="center">tun2socks</h1>
+<h3 align="center">A tun2socks implementation written in Go.</h3>
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/xjasonlyu/tun2socks/Go/master?style=flat-square)
-![Go report](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks?style=flat-square)
-![GitHub License](https://img.shields.io/github/license/xjasonlyu/tun2socks?style=flat-square)
-![Lines of code](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square)
-![Release](https://img.shields.io/github/v/release/xjasonlyu/tun2socks.svg?include_prereleases&style=flat-square)
-
-A tun2socks implementation written in Go.
+[![GitHub Workflow](https://img.shields.io/github/workflow/status/xjasonlyu/tun2socks/Go/master?style=flat-square)](https://github.com/xjasonlyu/tun2socks/actions)
+[![Docker Pulls](https://img.shields.io/docker/pulls/xjasonlyu/tun2socks?style=flat-square)](https://hub.docker.com/r/xjasonlyu/tun2socks)
+[![Docker Image Size (tag)](https://img.shields.io/docker/image-size/xjasonlyu/tun2socks/latest?style=flat-square)](https://hub.docker.com/r/xjasonlyu/tun2socks)
+[![Go version](https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks?style=flat-square)](https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks)
+[![Go report](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks?style=flat-square)](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks)
+[![GitHub License](https://img.shields.io/github/license/xjasonlyu/tun2socks?style=flat-square)](https://github.com/xjasonlyu/tun2socks/blob/master/LICENSE)
+[![Lines of code](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square)](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks)
+[![Release](https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square)](https://github.com/xjasonlyu/tun2socks/releases)
 
 ## Features
 
+- ICMP echoing
 - IPv6 support
 - Optimized UDP transmission for game acceleration
 - Pure Go implementation, no CGO required
@@ -25,16 +28,53 @@ A tun2socks implementation written in Go.
 | Memory | >20MB | >128MB |
 | CPU | amd64 arm64 | amd64 |
 
+## Performance
+
+> iPerf3 tested on Debian 10 with i5-10500, 8G RAM
+
+![iperf3 test](assets/iperf3.png)
+
 ## QuickStart
 
 Download from precompiled [Releases](https://github.com/xjasonlyu/tun2socks/releases).
 
 <details>
-  <summary>With Docker</summary>
+  <summary><b>With Docker</b></summary>
 
 > Since Go 1.12, the runtime now uses MADV_FREE to release unused memory on **linux**. This is more efficient but may result in higher reported RSS. The kernel will reclaim the unused data when it is needed. To revert to the Go 1.11 behavior (MADV_DONTNEED), set the environment variable GODEBUG=madvdontneed=1.
 
-docker-compose.yml
+create docker network (macvlan mode)
+
+```shell script
+docker network create -d macvlan \
+  --subnet=172.20.1.0/25 \
+  --gateway=172.20.1.1 \
+  -o parent=eth0 \
+  switch
+```
+
+pull `tun2socks` docker image
+
+```shell script
+docker pull xjasonlyu/tun2socks:latest
+```
+
+run as gateway (DNS configuration required)
+
+```shell script
+docker run -d \
+  --network switch \
+  --name tun2socks \
+  --ip 172.20.1.2 \
+  --privileged \
+  --restart always \
+  --sysctl net.ipv4.ip_forward=1 \
+  -e PROXY=socks5://server:port \
+  -e KEY=VALUE... \
+  xjasonlyu/tun2socks:latest
+```
+
+or use docker-compose (recommended)
 
 ```yaml
 version: '2.4'
@@ -76,7 +116,7 @@ networks:
 </details>
 
 <details>
-  <summary>With Linux</summary>
+  <summary><b>With Linux</b></summary>
 
 create tun
 
@@ -86,7 +126,7 @@ ip addr add 198.18.0.1/15 dev tun0
 ip link set dev tun0 up
 ```
 
-add route
+add route table
 
 ```shell script
 ip route del default
@@ -101,14 +141,18 @@ run
 </details>
 
 <details>
-  <summary>With Script</summary>
+  <summary><b>With Script</b></summary>
 
 ```shell script
 PROXY=socks5://server:port LOGLEVEL=WARN sh ./scripts/entrypoint.sh
 ```
 </details>
 
-## Build from source
+## How to Build
+
+### build from source code
+
+Go compiler version >= 1.15 is required
 
 ```text
 $ git clone https://github.com/xjasonlyu/tun2socks.git
@@ -116,11 +160,16 @@ $ cd tun2socks
 $ make
 ```
 
-## Performance
+### build docker image
 
-![iperf3 test](assets/iperf3.png)
+```text
+$ docker build -t tun2socks .
+```
 
 ## Usage
+
+<details>
+  <summary><b>Help Text</b></summary>
 
 ```text
 NAME:
@@ -140,11 +189,12 @@ GLOBAL OPTIONS:
    --version, -v                Print current version (default: false)
    --help, -h                   show help (default: false)
 ```
+</details>
 
 ## Known Issues
 
 Due to the implementation of pure Go, the memory usage is higher than the previous version.
-If you are memory sensitive, please go back to [v1](https://github.com/xjasonlyu/tun2socks/tree/v1).
+If you are sensitive to memory, please go back to [v1](https://github.com/xjasonlyu/tun2socks/tree/v1).
 
 ## TODO
 
