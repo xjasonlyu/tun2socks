@@ -11,7 +11,7 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/sirupsen/logrus v1.7.0
 	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
-	github.com/urfave/cli/v2 v2.2.0
+	github.com/urfave/cli/v2 v2.3.0
 	github.com/xjasonlyu/clash v0.15.1-0.20201105074459-aa45c8b56cf6
 	go.uber.org/atomic v1.7.0
 	golang.org/x/net v0.0.0-20201031054903-ff519b6c9102 // indirect

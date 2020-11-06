@@ -4,7 +4,7 @@ NAME = "tun2socks"
 TAGS = ""
 BUILD_FLAGS = "-v"
 
-VERSION = $(shell git describe --tags)
+VERSION = $(shell git describe --tags --abbrev=0)
 BUILD_TIME = $(shell date -u '+%FT%TZ')
 
 LDFLAGS += -w -s -buildid=
@@ -17,7 +17,7 @@ PLATFORM_LIST = \
 	linux-amd64 \
 	linux-arm64 \
 
-.PHONY: $(PLATFORM_LIST)
+.PHONY: all docker $(PLATFORM_LIST)
 
 all: $(PLATFORM_LIST)
 

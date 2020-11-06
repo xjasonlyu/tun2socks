@@ -2,7 +2,7 @@ version: '2.4'
 
 services:
   tun2socks:
-    image: xjasonlyu/tun2socks:arm64-dev
+    image: xjasonlyu/tun2socks:latest
     cap_add:
       - NET_ADMIN
     devices:
@@ -10,15 +10,15 @@ services:
     environment:
       - GODEBUG=madvdontneed=1
       - PROXY=
-      - LOGLEVEL=warning
-      - API=:8080
+      - LOGLEVEL=
+      - API=
       - DNS=
       - HOSTS=
       - EXCLUDED=
       - EXTRACMD=
     networks:
       switch:
-        ipv4_address: 172.20.1.20
+        ipv4_address: 172.20.1.2
     restart: always
     container_name: tun2socks
 
