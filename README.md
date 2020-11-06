@@ -9,6 +9,7 @@
 [![GitHub License](https://img.shields.io/github/license/xjasonlyu/tun2socks?style=flat-square)](https://github.com/xjasonlyu/tun2socks/blob/master/LICENSE)
 [![Lines of code](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square)](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks)
 [![Release](https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square)](https://github.com/xjasonlyu/tun2socks/releases)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks?ref=badge_shield)
 
 ## Features
 
@@ -205,3 +206,7 @@ If you are sensitive to memory, please go back to [v1](https://github.com/xjason
 - [Dreamacro/clash](https://github.com/Dreamacro/clash)
 - [google/gvisor](https://github.com/google/gvisor)
 - [majek/slirpnetstack](https://github.com/majek/slirpnetstack)
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks?ref=badge_large)
