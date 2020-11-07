@@ -11,6 +11,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
 
 	"github.com/xjasonlyu/tun2socks/internal/adapter"
+	"github.com/xjasonlyu/tun2socks/pkg/log"
 )
 
 const udpNoChecksum = true
@@ -19,16 +20,16 @@ type udpHandleFunc func(adapter.UDPPacket)
 
 func WithUDPHandler(handle udpHandleFunc) Option {
 	return func(s *stack.Stack) error {
-		udpHandlePacket := func(r *stack.Route, id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
+		udpHandlePacket := func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 			// Ref: gVisor pkg/tcpip/transport/udp/endpoint.go HandlePacket
-			hdr := header.UDP(pkt.TransportHeader().View())
-			if int(hdr.Length()) > pkt.Data.Size()+header.UDPMinimumSize {
+			udpHdr := header.UDP(pkt.TransportHeader().View())
+			if int(udpHdr.Length()) > pkt.Data.Size()+header.UDPMinimumSize {
 				// Malformed packet.
 				s.Stats().UDP.MalformedPacketsReceived.Increment()
 				return true
 			}
 
-			if !verifyChecksum(r, hdr, pkt) {
+			if !verifyChecksum(udpHdr, pkt) {
 				// Checksum error.
 				s.Stats().UDP.ChecksumErrors.Increment()
 				return true
@@ -36,8 +37,14 @@ func WithUDPHandler(handle udpHandleFunc) Option {
 
 			s.Stats().UDP.PacketsReceived.Increment()
 
-			// make a clone here.
-			route := r.Clone()
+			netHdr := pkt.Network()
+			route, err := s.FindRoute(pkt.NICID, netHdr.DestinationAddress(), netHdr.SourceAddress(), pkt.NetworkProtocolNumber, false /* multicastLoop */)
+			if err != nil {
+				log.Warnf("[STACK] find route error: %v", err)
+				return true
+			}
+			route.ResolveWith(pkt.SourceLinkAddress())
+
 			packet := &udpPacket{
 				id: id,
 				r:  &route,
@@ -138,7 +145,7 @@ func sendUDP(r *stack.Route, data buffer.VectorisedView, localPort, remotePort u
 	// On IPv4, UDP checksum is optional, and a zero value indicates the
 	// transmitter skipped the checksum generation (RFC768).
 	// On IPv6, UDP checksum is not optional (RFC2460 Section 8.1).
-	if r.Capabilities()&stack.CapabilityTXChecksumOffload == 0 &&
+	if r.RequiresTXTransportChecksum() &&
 		(!noChecksum || r.NetProto == header.IPv6ProtocolNumber) {
 		xsum := r.PseudoHeaderChecksum(udp.ProtocolNumber, length)
 		for _, v := range data.Views() {
@@ -166,10 +173,11 @@ func sendUDP(r *stack.Route, data buffer.VectorisedView, localPort, remotePort u
 // On IPv4, UDP checksum is optional, and a zero value means the transmitter
 // omitted the checksum generation (RFC768).
 // On IPv6, UDP checksum is not optional (RFC2460 Section 8.1).
-func verifyChecksum(r *stack.Route, hdr header.UDP, pkt *stack.PacketBuffer) bool {
-	if r.Capabilities()&stack.CapabilityRXChecksumOffload == 0 &&
-		(hdr.Checksum() != 0 || r.NetProto == header.IPv6ProtocolNumber) {
-		xsum := r.PseudoHeaderChecksum(udp.ProtocolNumber, hdr.Length())
+func verifyChecksum(hdr header.UDP, pkt *stack.PacketBuffer) bool {
+	if !pkt.RXTransportChecksumValidated &&
+		(hdr.Checksum() != 0 || pkt.NetworkProtocolNumber == header.IPv6ProtocolNumber) {
+		netHdr := pkt.Network()
+		xsum := header.PseudoHeaderChecksum(udp.ProtocolNumber, netHdr.DestinationAddress(), netHdr.SourceAddress(), hdr.Length())
 		for _, v := range pkt.Data.Views() {
 			xsum = header.Checksum(v, xsum)
 		}

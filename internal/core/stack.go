@@ -77,6 +77,17 @@ func NewDefaultStack(linkEp stack.LinkEndpoint, th tcpHandleFunc, uh udpHandleFu
 		// Ref: https://github.com/majek/slirpnetstack/blob/master/stack.go
 		WithPromiscuousMode(defaultNICID, nicPromiscuousModeEnabled),
 
+		// Enable spoofing if a stack may send packets from unowned addresses.
+		// This change required changes to some netgophers since previously,
+		// promiscuous mode was enough to let the netstack respond to all
+		// incoming packets regardless of the packet's destination address. Now
+		// that a stack.Route is not held for each incoming packet, finding a route
+		// may fail with local addresses we don't own but accepted packets for
+		// while in promiscuous mode. Since we also want to be able to send from
+		// any address (in response the received promiscuous mode packets), we need
+		// to enable spoofing.
+		//
+		// Ref: https://github.com/google/gvisor/commit/8c0701462a84ff77e602f1626aec49479c308127
 		WithSpoofing(defaultNICID, nicSpoofingEnabled),
 	)
 }
