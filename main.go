@@ -10,7 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/pkg/log"
 )
 
-const Usage = "A tun2socks implementation written in Go."
+const About = "A tun2socks powered by gVisor TCP/IP stack."
 
 var (
 	Version   string
@@ -19,7 +19,7 @@ var (
 
 func main() {
 	app := &cli.App{
-		Usage:   Usage,
+		Usage:   About,
 		Version: Version,
 		Action:  cmd.Main,
 		Flags: []cli.Flag{

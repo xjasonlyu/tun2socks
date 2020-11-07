@@ -1,5 +1,5 @@
 <h1 align="center">tun2socks</h1>
-<h3 align="center">A tun2socks implementation written in Go.</h3>
+<h3 align="center">A tun2socks powered by gVisor TCP/IP stack.</h3>
 
 <p align="center">
   <a href="https://github.com/xjasonlyu/tun2socks/actions">
@@ -222,7 +222,7 @@ PROXY=socks5://server:port LOGLEVEL=INFO sh ./scripts/entrypoint.sh
 
 ```text
 NAME:
-   tun2socks - A tun2socks implementation written in Go.
+   tun2socks - A tun2socks powered by gVisor TCP/IP stack.
 
 USAGE:
    tun2socks [global options] [arguments...]
