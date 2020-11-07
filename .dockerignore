@@ -1,0 +1,9 @@
+.github/
+.github/**
+assets/
+assets/**
+.dockerignore
+*.yml
+*.md
+.gitignore
+Dockerfile*
