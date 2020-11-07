@@ -30,7 +30,7 @@ config_route() {
   # clone main route
   ip route show table main |
     while read -r route; do
-      ip route add $route table "$TABLE"
+      ip route add ${route%linkdown*} table "$TABLE"
     done
 
   # config default route
