@@ -3,10 +3,9 @@ package tun
 import (
 	"fmt"
 	"io"
-	"syscall"
-	"unsafe"
 
 	"github.com/songgao/water"
+	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
 	"github.com/xjasonlyu/tun2socks/pkg/link/rwc"
@@ -37,34 +36,22 @@ func Open(name string) (ep stack.LinkEndpoint, c io.Closer, err error) {
 }
 
 func getMTU(name string) (uint32, error) {
-	// open datagram socket
-	fd, err := syscall.Socket(
-		syscall.AF_INET,
-		syscall.SOCK_DGRAM,
+	fd, err := unix.Socket(
+		unix.AF_INET,
+		unix.SOCK_DGRAM,
 		0,
 	)
+
 	if err != nil {
 		return 0, err
 	}
 
-	defer syscall.Close(fd)
+	defer unix.Close(fd)
 
-	// do ioctl call
-	var ifr struct {
-		name [16]byte
-		mtu  uint32
-	}
-	copy(ifr.name[:], name)
-
-	_, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		uintptr(fd),
-		uintptr(syscall.SIOCGIFMTU),
-		uintptr(unsafe.Pointer(&ifr)),
-	)
-	if errno != 0 {
-		return 0, fmt.Errorf("get MTU on %s: %s", name, errno.Error())
+	ifr, err := unix.IoctlGetIfreqMTU(fd, name)
+	if err != nil {
+		return 0, fmt.Errorf("get MTU on %s: %w", name, err)
 	}
 
-	return ifr.mtu, nil
+	return uint32(ifr.MTU), nil
 }
