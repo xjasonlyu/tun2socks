@@ -13,11 +13,11 @@ import (
 	"github.com/xjasonlyu/clash/component/dialer"
 	"github.com/xjasonlyu/tun2socks/internal/api"
 	"github.com/xjasonlyu/tun2socks/internal/core"
-	"github.com/xjasonlyu/tun2socks/internal/dev"
 	"github.com/xjasonlyu/tun2socks/internal/dns"
 	"github.com/xjasonlyu/tun2socks/internal/proxy"
 	"github.com/xjasonlyu/tun2socks/internal/tunnel"
 	"github.com/xjasonlyu/tun2socks/pkg/log"
+	"github.com/xjasonlyu/tun2socks/pkg/tun"
 )
 
 func bindToInterface(name string) {
@@ -51,7 +51,7 @@ func Main(c *cli.Context) error {
 	if c.IsSet("interface") {
 		name := c.String("interface")
 		bindToInterface(name)
-		log.Infof("[IFCE] bind to interface: %s", name)
+		log.Infof("[DIALER] bind to interface: %s", name)
 	}
 
 	if c.IsSet("api") { /* initiate API */
@@ -71,16 +71,11 @@ func Main(c *cli.Context) error {
 	}
 
 	deviceURL := c.String("device")
-	device, err := dev.Open(deviceURL)
+	device, err := tun.Open(deviceURL)
 	if err != nil {
 		return fmt.Errorf("open device %s: %w", deviceURL, err)
 	}
-	defer func() {
-		err := device.Close()
-		if err != nil {
-			log.Errorf("close device %s error: %v", deviceURL, err)
-		}
-	}()
+	defer device.Close()
 
 	proxyURL := c.String("proxy")
 	if err := proxy.Register(proxyURL); err != nil {
@@ -90,7 +85,7 @@ func Main(c *cli.Context) error {
 	if _, err := core.NewDefaultStack(device, tunnel.Add, tunnel.AddPacket); err != nil {
 		return fmt.Errorf("initiate stack: %w", err)
 	}
-	log.Infof("[STACK] %s --> %s", device.String(), proxy.String())
+	log.Infof("[STACK] %s --> %s", deviceURL, proxyURL)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)

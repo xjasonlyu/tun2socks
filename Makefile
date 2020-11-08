@@ -14,8 +14,12 @@ GO_BUILD = CGO_ENABLED=0 go build $(BUILD_FLAGS) -ldflags '$(LDFLAGS)' -tags '$(
 
 PLATFORM_LIST = \
 	darwin-amd64 \
+	freebsd-amd64 \
+	freebsd-arm64 \
 	linux-amd64 \
 	linux-arm64 \
+	openbsd-amd64 \
+	openbsd-arm64 \
 
 .PHONY: all docker $(PLATFORM_LIST)
 
@@ -27,11 +31,23 @@ docker:
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GO_BUILD) -o $(DIR)/$(NAME)-$@
 
+freebsd-amd64:
+	GOARCH=amd64 GOOS=freebsd $(GO_BUILD) -o $(DIR)/$(NAME)-$@
+
+freebsd-arm64:
+	GOARCH=arm64 GOOS=freebsd $(GO_BUILD) -o $(DIR)/$(NAME)-$@
+
 linux-amd64:
 	GOARCH=amd64 GOOS=linux $(GO_BUILD) -o $(DIR)/$(NAME)-$@
 
 linux-arm64:
 	GOARCH=arm64 GOOS=linux $(GO_BUILD) -o $(DIR)/$(NAME)-$@
+
+openbsd-amd64:
+	GOARCH=amd64 GOOS=openbsd $(GO_BUILD) -o $(DIR)/$(NAME)-$@
+
+openbsd-arm64:
+	GOARCH=arm64 GOOS=openbsd $(GO_BUILD) -o $(DIR)/$(NAME)-$@
 
 zip_releases=$(addsuffix .zip, $(PLATFORM_LIST))
 

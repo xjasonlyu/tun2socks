@@ -40,7 +40,7 @@
 
 | Target | Minimum | Recommended |
 | :----- | :-----: | :---------: |
-| System | linux darwin | linux |
+| System | linux darwin freebsd openbsd | linux |
 | Memory | >20MB | >128MB |
 | CPU | amd64 arm64 | amd64 |
 
@@ -296,5 +296,5 @@ If you are sensitive to memory, please go back to [v1](https://github.com/xjason
 ## TODO
 
 - [ ] Windows support
-- [ ] FreeBSD support
-- [ ] OpenBSD support
+- [x] FreeBSD support
+- [x] OpenBSD support
