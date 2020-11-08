@@ -45,9 +45,6 @@ jobs:
 
       - name: Build
         if: startsWith(github.ref, 'refs/tags/')
-        env:
-          DIR: bin
-          NAME: tun2socks
         run: make -j releases
 
       - name: Upload Release
