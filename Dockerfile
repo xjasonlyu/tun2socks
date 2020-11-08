@@ -1,17 +1,17 @@
 FROM golang:alpine AS builder
 
-WORKDIR /app
-COPY . /app
+WORKDIR /tun2socks-src
+COPY . /tun2socks-src
 
 RUN apk add --no-cache make git \
     && go mod download \
     && make docker \
-    && /app/bin/tun2socks-docker -v
+    && mv ./bin/tun2socks-docker /tun2socks
 
 FROM alpine:latest
 
 COPY ./scripts/entrypoint.sh /entrypoint.sh
-COPY --from=builder /app/bin/tun2socks-docker /usr/bin/tun2socks
+COPY --from=builder /tun2socks /usr/bin/tun2socks
 
 RUN apk add --update --no-cache iptables iproute2 \
     && chmod +x /entrypoint.sh

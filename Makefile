@@ -4,7 +4,7 @@ NAME = "tun2socks"
 TAGS = ""
 BUILD_FLAGS = "-v"
 
-VERSION = $(shell git describe --tags --abbrev=0)
+VERSION = $(shell git describe --tags --abbrev=0 || echo "unknown version")
 BUILD_TIME = $(shell date -u '+%FT%TZ')
 
 LDFLAGS += -w -s -buildid=
