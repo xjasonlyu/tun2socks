@@ -257,6 +257,7 @@ GLOBAL OPTIONS:
 - [Dreamacro/clash](https://github.com/Dreamacro/clash)
 - [google/gvisor](https://github.com/google/gvisor)
 - [majek/slirpnetstack](https://github.com/majek/slirpnetstack)
+- [WireGuard/wireguard-go](https://github.com/WireGuard/wireguard-go)
 
 ## Known Issues
 
@@ -266,3 +267,5 @@ If you are sensitive to memory, please go back to [v1](https://github.com/xjason
 ## TODO
 
 - [ ] Windows support
+- [ ] FreeBSD support
+- [ ] OpenBSD support
