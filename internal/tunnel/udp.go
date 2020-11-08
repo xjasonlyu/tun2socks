@@ -18,7 +18,7 @@ import (
 
 const (
 	udpTimeout    = 30 * time.Second
-	udpBufferSize = 64 << 10 // KiB
+	udpBufferSize = (1 << 16) - 1 // largest possible UDP datagram
 )
 
 var (
