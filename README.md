@@ -192,6 +192,35 @@ ip rule add from all priority 3000 table tun2socks
 </details>
 
 <details>
+  <summary><b>With MacOS</b></summary>
+
+### start tun2socks
+```shell script
+./tun2socks --loglevel info --device tun://utun123 --proxy socks5://server:port --interface eth0
+```
+
+### config interface
+
+```shell script
+sudo ifconfig utun123 198.18.0.1 netmask 255.255.255.255 198.18.0.1 up
+```
+
+### config route
+
+```shell script
+sudo route del default
+sudo route add default 198.18.0.1
+sudo route add ${proxy_server_ip} ${your_gateway}
+```
+
+### check route table
+
+```shell script
+netstat -nr
+```
+</details>
+
+<details>
   <summary><b>With Script</b></summary>
 
 > entrypoint.sh would take care of tun & routes.
