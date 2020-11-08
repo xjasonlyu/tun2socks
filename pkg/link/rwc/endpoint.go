@@ -162,8 +162,7 @@ func (e *Endpoint) Wait() {
 	e.wg.Wait()
 }
 
-// Close closes io.ReadWriteCloser and set closed to true.
+// Close closes io.ReadWriteCloser.
 func (e *Endpoint) Close() error {
-	e.rwc.Close()
-	return nil
+	return e.rwc.Close()
 }
