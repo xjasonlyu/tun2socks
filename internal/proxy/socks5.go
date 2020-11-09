@@ -92,7 +92,7 @@ func (ss *Socks5) DialUDP(_ *adapter.Metadata) (_ net.PacketConn, err error) {
 	// zeros. RFC1928
 	var targetAddr socks5.Addr = []byte{socks5.AtypIPv4, 0, 0, 0, 0, 0, 0}
 
-	bindAddr, err := socks5.ClientHandshake(c, targetAddr, socks5.CmdUDPAssociate, user)
+	addr, err := socks5.ClientHandshake(c, targetAddr, socks5.CmdUDPAssociate, user)
 	if err != nil {
 		return nil, fmt.Errorf("client hanshake: %w", err)
 	}
@@ -110,7 +110,17 @@ func (ss *Socks5) DialUDP(_ *adapter.Metadata) (_ net.PacketConn, err error) {
 		pc.Close()
 	}()
 
-	return &socksPacketConn{PacketConn: pc, rAddr: bindAddr.UDPAddr(), tcpConn: c}, nil
+	bindAddr := addr.UDPAddr()
+	if bindAddr.IP.IsUnspecified() {
+		udpAddr, err := resolveUDPAddr("udp", ss.Addr())
+		if err != nil {
+			return nil, err
+		}
+
+		bindAddr.IP = udpAddr.IP
+	}
+
+	return &socksPacketConn{PacketConn: pc, rAddr: bindAddr, tcpConn: c}, nil
 }
 
 type socksPacketConn struct {

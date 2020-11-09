@@ -31,7 +31,10 @@ func Start(dnsURL string, rawHosts []string) error {
 		return errors.New("unsupported scheme")
 	}
 
-	var serverAddr = u.Host
+	serverAddr := u.Host
+	if serverAddr == "" {
+		return nil
+	}
 
 	fakeIPRange := u.Query().Get("fake-ip-range")
 	if fakeIPRange == "" {
