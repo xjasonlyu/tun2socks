@@ -21,9 +21,7 @@ PLATFORM_LIST = \
 	openbsd-amd64 \
 	openbsd-arm64 \
 
-.PHONY: all docker $(PLATFORM_LIST)
-
-all: $(PLATFORM_LIST)
+all: linux-amd64 darwin-amd64
 
 docker:
 	$(GO_BUILD) -o $(DIR)/$(NAME)-$@
@@ -53,6 +51,8 @@ zip_releases=$(addsuffix .zip, $(PLATFORM_LIST))
 
 $(zip_releases): %.zip : %
 	zip -m -j $(DIR)/$(NAME)-$(basename $@).zip $(DIR)/$(NAME)-$(basename $@)
+
+all-arch: $(PLATFORM_LIST)
 
 releases: $(zip_releases)
 

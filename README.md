@@ -71,7 +71,7 @@ $ docker build -t tun2socks .
 or
 
 ```text
-$ docker build -t tun2socks -f ./docker/Dockerfile.aarch64 .
+$ docker build -t tun2socks -f .Dockerfile.aarch64 .
 ```
 
 ## QuickStart
