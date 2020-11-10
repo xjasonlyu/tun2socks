@@ -1,6 +1,14 @@
-
-.idea/
-.vscode/
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
 bin/
 
+# IDE
+.idea/
+.vscode/
+
+# Misc
 .DS_Store
