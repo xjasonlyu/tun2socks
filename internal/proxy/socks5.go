@@ -51,10 +51,7 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *adapter.Metadata) (
 		}
 	}
 
-	if _, err := socks5.ClientHandshake(c, metadata.SerializesSocksAddr(), socks5.CmdConnect, user); err != nil {
-		return nil, fmt.Errorf("client hanshake: %w", err)
-	}
-
+	_, err = socks5.ClientHandshake(c, metadata.SerializesSocksAddr(), socks5.CmdConnect, user)
 	return
 }
 
