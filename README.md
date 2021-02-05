@@ -48,8 +48,6 @@
 
 > iPerf3 tested on Debian 10 with i5-10500, 8G RAM
 
-![iPerf3 Test](assets/iperf3.png)
-
 ## How to Build
 
 ### build from source code
@@ -250,22 +248,15 @@ PROXY=socks5://server:port LOGLEVEL=INFO sh ./scripts/entrypoint.sh
   <summary><b>Help Text</b></summary>
 
 ```text
-NAME:
-   tun2socks - A tun2socks powered by gVisor TCP/IP stack.
-
-USAGE:
-   tun2socks [global options] [arguments...]
-
-GLOBAL OPTIONS:
-   --api value                  URL of external API to listen
-   --device value, -d value     URL of device to open
-   --dns value                  URL of fake DNS to listen
-   --hosts value                Extra hosts mapping
-   --interface value, -i value  Bind interface to dial
-   --loglevel value, -l value   Set logging level (default: "INFO")
-   --proxy value, -p value      URL of proxy to dial
-   --version, -v                Print current version (default: false)
-   --help, -h                   show help (default: false)
+Usage of tun2socks:
+  -d, --device string      Use this device [driver://]name
+  -i, --interface string   Use network INTERFACE (Darwin/Linux only)
+  -l, --loglevel string    Log level [debug|info|warn|error|silent] (default "info")
+  -m, --mtu int            Maximum transmission unit
+  -p, --proxy string       Use this proxy [protocol://]host[:port]
+      --secret string      HTTP statistic server auth secret
+      --stats string       HTTP statistic server listen address
+  -v, --version            Show version information and quit
 ```
 
 </details>
@@ -295,6 +286,6 @@ If you are sensitive to memory, please go back to [v1](https://github.com/xjason
 
 ## TODO
 
-- [ ] Windows support
+- [x] Windows support
 - [x] FreeBSD support
 - [x] OpenBSD support

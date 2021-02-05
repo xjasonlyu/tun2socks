@@ -1,19 +1,13 @@
 name: Go
 
 on:
+  pull_request:
   push:
     branches:
-      - master
-    tags:
-      - '*'
-    paths-ignore:
-      - '.github/**'
-      - 'assets/**'
-      - '.gitignore'
-      - 'README.md'
+      - main
+      - dev
 
 jobs:
-
   build:
     name: Build
     runs-on: ubuntu-latest

@@ -1,0 +1,37 @@
+version: '2.4'
+
+services:
+  tun2socks:
+    image: ghcr.io/xjasonlyu/tun2socks:latest
+    cap_add:
+      - NET_ADMIN
+    devices:
+        - '/dev/net/tun:/dev/net/tun'
+    environment:
+      - GODEBUG=madvdontneed=1
+      - PROXY=
+      - LOGLEVEL=
+      - STATS=
+      - SECRET=
+      - EXCLUDED=
+      - EXTRACMD=
+    networks:
+      switch:
+        ipv4_address: 172.20.1.2
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.rp_filter=0
+    restart: unless-stopped
+    container_name: tun2socks
+
+networks:
+  switch:
+    name: switch
+    ipam:
+      driver: default
+      config:
+        - subnet: '172.20.1.0/24'
+          gateway: 172.20.1.1
+    driver: macvlan
+    driver_opts:
+      parent: eth0

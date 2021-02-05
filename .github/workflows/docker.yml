@@ -3,13 +3,11 @@ name: Publish Docker Image
 on:
   push:
     branches:
-      - master
+      - dev
     tags:
       - '*'
     paths-ignore:
-      - '.github/**'
-      - 'assets/**'
-      - '.gitignore'
+      - 'docs/**'
       - 'README.md'
 
 jobs:
@@ -40,8 +38,15 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: xjasonlyu
+          password: ${{ secrets.CR_PAT }}
+
       - name: Build and Push (dev)
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/dev'
         uses: docker/build-push-action@v2
         with:
           context: .
@@ -49,6 +54,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: |
             xjasonlyu/tun2socks:dev
+            ghcr.io/xjasonlyu/tun2socks:dev
 
       - name: Get Version
         id: shell
@@ -65,3 +71,5 @@ jobs:
           tags: |
             xjasonlyu/tun2socks:latest
             xjasonlyu/tun2socks:${{ steps.shell.outputs.version }}
+            ghcr.io/xjasonlyu/tun2socks:latest
+            ghcr.io/xjasonlyu/tun2socks:${{ steps.shell.outputs.version }}
