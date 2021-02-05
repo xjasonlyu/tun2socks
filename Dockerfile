@@ -11,11 +11,11 @@ RUN apk add --no-cache make git \
 FROM alpine:latest
 LABEL org.opencontainers.image.source="https://github.com/xjasonlyu/tun2socks"
 
-RUN apk add --update --no-cache iptables iproute2 \
-    && chmod +x /entrypoint.sh
-
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY --from=builder /tun2socks /usr/bin/tun2socks
+
+RUN apk add --update --no-cache iptables iproute2 \
+    && chmod +x /entrypoint.sh
 
 ENV TUN tun0
 ENV ETH eth0
