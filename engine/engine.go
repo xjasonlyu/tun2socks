@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"errors"
+
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	"github.com/xjasonlyu/tun2socks/device"
 	"github.com/xjasonlyu/tun2socks/log"
@@ -84,6 +86,10 @@ func (e *Engine) setStats() error {
 }
 
 func (e *Engine) setProxy() error {
+	if e.rawProxy == "" {
+		return errors.New("empty proxy")
+	}
+
 	d, err := parseProxy(e.rawProxy)
 	if err != nil {
 		return err
@@ -93,6 +99,10 @@ func (e *Engine) setProxy() error {
 }
 
 func (e *Engine) setDevice() error {
+	if e.rawDevice == "" {
+		return errors.New("empty device")
+	}
+
 	d, err := parseDevice(e.rawDevice, e.mtu)
 	if err != nil {
 		return err
