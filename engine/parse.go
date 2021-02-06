@@ -37,7 +37,7 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 	return d, nil
 }
 
-func parseProxy(s string) (proxy.Dialer, error) {
+func parseProxy(s string) (proxy.Proxy, error) {
 	const defaultProto = "socks5"
 	if !strings.Contains(s, "://") {
 		s = defaultProto + "://" + s

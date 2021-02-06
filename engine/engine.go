@@ -20,6 +20,7 @@ type Engine struct {
 	rawProxy  string
 	rawDevice string
 
+	proxy  proxy.Proxy
 	device device.Device
 }
 
@@ -90,11 +91,12 @@ func (e *Engine) setProxy() error {
 		return errors.New("empty proxy")
 	}
 
-	d, err := parseProxy(e.rawProxy)
+	p, err := parseProxy(e.rawProxy)
 	if err != nil {
 		return err
 	}
-	proxy.SetDialer(d)
+	e.proxy = p
+	proxy.SetDialer(p)
 	return nil
 }
 
@@ -116,6 +118,10 @@ func (e *Engine) setStack() error {
 	if _, err := stack.New(e.device, handler, stack.WithDefault()); err != nil {
 		return err
 	}
-	log.Infof("[STACK] %s <-> %s", e.rawDevice, e.rawProxy)
+	log.Infof(
+		"[STACK] %s://%s <-> %s://%s",
+		e.device.Type(), e.device.Name(),
+		e.proxy.Type(), e.proxy.Addr(),
+	)
 	return nil
 }
