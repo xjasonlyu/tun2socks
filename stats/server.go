@@ -26,7 +26,7 @@ var (
 	}
 )
 
-func Start(addr, secret string) error {
+func Start(addr, token string) error {
 	r := chi.NewRouter()
 
 	c := cors.New(cors.Options{
@@ -38,7 +38,7 @@ func Start(addr, secret string) error {
 
 	r.Use(c.Handler)
 	r.Group(func(r chi.Router) {
-		r.Use(authenticator(secret))
+		r.Use(authenticator(token))
 		r.Get("/", hello)
 		r.Get("/logs", getLogs)
 		r.Get("/traffic", traffic)
@@ -63,18 +63,18 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, render.M{"hello": constant.Name})
 }
 
-func authenticator(secret string) func(http.Handler) http.Handler {
+func authenticator(token string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
-			if secret == "" {
+			if token == "" {
 				next.ServeHTTP(w, r)
 				return
 			}
 
 			// Browser websocket not support custom header
 			if websocket.IsWebSocketUpgrade(r) && r.URL.Query().Get("token") != "" {
-				token := r.URL.Query().Get("token")
-				if token != secret {
+				t := r.URL.Query().Get("token")
+				if t != token {
 					render.Status(r, http.StatusUnauthorized)
 					render.JSON(w, r, ErrUnauthorized)
 					return
@@ -87,8 +87,8 @@ func authenticator(secret string) func(http.Handler) http.Handler {
 			text := strings.SplitN(header, " ", 2)
 
 			hasInvalidHeader := text[0] != "Bearer"
-			hasInvalidSecret := len(text) != 2 || text[1] != secret
-			if hasInvalidHeader || hasInvalidSecret {
+			hasInvalidToken := len(text) != 2 || text[1] != token
+			if hasInvalidHeader || hasInvalidToken {
 				render.Status(r, http.StatusUnauthorized)
 				render.JSON(w, r, ErrUnauthorized)
 				return

@@ -63,8 +63,8 @@ main() {
     ARGS="--stats $STATS"
   fi
 
-  if [ -n "$SECRET" ]; then
-    ARGS="$ARGS --secret $SECRET"
+  if [ -n "$TOKEN" ]; then
+    ARGS="$ARGS --token $TOKEN"
   fi
 
   exec tun2socks \

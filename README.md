@@ -254,8 +254,8 @@ Usage of tun2socks:
   -l, --loglevel string    Log level [debug|info|warn|error|silent] (default "info")
   -m, --mtu int            Maximum transmission unit
   -p, --proxy string       Use this proxy [protocol://]host[:port]
-      --secret string      HTTP statistic server auth secret
       --stats string       HTTP statistic server listen address
+      --token string      HTTP statistic server auth token
   -v, --version            Show version information and quit
 ```
 

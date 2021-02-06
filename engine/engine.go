@@ -12,8 +12,8 @@ import (
 type Engine struct {
 	mtu       uint32
 	iface     string
-	secret    string
 	stats     string
+	token     string
 	logLevel  string
 	rawProxy  string
 	rawDevice string
@@ -76,7 +76,7 @@ func (e *Engine) setInterface() error {
 func (e *Engine) setStats() error {
 	if e.stats != "" {
 		go func() {
-			_ = stats.Start(e.stats, e.secret)
+			_ = stats.Start(e.stats, e.token)
 		}()
 		log.Infof("[STATS] listen and serve at: http://%s", e.stats)
 	}

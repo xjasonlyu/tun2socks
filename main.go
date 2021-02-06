@@ -19,8 +19,8 @@ var (
 	iface   string
 	level   string
 	proxy   string
-	secret  string
 	stats   string
+	token   string
 	mtu     int
 	version bool
 )
@@ -30,8 +30,8 @@ func init() {
 	flag.StringVarP(&iface, "interface", "i", "", "Use network INTERFACE (Darwin/Linux only)")
 	flag.StringVarP(&proxy, "proxy", "p", "", "Use this proxy [protocol://]host[:port]")
 	flag.StringVarP(&level, "loglevel", "l", "info", "Log level [debug|info|warn|error|silent]")
-	flag.StringVar(&secret, "secret", "", "HTTP statistic server auth secret")
 	flag.StringVar(&stats, "stats", "", "HTTP statistic server listen address")
+	flag.StringVar(&token, "token", "", "HTTP statistic server auth token")
 	flag.IntVarP(&mtu, "mtu", "m", 0, "Maximum transmission unit")
 	flag.BoolVarP(&version, "version", "v", false, "Show version information and quit")
 	flag.Parse()
@@ -56,7 +56,7 @@ func main() {
 		engine.WithLogLevel(level),
 		engine.WithMTU(mtu),
 		engine.WithProxy(proxy),
-		engine.WithStats(stats, secret),
+		engine.WithStats(stats, token),
 	}
 
 	eng := engine.New(options...)

@@ -9,12 +9,12 @@ services:
         - '/dev/net/tun:/dev/net/tun'
     environment:
       - GODEBUG=madvdontneed=1
-      - PROXY=
       - LOGLEVEL=
-      - STATS=
-      - SECRET=
       - EXCLUDED=
       - EXTRACMD=
+      - PROXY=
+      - STATS=
+      - TOKEN=
     networks:
       switch:
         ipv4_address: 172.20.1.2

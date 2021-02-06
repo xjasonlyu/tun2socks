@@ -32,9 +32,9 @@ func WithProxy(proxy string) Option {
 	}
 }
 
-func WithStats(stats, secret string) Option {
+func WithStats(stats, token string) Option {
 	return func(e *Engine) {
 		e.stats = stats
-		e.secret = secret
+		e.token = token
 	}
 }
