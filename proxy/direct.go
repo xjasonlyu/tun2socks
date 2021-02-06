@@ -15,7 +15,9 @@ type Direct struct {
 }
 
 func NewDirect() *Direct {
-	return &Direct{}
+	return &Direct{
+		Base: &Base{},
+	}
 }
 
 func (d *Direct) Type() string {
