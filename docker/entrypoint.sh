@@ -22,7 +22,6 @@ config_route() {
   TABLE="$1"
   TUN_IF="$2"
   ETH_IF="$3"
-  TUN_EXCLUDED="$4"
 
   # add custom table
   printf "%s\t%s\n" 100 "$TABLE" >>/etc/iproute2/rt_tables
@@ -44,19 +43,24 @@ config_route() {
   ip rule add from "$eth" priority 2000 table main
   ip rule add from all priority 3000 table "$TABLE"
 
-  # add tun excluded to route
-  for addr in $(echo "$TUN_EXCLUDED" | tr ',' '\n'); do
+  # add tun included routes
+  for addr in $(echo "$TUN_INCLUDED_ROUTES" | tr ',' '\n'); do
+    ip rule add to "$addr" table "$TABLE"
+  done
+
+  # add tun excluded routes
+  for addr in $(echo "$TUN_EXCLUDED_ROUTES" | tr ',' '\n'); do
     ip rule add to "$addr" table main
   done
 }
 
 main() {
   mk_tun "$TUN" "$TUN_ADDR" "$TUN_MASK"
-  config_route "tun2socks" "$TUN" "$ETH" "$EXCLUDED"
+  config_route "tun2socks" "$TUN" "$ETH"
 
   # execute extra commands
-  if [ -n "$EXTRACMD" ]; then
-    sh -c "$EXTRACMD"
+  if [ -n "$EXTRA_COMMANDS" ]; then
+    sh -c "$EXTRA_COMMANDS"
   fi
 
   if [ -n "$STATS" ]; then
