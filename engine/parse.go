@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/xjasonlyu/tun2socks/device"
-	"github.com/xjasonlyu/tun2socks/device/tun"
 	"github.com/xjasonlyu/tun2socks/proxy"
 )
 
@@ -22,14 +21,12 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 		return nil, err
 	}
 
-	name := u.Host
-	driver := u.Scheme
-
 	var d device.Device
 
+	driver := strings.ToLower(u.Scheme)
 	switch driver {
 	case "tun":
-		d, err = tun.Open(tun.WithName(name), tun.WithMTU(mtu))
+		d, err = openTUN(u, mtu)
 	default:
 		err = fmt.Errorf("unsupported driver: %s", driver)
 	}
