@@ -22,9 +22,6 @@ type Endpoint struct {
 	// mtu (maximum transmission unit) is the maximum size of a packet.
 	mtu uint32
 
-	// caps holds the endpoint capabilities.
-	caps stack.LinkEndpointCapabilities
-
 	dispatcher stack.NetworkDispatcher
 }
 
@@ -70,34 +67,25 @@ func (e *Endpoint) dispatchLoop() {
 			continue
 		}
 
-		var p tcpip.NetworkProtocolNumber
+		pkb := stack.NewPacketBuffer(stack.PacketBufferOptions{
+			Data: buffer.NewVectorisedView(n, []buffer.View{buffer.NewViewFromBytes(packet)}),
+		})
+
 		switch header.IPVersion(packet) {
 		case header.IPv4Version:
-			p = header.IPv4ProtocolNumber
+			e.dispatcher.DeliverNetworkPacket("", "", header.IPv4ProtocolNumber, pkb)
 		case header.IPv6Version:
-			p = header.IPv6ProtocolNumber
+			e.dispatcher.DeliverNetworkPacket("", "", header.IPv6ProtocolNumber, pkb)
 		}
-
-		e.dispatcher.DeliverNetworkPacket("", "", p, &stack.PacketBuffer{
-			Data: buffer.View(packet[:n]).ToVectorisedView(),
-		})
 	}
 }
 
 func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
-	networkHdr := pkt.NetworkHeader().View()
-	transportHdr := pkt.TransportHeader().View()
-	payload := pkt.Data.ToView()
+	vView := buffer.NewVectorisedView(pkt.Size(), pkt.Views())
 
-	buf := buffer.NewVectorisedView(
-		len(networkHdr)+len(transportHdr)+len(payload),
-		[]buffer.View{networkHdr, transportHdr, payload},
-	)
-
-	if _, err := e.rw.Write(buf.ToView()); err != nil {
+	if _, err := e.rw.Write(vView.ToView()); err != nil {
 		return &tcpip.ErrInvalidEndpointState{}
 	}
-
 	return nil
 }
 
@@ -118,14 +106,6 @@ func (e *Endpoint) WritePackets(_ stack.RouteInfo, _ *stack.GSO, pkts stack.Pack
 	return n, nil
 }
 
-// WriteRawPacket implements stack.LinkEndpoint.WriteRawPacket.
-func (e *Endpoint) WriteRawPacket(vv buffer.VectorisedView) tcpip.Error {
-	pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
-		Data: vv,
-	})
-	return e.writePacket(pkt)
-}
-
 // MTU implements stack.LinkEndpoint.MTU.
 func (e *Endpoint) MTU() uint32 {
 	return e.mtu
@@ -133,12 +113,7 @@ func (e *Endpoint) MTU() uint32 {
 
 // Capabilities implements stack.LinkEndpoint.Capabilities.
 func (e *Endpoint) Capabilities() stack.LinkEndpointCapabilities {
-	return e.caps
-}
-
-// GSOMaxSize returns the maximum GSO packet size.
-func (*Endpoint) GSOMaxSize() uint32 {
-	return 1 << 15 /* default */
+	return stack.CapabilityNone
 }
 
 // MaxHeaderLength returns the maximum size of the link layer header. Given it
