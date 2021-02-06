@@ -14,4 +14,7 @@ type Device interface {
 
 	// Name returns the current name of the device.
 	Name() string
+
+	// Type returns the driver type of the device.
+	Type() string
 }
