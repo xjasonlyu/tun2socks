@@ -8,12 +8,18 @@ import (
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 )
 
+var _ Proxy = (*Direct)(nil)
+
 type Direct struct {
 	*Base
 }
 
 func NewDirect() *Direct {
 	return &Direct{}
+}
+
+func (d *Direct) Type() string {
+	return "direct"
 }
 
 func (d *Direct) DialContext(ctx context.Context, metadata *adapter.Metadata) (net.Conn, error) {

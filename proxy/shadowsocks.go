@@ -14,6 +14,8 @@ import (
 	"github.com/Dreamacro/go-shadowsocks2/core"
 )
 
+var _ Proxy = (*ShadowSocks)(nil)
+
 type ShadowSocks struct {
 	*Base
 
@@ -35,6 +37,10 @@ func NewShadowSocks(addr, method, password, obfsMode, obfsHost string) (*ShadowS
 		obfsMode: obfsMode,
 		obfsHost: obfsHost,
 	}, nil
+}
+
+func (ss *ShadowSocks) Type() string {
+	return "ss"
 }
 
 func (ss *ShadowSocks) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {

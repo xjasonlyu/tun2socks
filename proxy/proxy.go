@@ -22,6 +22,12 @@ type Dialer interface {
 	DialUDP(*adapter.Metadata) (net.PacketConn, error)
 }
 
+type Proxy interface {
+	Dialer
+	Addr() string
+	Type() string
+}
+
 // SetDialer sets default Dialer.
 func SetDialer(d Dialer) {
 	_defaultDialer = d

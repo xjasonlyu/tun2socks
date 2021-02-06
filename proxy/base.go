@@ -8,6 +8,8 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/adapter"
 )
 
+var _ Proxy = (*Base)(nil)
+
 type Base struct {
 	addr string
 }
@@ -18,6 +20,10 @@ func NewBase(addr string) *Base {
 
 func (b *Base) Addr() string {
 	return b.addr
+}
+
+func (b *Base) Type() string {
+	return "base"
 }
 
 func (b *Base) DialContext(context.Context, *adapter.Metadata) (net.Conn, error) {
