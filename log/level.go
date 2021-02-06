@@ -56,11 +56,11 @@ func (level Level) String() string {
 
 func ParseLevel(lvl string) (Level, error) {
 	switch strings.ToLower(lvl) {
-	case "silent", "none":
+	case "silent":
 		return SilentLevel, nil
 	case "error":
 		return ErrorLevel, nil
-	case "warn", "warning":
+	case "warn":
 		return WarnLevel, nil
 	case "info":
 		return InfoLevel, nil
