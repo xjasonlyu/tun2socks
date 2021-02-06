@@ -8,6 +8,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/component/dialer"
+	obfs "github.com/xjasonlyu/tun2socks/component/simple-obfs"
 	"github.com/xjasonlyu/tun2socks/component/socks5"
 
 	"github.com/Dreamacro/go-shadowsocks2/core"
@@ -17,17 +18,22 @@ type ShadowSocks struct {
 	*Base
 
 	cipher core.Cipher
+
+	// simple-obfs plugin
+	obfsMode, obfsHost string
 }
 
-func NewShadowSocks(addr, method, password string) (*ShadowSocks, error) {
+func NewShadowSocks(addr, method, password, obfsMode, obfsHost string) (*ShadowSocks, error) {
 	cipher, err := core.PickCipher(method, nil, password)
 	if err != nil {
 		return nil, fmt.Errorf("ss initialize: %w", err)
 	}
 
 	return &ShadowSocks{
-		Base:   NewBase(addr),
-		cipher: cipher,
+		Base:     NewBase(addr),
+		cipher:   cipher,
+		obfsMode: obfsMode,
+		obfsHost: obfsHost,
 	}, nil
 }
 
@@ -43,6 +49,14 @@ func (ss *ShadowSocks) DialContext(ctx context.Context, metadata *adapter.Metada
 			c.Close()
 		}
 	}()
+
+	switch ss.obfsMode {
+	case "tls":
+		c = obfs.NewTLSObfs(c, ss.obfsHost)
+	case "http":
+		_, port, _ := net.SplitHostPort(ss.addr)
+		c = obfs.NewHTTPObfs(c, ss.obfsHost, port)
+	}
 
 	c = ss.cipher.StreamConn(c)
 	_, err = c.Write(metadata.SerializesSocksAddr())
