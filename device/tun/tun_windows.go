@@ -43,9 +43,8 @@ func Open(opts ...Option) (device.Device, error) {
 	}
 	t.iface = iface
 
-	t.mtu = defaultMTU
-	if t.mtu > 0 {
-		/* ignore */
+	if t.mtu == 0 {
+		t.mtu = defaultMTU
 	}
 
 	ep, err := rwbased.New(iface, t.mtu)
