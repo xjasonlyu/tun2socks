@@ -56,7 +56,7 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	case "socks5":
 		return proxy.NewSocks5(parseSocks(u))
 	case "ss":
-		return proxy.NewShadowSocks(parseShadowSocks(u))
+		return proxy.NewShadowsocks(parseShadowsocks(u))
 	}
 
 	return nil, fmt.Errorf("unsupported protocol: %s", proto)
@@ -69,7 +69,7 @@ func parseSocks(u *url.URL) (address, username, password string) {
 	return
 }
 
-func parseShadowSocks(u *url.URL) (address, method, password, obfsMode, obfsHost string) {
+func parseShadowsocks(u *url.URL) (address, method, password, obfsMode, obfsHost string) {
 	address = u.Host
 
 	if pass, set := u.User.Password(); set {

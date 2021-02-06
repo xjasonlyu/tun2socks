@@ -14,9 +14,9 @@ import (
 	"github.com/Dreamacro/go-shadowsocks2/core"
 )
 
-var _ Proxy = (*ShadowSocks)(nil)
+var _ Proxy = (*Shadowsocks)(nil)
 
-type ShadowSocks struct {
+type Shadowsocks struct {
 	*Base
 
 	cipher core.Cipher
@@ -25,13 +25,13 @@ type ShadowSocks struct {
 	obfsMode, obfsHost string
 }
 
-func NewShadowSocks(addr, method, password, obfsMode, obfsHost string) (*ShadowSocks, error) {
+func NewShadowsocks(addr, method, password, obfsMode, obfsHost string) (*Shadowsocks, error) {
 	cipher, err := core.PickCipher(method, nil, password)
 	if err != nil {
 		return nil, fmt.Errorf("ss initialize: %w", err)
 	}
 
-	return &ShadowSocks{
+	return &Shadowsocks{
 		Base:     NewBase(addr),
 		cipher:   cipher,
 		obfsMode: obfsMode,
@@ -39,11 +39,11 @@ func NewShadowSocks(addr, method, password, obfsMode, obfsHost string) (*ShadowS
 	}, nil
 }
 
-func (ss *ShadowSocks) Type() string {
+func (ss *Shadowsocks) Type() string {
 	return "ss"
 }
 
-func (ss *ShadowSocks) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {
+func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {
 	c, err = dialer.DialContext(ctx, "tcp", ss.Addr())
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", ss.Addr(), err)
@@ -69,7 +69,7 @@ func (ss *ShadowSocks) DialContext(ctx context.Context, metadata *adapter.Metada
 	return
 }
 
-func (ss *ShadowSocks) DialUDP(_ *adapter.Metadata) (net.PacketConn, error) {
+func (ss *Shadowsocks) DialUDP(_ *adapter.Metadata) (net.PacketConn, error) {
 	pc, err := dialer.ListenPacket("udp", "")
 	if err != nil {
 		return nil, fmt.Errorf("listen packet: %w", err)
