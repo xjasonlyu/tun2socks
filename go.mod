@@ -10,7 +10,6 @@ require (
 	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/gorilla/websocket v1.4.2
 	github.com/sirupsen/logrus v1.7.0
-	github.com/songgao/water v0.0.0-20200317203138-2b4b6d7c09d8
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.5.1
 	go.uber.org/atomic v1.7.0

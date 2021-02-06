@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/xjasonlyu/tun2socks/device"
+	"github.com/xjasonlyu/tun2socks/device/tun"
 	"github.com/xjasonlyu/tun2socks/proxy"
 )
 
@@ -21,20 +22,15 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 		return nil, err
 	}
 
-	var d device.Device
-
+	name := u.Host
 	driver := strings.ToLower(u.Scheme)
+
 	switch driver {
 	case "tun":
-		d, err = openTUN(u, mtu)
+		return tun.Open(tun.WithName(name), tun.WithMTU(mtu))
 	default:
-		err = fmt.Errorf("unsupported driver: %s", driver)
+		return nil, fmt.Errorf("unsupported driver: %s", driver)
 	}
-	if err != nil {
-		return nil, err
-	}
-
-	return d, nil
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
@@ -57,9 +53,9 @@ func parseProxy(s string) (proxy.Proxy, error) {
 		return proxy.NewSocks5(parseSocks(u))
 	case "ss":
 		return proxy.NewShadowsocks(parseShadowsocks(u))
+	default:
+		return nil, fmt.Errorf("unsupported protocol: %s", proto)
 	}
-
-	return nil, fmt.Errorf("unsupported protocol: %s", proto)
 }
 
 func parseSocks(u *url.URL) (address, username, password string) {

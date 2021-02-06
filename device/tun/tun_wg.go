@@ -1,4 +1,4 @@
-// +build darwin freebsd openbsd
+// +build !linux
 
 package tun
 
@@ -11,8 +11,6 @@ import (
 
 	"golang.zx2c4.com/wireguard/tun"
 )
-
-const offset = 4 /* 4 bytes TUN_PI */
 
 type TUN struct {
 	*rwbased.Endpoint
