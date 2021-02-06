@@ -9,12 +9,13 @@ services:
         - '/dev/net/tun:/dev/net/tun'
     environment:
       - GODEBUG=madvdontneed=1
-      - LOGLEVEL=
-      - EXCLUDED=
-      - EXTRACMD=
+      - LOGLEVEL=WARN
       - PROXY=
       - STATS=
       - TOKEN=
+      - EXTRA_COMMANDS=
+      - TUN_INCLUDED_ROUTES=
+      - TUN_EXCLUDED_ROUTES=
     networks:
       switch:
         ipv4_address: 172.20.1.2
@@ -30,7 +31,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: '172.20.1.0/24'
+        - subnet: '172.20.1.0/25'
           gateway: 172.20.1.1
     driver: macvlan
     driver_opts:
