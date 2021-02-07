@@ -11,7 +11,7 @@ const (
 	// maxUDPQueueSize is the max number of UDP packets
 	// could be buffered. if queue is full, upcoming packets
 	// would be dropped util queue is ready again.
-	maxUDPQueueSize = 2 << 10
+	maxUDPQueueSize = 1 << 9
 )
 
 var (
