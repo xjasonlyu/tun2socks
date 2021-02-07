@@ -27,12 +27,12 @@ var (
 
 func init() {
 	flag.StringVarP(&device, "device", "d", "", "Use this device [driver://]name")
-	flag.StringVarP(&iface, "interface", "i", "", "Use network INTERFACE (Darwin/Linux only)")
+	flag.StringVarP(&iface, "interface", "i", "", "Use network INTERFACE (Linux and MacOS only)")
 	flag.StringVarP(&proxy, "proxy", "p", "", "Use this proxy [protocol://]host[:port]")
 	flag.StringVarP(&level, "loglevel", "l", "info", "Log level [debug|info|warn|error|silent]")
 	flag.StringVar(&stats, "stats", "", "HTTP statistic server listen address")
 	flag.StringVar(&token, "token", "", "HTTP statistic server auth token")
-	flag.IntVarP(&mtu, "mtu", "m", 0, "Maximum transmission unit")
+	flag.IntVarP(&mtu, "mtu", "m", 0, "Set device maximum transmission unit (MTU)")
 	flag.BoolVarP(&version, "version", "v", false, "Show version information and quit")
 	flag.Parse()
 }
