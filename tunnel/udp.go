@@ -12,6 +12,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/component/nat"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
+	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
 )
 
 const (
@@ -23,6 +24,10 @@ var (
 	// as key to store destination udp packetConn.
 	natTable = nat.NewTable()
 )
+
+func newUDPTracker(conn net.PacketConn, metadata *adapter.Metadata) net.PacketConn {
+	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
+}
 
 func handleUDP(packet adapter.UDPPacket) {
 	metadata := packet.Metadata()

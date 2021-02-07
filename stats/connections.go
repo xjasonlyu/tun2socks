@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/tunnel"
+	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -26,7 +26,7 @@ func connectionRouter() http.Handler {
 
 func getConnections(w http.ResponseWriter, r *http.Request) {
 	if !websocket.IsWebSocketUpgrade(r) {
-		snapshot := tunnel.DefaultManager.Snapshot()
+		snapshot := statistic.DefaultManager.Snapshot()
 		render.JSON(w, r, snapshot)
 		return
 	}
@@ -52,7 +52,7 @@ func getConnections(w http.ResponseWriter, r *http.Request) {
 	buf := &bytes.Buffer{}
 	sendSnapshot := func() error {
 		buf.Reset()
-		snapshot := tunnel.DefaultManager.Snapshot()
+		snapshot := statistic.DefaultManager.Snapshot()
 		if err := json.NewEncoder(buf).Encode(snapshot); err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func getConnections(w http.ResponseWriter, r *http.Request) {
 
 func closeConnection(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	snapshot := tunnel.DefaultManager.Snapshot()
+	snapshot := statistic.DefaultManager.Snapshot()
 	for _, c := range snapshot.Connections {
 		if id == c.ID() {
 			_ = c.Close()
@@ -86,7 +86,7 @@ func closeConnection(w http.ResponseWriter, r *http.Request) {
 }
 
 func closeAllConnections(w http.ResponseWriter, r *http.Request) {
-	snapshot := tunnel.DefaultManager.Snapshot()
+	snapshot := statistic.DefaultManager.Snapshot()
 	for _, c := range snapshot.Connections {
 		_ = c.Close()
 	}

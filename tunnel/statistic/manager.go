@@ -1,5 +1,4 @@
-// Package manager provides statistic management of connections.
-package manager
+package statistic
 
 import (
 	"sync"
@@ -7,6 +6,21 @@ import (
 
 	"go.uber.org/atomic"
 )
+
+var DefaultManager *Manager
+
+func init() {
+	DefaultManager = &Manager{
+		uploadTemp:    atomic.NewInt64(0),
+		downloadTemp:  atomic.NewInt64(0),
+		uploadBlip:    atomic.NewInt64(0),
+		downloadBlip:  atomic.NewInt64(0),
+		uploadTotal:   atomic.NewInt64(0),
+		downloadTotal: atomic.NewInt64(0),
+	}
+
+	go DefaultManager.handle()
+}
 
 type Manager struct {
 	connections   sync.Map
@@ -16,20 +30,6 @@ type Manager struct {
 	downloadBlip  *atomic.Int64
 	uploadTotal   *atomic.Int64
 	downloadTotal *atomic.Int64
-}
-
-func New() *Manager {
-	manager := &Manager{
-		uploadTemp:    atomic.NewInt64(0),
-		downloadTemp:  atomic.NewInt64(0),
-		uploadBlip:    atomic.NewInt64(0),
-		downloadBlip:  atomic.NewInt64(0),
-		uploadTotal:   atomic.NewInt64(0),
-		downloadTotal: atomic.NewInt64(0),
-	}
-	go manager.handle()
-
-	return manager
 }
 
 func (m *Manager) Join(c tracker) {

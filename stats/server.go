@@ -10,7 +10,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/log"
-	"github.com/xjasonlyu/tun2socks/tunnel"
+	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/cors"
@@ -176,7 +176,7 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
-	t := tunnel.DefaultManager
+	t := statistic.DefaultManager
 	buf := &bytes.Buffer{}
 	var err error
 	for range tick.C {

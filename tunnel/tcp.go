@@ -11,11 +11,16 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
+	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
 )
 
 const (
 	tcpWaitTimeout = 5 * time.Second
 )
+
+func newTCPTracker(conn net.Conn, metadata *adapter.Metadata) net.Conn {
+	return statistic.NewTCPTracker(conn, metadata, statistic.DefaultManager)
+}
 
 func handleTCP(localConn adapter.TCPConn) {
 	defer localConn.Close()
