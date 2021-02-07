@@ -43,11 +43,6 @@ config_route() {
   ip rule add from "$eth" priority 9999 table main
   ip rule add from all priority 10000 table "$TABLE"
 
-  # reserved IP addresses
-  ip rule add to 0.0.0.0/8 table main
-  ip rule add to 192.0.2.0/24 table main
-  ip rule add to 224.0.0.0/4 table main
-
   # add tun included routes
   for addr in $(echo "$TUN_INCLUDED_ROUTES" | tr ',' '\n'); do
     ip rule add to "$addr" table "$TABLE"
@@ -68,8 +63,12 @@ main() {
     sh -c "$EXTRA_COMMANDS"
   fi
 
+  if [ -n "$MTU" ]; then
+    ARGS="--mtu $MTU"
+  fi
+
   if [ -n "$STATS" ]; then
-    ARGS="--stats $STATS"
+    ARGS="$ARGS --stats $STATS"
   fi
 
   if [ -n "$TOKEN" ]; then

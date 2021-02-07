@@ -9,10 +9,15 @@ services:
         - '/dev/net/tun:/dev/net/tun'
     environment:
       - GODEBUG=madvdontneed=1
-      - LOGLEVEL=WARN
+      - LOGLEVEL=
+      - TUN=
+      - ETH=
+      - TUN_ADDR=
+      - TUN_MASK=
       - PROXY=
       - STATS=
       - TOKEN=
+      - MTU=
       - EXTRA_COMMANDS=
       - TUN_INCLUDED_ROUTES=
       - TUN_EXCLUDED_ROUTES=

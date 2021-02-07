@@ -17,12 +17,13 @@ COPY --from=builder /tun2socks /usr/bin/tun2socks
 RUN apk add --update --no-cache iptables iproute2 \
     && chmod +x /entrypoint.sh
 
-ENV TUN tun0
-ENV ETH eth0
+ENV TUN=tun0
+ENV ETH=eth0
 ENV TUN_ADDR=198.18.0.1
 ENV TUN_MASK=255.254.0.0
 ENV LOGLEVEL=INFO
 ENV PROXY=direct://
+ENV MTU=9000
 ENV STATS=
 ENV TOKEN=
 ENV EXTRA_COMMANDS=
