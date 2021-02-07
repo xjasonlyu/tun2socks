@@ -12,9 +12,8 @@ import (
 )
 
 func parseDevice(s string, mtu uint32) (device.Device, error) {
-	const defaultDriver = "tun"
 	if !strings.Contains(s, "://") {
-		s = defaultDriver + "://" + s
+		s = tun.Driver + "://" + s /* default driver */
 	}
 
 	u, err := url.Parse(s)
@@ -26,7 +25,7 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 	driver := strings.ToLower(u.Scheme)
 
 	switch driver {
-	case "tun":
+	case tun.Driver:
 		return tun.Open(tun.WithName(name), tun.WithMTU(mtu))
 	default:
 		return nil, fmt.Errorf("unsupported driver: %s", driver)

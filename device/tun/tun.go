@@ -5,10 +5,10 @@ import (
 	"github.com/xjasonlyu/tun2socks/device"
 )
 
-const driverType = "tun"
+const Driver = "tun"
 
 func (t *TUN) Type() string {
-	return driverType
+	return Driver
 }
 
 var _ device.Device = (*TUN)(nil)
