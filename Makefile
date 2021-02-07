@@ -1,16 +1,16 @@
 BINDIR = "bin"
-NAME = "tun2socks"
+NAME   = "tun2socks"
 
-TAGS = ""
-BUILD_FLAGS = "-v"
-
-VERSION = $(shell git describe --tags || echo "unknown version")
-BUILD_TIME = $(shell date -u '+%FT%TZ')
+BUILD_FLAGS   = "-v"
+BUILD_TAGS    = ""
+BUILD_TIME    = $(shell date -u '+%FT%TZ')
+BUILD_VERSION = $(shell git describe --tags)
 
 LDFLAGS += -w -s -buildid=
-LDFLAGS += -X "github.com/xjasonlyu/tun2socks/constant.Version=$(VERSION)"
+LDFLAGS += -X "github.com/xjasonlyu/tun2socks/constant.Version=$(BUILD_VERSION)"
 LDFLAGS += -X "github.com/xjasonlyu/tun2socks/constant.BuildTime=$(BUILD_TIME)"  # RFC3339
-GO_BUILD = GO111MODULE=on CGO_ENABLED=0 go build $(BUILD_FLAGS) -ldflags '$(LDFLAGS)' -tags '$(TAGS)' -trimpath
+
+GO_BUILD = GO111MODULE=on CGO_ENABLED=0 go build $(BUILD_FLAGS) -ldflags '$(LDFLAGS)' -tags '$(BUILD_TAGS)' -trimpath
 
 PLATFORM_LIST = \
 	darwin-amd64 \
