@@ -2,7 +2,7 @@
 package tun
 
 import (
-	"github.com/xjasonlyu/tun2socks/device"
+	"github.com/xjasonlyu/tun2socks/component/device"
 )
 
 const Driver = "tun"

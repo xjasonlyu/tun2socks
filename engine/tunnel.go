@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/xjasonlyu/tun2socks/common/adapter"
-	"github.com/xjasonlyu/tun2socks/stack"
+	"github.com/xjasonlyu/tun2socks/component/stack"
 	"github.com/xjasonlyu/tun2socks/tunnel"
 )
 

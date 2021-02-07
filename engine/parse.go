@@ -6,8 +6,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/xjasonlyu/tun2socks/device"
-	"github.com/xjasonlyu/tun2socks/device/tun"
+	"github.com/xjasonlyu/tun2socks/component/device"
+	"github.com/xjasonlyu/tun2socks/component/device/tun"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
