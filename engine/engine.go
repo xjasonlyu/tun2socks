@@ -20,6 +20,7 @@ type Engine struct {
 	rawProxy  string
 	rawDevice string
 
+	stack  *stack.Stack
 	proxy  proxy.Proxy
 	device device.Device
 }
@@ -86,42 +87,34 @@ func (e *Engine) setStats() error {
 	return nil
 }
 
-func (e *Engine) setProxy() error {
+func (e *Engine) setProxy() (err error) {
 	if e.rawProxy == "" {
 		return errors.New("empty proxy")
 	}
 
-	p, err := parseProxy(e.rawProxy)
-	if err != nil {
-		return err
-	}
-	e.proxy = p
-	proxy.SetDialer(p)
-	return nil
+	e.proxy, err = parseProxy(e.rawProxy)
+	proxy.SetDialer(e.proxy)
+	return
 }
 
-func (e *Engine) setDevice() error {
+func (e *Engine) setDevice() (err error) {
 	if e.rawDevice == "" {
 		return errors.New("empty device")
 	}
 
-	d, err := parseDevice(e.rawDevice, e.mtu)
-	if err != nil {
-		return err
-	}
-	e.device = d
-	return nil
+	e.device, err = parseDevice(e.rawDevice, e.mtu)
+	return
 }
 
-func (e *Engine) setStack() error {
+func (e *Engine) setStack() (err error) {
 	handler := &fakeTunnel{}
-	if _, err := stack.New(e.device, handler, stack.WithDefault()); err != nil {
-		return err
+	e.stack, err = stack.New(e.device, handler, stack.WithDefault())
+	if err != nil {
+		log.Infof(
+			"[STACK] %s://%s <-> %s://%s",
+			e.device.Type(), e.device.Name(),
+			e.proxy.Proto(), e.proxy.Addr(),
+		)
 	}
-	log.Infof(
-		"[STACK] %s://%s <-> %s://%s",
-		e.device.Type(), e.device.Name(),
-		e.proxy.Proto(), e.proxy.Addr(),
-	)
-	return nil
+	return
 }
