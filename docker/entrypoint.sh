@@ -39,9 +39,14 @@ config_route() {
   # policy routing
   tun=$(ip -4 addr show "$TUN_IF" | awk 'NR==2 {print $2}')
   eth=$(ip -4 addr show "$ETH_IF" | awk 'NR==2 {split($2,a,"/");print a[1]}')
-  ip rule add from "$eth" to "$tun" priority 1000 prohibit
-  ip rule add from "$eth" priority 2000 table main
-  ip rule add from all priority 3000 table "$TABLE"
+  ip rule add from "$eth" to "$tun" priority 9998 prohibit
+  ip rule add from "$eth" priority 9999 table main
+  ip rule add from all priority 10000 table "$TABLE"
+
+  # reserved IP addresses
+  ip rule add to 0.0.0.0/8 table main
+  ip rule add to 192.0.2.0/24 table main
+  ip rule add to 224.0.0.0/4 table main
 
   # add tun included routes
   for addr in $(echo "$TUN_INCLUDED_ROUTES" | tr ',' '\n'); do
