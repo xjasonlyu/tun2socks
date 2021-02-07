@@ -20,8 +20,8 @@ func NewDirect() *Direct {
 	}
 }
 
-func (d *Direct) Type() string {
-	return "direct"
+func (d *Direct) Proto() string {
+	return DirectProto.String()
 }
 
 func (d *Direct) DialContext(ctx context.Context, metadata *adapter.Metadata) (net.Conn, error) {

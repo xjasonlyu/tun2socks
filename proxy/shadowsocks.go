@@ -39,8 +39,8 @@ func NewShadowsocks(addr, method, password, obfsMode, obfsHost string) (*Shadows
 	}, nil
 }
 
-func (ss *Shadowsocks) Type() string {
-	return "ss"
+func (ss *Shadowsocks) Proto() string {
+	return ShadowsocksProto.String()
 }
 
 func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {

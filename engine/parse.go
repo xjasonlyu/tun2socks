@@ -33,9 +33,8 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
-	const defaultProto = "socks5"
 	if !strings.Contains(s, "://") {
-		s = defaultProto + "://" + s
+		s = proxy.Socks5Proto.String() + "://" + s /* default protocol */
 	}
 
 	u, err := url.Parse(s)
@@ -46,11 +45,11 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	proto := strings.ToLower(u.Scheme)
 
 	switch proto {
-	case "direct":
+	case proxy.DirectProto.String():
 		return proxy.NewDirect(), nil
-	case "socks5":
+	case proxy.Socks5Proto.String():
 		return proxy.NewSocks5(parseSocks(u))
-	case "ss":
+	case proxy.ShadowsocksProto.String():
 		return proxy.NewShadowsocks(parseShadowsocks(u))
 	default:
 		return nil, fmt.Errorf("unsupported protocol: %s", proto)

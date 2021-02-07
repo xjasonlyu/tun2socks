@@ -29,8 +29,8 @@ func NewSocks5(addr, user, pass string) (*Socks5, error) {
 	}, nil
 }
 
-func (ss *Socks5) Type() string {
-	return "socks5"
+func (ss *Socks5) Proto() string {
+	return Socks5Proto.String()
 }
 
 func (ss *Socks5) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {

@@ -25,7 +25,7 @@ type Dialer interface {
 type Proxy interface {
 	Dialer
 	Addr() string
-	Type() string
+	Proto() string
 }
 
 // SetDialer sets default Dialer.

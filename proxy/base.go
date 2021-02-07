@@ -22,8 +22,8 @@ func (b *Base) Addr() string {
 	return b.addr
 }
 
-func (b *Base) Type() string {
-	return "base"
+func (b *Base) Proto() string {
+	return ""
 }
 
 func (b *Base) DialContext(context.Context, *adapter.Metadata) (net.Conn, error) {

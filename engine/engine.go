@@ -121,7 +121,7 @@ func (e *Engine) setStack() error {
 	log.Infof(
 		"[STACK] %s://%s <-> %s://%s",
 		e.device.Type(), e.device.Name(),
-		e.proxy.Type(), e.proxy.Addr(),
+		e.proxy.Proto(), e.proxy.Addr(),
 	)
 	return nil
 }
