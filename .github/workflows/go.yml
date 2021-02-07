@@ -7,6 +7,9 @@ on:
       - dev
     tags:
       - '*'
+    paths-ignore:
+      - 'docs/**'
+      - 'README.md'
 
 jobs:
   build:
