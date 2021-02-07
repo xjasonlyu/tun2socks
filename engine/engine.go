@@ -3,9 +3,9 @@ package engine
 import (
 	"errors"
 
-	"github.com/xjasonlyu/tun2socks/component/device"
 	"github.com/xjasonlyu/tun2socks/component/dialer"
-	"github.com/xjasonlyu/tun2socks/component/stack"
+	"github.com/xjasonlyu/tun2socks/core/device"
+	"github.com/xjasonlyu/tun2socks/core/stack"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/stats"

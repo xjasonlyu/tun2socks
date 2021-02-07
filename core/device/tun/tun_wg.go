@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/xjasonlyu/tun2socks/common/pool"
-	"github.com/xjasonlyu/tun2socks/component/device"
-	"github.com/xjasonlyu/tun2socks/component/device/rwbased"
+	"github.com/xjasonlyu/tun2socks/core/device"
+	"github.com/xjasonlyu/tun2socks/core/device/rwbased"
 
 	"golang.zx2c4.com/wireguard/tun"
 )
