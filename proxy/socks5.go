@@ -10,6 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	"github.com/xjasonlyu/tun2socks/component/socks5"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
 var _ Proxy = (*Socks5)(nil)
@@ -23,14 +24,13 @@ type Socks5 struct {
 
 func NewSocks5(addr, user, pass string) (*Socks5, error) {
 	return &Socks5{
-		Base: NewBase(addr),
+		Base: &Base{
+			addr:  addr,
+			proto: proto.Socks5,
+		},
 		user: user,
 		pass: pass,
 	}, nil
-}
-
-func (ss *Socks5) Proto() string {
-	return Socks5Proto.String()
 }
 
 func (ss *Socks5) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {

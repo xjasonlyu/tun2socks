@@ -6,6 +6,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/component/dialer"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
 var _ Proxy = (*Direct)(nil)
@@ -16,12 +17,10 @@ type Direct struct {
 
 func NewDirect() *Direct {
 	return &Direct{
-		Base: &Base{},
+		Base: &Base{
+			proto: proto.Direct,
+		},
 	}
-}
-
-func (d *Direct) Proto() string {
-	return DirectProto.String()
 }
 
 func (d *Direct) DialContext(ctx context.Context, metadata *adapter.Metadata) (net.Conn, error) {

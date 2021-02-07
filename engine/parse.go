@@ -9,6 +9,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/device"
 	"github.com/xjasonlyu/tun2socks/device/tun"
 	"github.com/xjasonlyu/tun2socks/proxy"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
 func parseDevice(s string, mtu uint32) (device.Device, error) {
@@ -34,7 +35,7 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 
 func parseProxy(s string) (proxy.Proxy, error) {
 	if !strings.Contains(s, "://") {
-		s = proxy.Socks5Proto.String() + "://" + s /* default protocol */
+		s = proto.Socks5.String() + "://" + s /* default protocol */
 	}
 
 	u, err := url.Parse(s)
@@ -42,17 +43,17 @@ func parseProxy(s string) (proxy.Proxy, error) {
 		return nil, err
 	}
 
-	proto := strings.ToLower(u.Scheme)
+	protocol := strings.ToLower(u.Scheme)
 
-	switch proto {
-	case proxy.DirectProto.String():
+	switch protocol {
+	case proto.Direct.String():
 		return proxy.NewDirect(), nil
-	case proxy.Socks5Proto.String():
+	case proto.Socks5.String():
 		return proxy.NewSocks5(parseSocks(u))
-	case proxy.ShadowsocksProto.String():
+	case proto.Shadowsocks.String():
 		return proxy.NewShadowsocks(parseShadowsocks(u))
 	default:
-		return nil, fmt.Errorf("unsupported protocol: %s", proto)
+		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
 }
 

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/adapter"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
 const (
@@ -25,7 +26,7 @@ type Dialer interface {
 type Proxy interface {
 	Dialer
 	Addr() string
-	Proto() string
+	Proto() proto.Proto
 }
 
 // SetDialer sets default Dialer.

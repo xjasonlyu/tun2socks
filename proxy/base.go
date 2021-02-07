@@ -6,24 +6,26 @@ import (
 	"net"
 
 	"github.com/xjasonlyu/tun2socks/common/adapter"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
 var _ Proxy = (*Base)(nil)
 
 type Base struct {
-	addr string
+	addr  string
+	proto proto.Proto
 }
 
-func NewBase(addr string) *Base {
-	return &Base{addr: addr}
+func NewBase(addr string, proto proto.Proto) *Base {
+	return &Base{addr: addr, proto: proto}
 }
 
 func (b *Base) Addr() string {
 	return b.addr
 }
 
-func (b *Base) Proto() string {
-	return ""
+func (b *Base) Proto() proto.Proto {
+	return b.proto
 }
 
 func (b *Base) DialContext(context.Context, *adapter.Metadata) (net.Conn, error) {

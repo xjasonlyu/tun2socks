@@ -1,22 +1,22 @@
-package proxy
+package proto
 
 import "fmt"
 
 const (
-	DirectProto Proto = iota
-	ShadowsocksProto
-	Socks5Proto
+	Direct Proto = iota
+	Shadowsocks
+	Socks5
 )
 
 type Proto uint8
 
 func (proto Proto) String() string {
 	switch proto {
-	case DirectProto:
+	case Direct:
 		return "direct"
-	case ShadowsocksProto:
+	case Shadowsocks:
 		return "ss"
-	case Socks5Proto:
+	case Socks5:
 		return "socks5"
 	default:
 		return fmt.Sprintf("proto(%d)", proto)

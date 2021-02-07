@@ -10,6 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	obfs "github.com/xjasonlyu/tun2socks/component/simple-obfs"
 	"github.com/xjasonlyu/tun2socks/component/socks5"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
 
 	"github.com/Dreamacro/go-shadowsocks2/core"
 )
@@ -32,15 +33,14 @@ func NewShadowsocks(addr, method, password, obfsMode, obfsHost string) (*Shadows
 	}
 
 	return &Shadowsocks{
-		Base:     NewBase(addr),
+		Base: &Base{
+			addr:  addr,
+			proto: proto.Shadowsocks,
+		},
 		cipher:   cipher,
 		obfsMode: obfsMode,
 		obfsHost: obfsHost,
 	}, nil
-}
-
-func (ss *Shadowsocks) Proto() string {
-	return ShadowsocksProto.String()
 }
 
 func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {
