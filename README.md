@@ -4,15 +4,21 @@
 [![Go Version][2]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
 [![Go Report][3]](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks)
 [![GitHub License][4]](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
-[![Releases][5]](https://github.com/xjasonlyu/tun2socks/releases)
+[![Total Lines][5]](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square)
+[![Releases][6]](https://github.com/xjasonlyu/tun2socks/releases)
 
-[1]: https://img.shields.io/github/workflow/status/xjasonlyu/tun2socks/Go/master?style=flat-square
-[2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks?style=flat-square
+[1]: https://img.shields.io/github/workflow/status/xjasonlyu/tun2socks/Go?style=flat-square
+[2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks/main?style=flat-square
 [3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks?style=flat-square
 [4]: https://img.shields.io/github/license/xjasonlyu/tun2socks?style=flat-square
-[5]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square
+[5]: https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square
+[6]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square
 
-[简体中文](README_ZH.md)
+English | [简体中文](README_ZH.md)
+
+# What is tun2socks?
+
+`tun2socks` is an application used to "socksify" TCP/UDP (IPv4 and IPv6) traffic at the network layer. It implements a TUN virtual network interface which accepts all incoming TCP/UDP packets and forwards them through a SOCKS server.
 
 ## Features
 
@@ -27,7 +33,7 @@
 
 | Target | Minimum | Recommended |
 | :----- | :-----: | :---------: |
-| System | Linux MacOS Freebsd OpenBSD Windows | Linux MacOS |
+| System | Linux MacOS Freebsd OpenBSD Windows | Linux or MacOS |
 | Memory | >20MB | >128MB |
 | CPU | AMD64(x86_64) ARM64 | AMD64 with AES-NI & AVX2 |
 
@@ -37,9 +43,9 @@ Documentations and quick start guides can be found at [Github Wiki](https://gith
 
 ## Building from source
 
-Due to tun2socks based on gVisor, so only x86_64 and ARM64 was supported for now. Other architectures may become available in the future.
+Due to the limitation of gVisor, tun2socks only supports x86_64 and ARM64 for now. Other architectures may become available in the future.
 
-### Dependencies
+### Environments
 
 Make sure the following dependencies are installed:
 
@@ -66,11 +72,6 @@ make all-arch
 - [google/gvisor](https://github.com/google/gvisor)
 - [majek/slirpnetstack](https://github.com/majek/slirpnetstack)
 - [WireGuard/wireguard-go](https://git.zx2c4.com/wireguard-go)
-
-## Known Issues
-
-Due to the implementation of pure Go, the memory consumption is higher than the previous version.
-If you are sensitive to it, please go back to [v1](https://github.com/xjasonlyu/tun2socks/tree/v1).
 
 ## TODO
 
