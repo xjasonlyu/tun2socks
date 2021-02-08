@@ -107,14 +107,16 @@ func (e *Engine) setDevice() (err error) {
 }
 
 func (e *Engine) setStack() (err error) {
-	handler := &fakeTunnel{}
-	e.stack, err = stack.New(e.device, handler, stack.WithDefault())
-	if err != nil {
-		log.Infof(
-			"[STACK] %s://%s <-> %s://%s",
-			e.device.Type(), e.device.Name(),
-			e.proxy.Proto(), e.proxy.Addr(),
-		)
-	}
+	defer func() {
+		if err == nil {
+			log.Infof(
+				"[STACK] %s://%s <-> %s://%s",
+				e.device.Type(), e.device.Name(),
+				e.proxy.Proto(), e.proxy.Addr(),
+			)
+		}
+	}()
+
+	e.stack, err = stack.New(e.device, &fakeTunnel{}, stack.WithDefault())
 	return
 }
