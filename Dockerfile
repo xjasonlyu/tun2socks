@@ -5,8 +5,8 @@ COPY . /tun2socks-src
 
 RUN apk add --no-cache make git \
     && go mod download \
-    && make docker \
-    && mv ./bin/tun2socks-docker /tun2socks
+    && make tun2socks \
+    && mv ./bin/tun2socks /tun2socks
 
 FROM alpine:latest
 LABEL org.opencontainers.image.source="https://github.com/xjasonlyu/tun2socks"

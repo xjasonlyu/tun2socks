@@ -26,9 +26,8 @@ WINDOWS_ARCH_LIST = \
 
 all: linux-amd64 darwin-amd64 windows-amd64
 
-.PHONY: docker
-docker:
-	$(GO_BUILD) -o $(BINDIR)/$(NAME)-$@
+tun2socks:
+	$(GO_BUILD) -o $(BINDIR)/$(NAME)
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GO_BUILD) -o $(BINDIR)/$(NAME)-$@
