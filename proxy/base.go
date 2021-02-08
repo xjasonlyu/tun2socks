@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
+	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
@@ -28,10 +28,10 @@ func (b *Base) Proto() proto.Proto {
 	return b.proto
 }
 
-func (b *Base) DialContext(context.Context, *adapter.Metadata) (net.Conn, error) {
+func (b *Base) DialContext(context.Context, *M.Metadata) (net.Conn, error) {
 	return nil, errors.New("not supported")
 }
 
-func (b *Base) DialUDP(*adapter.Metadata) (net.PacketConn, error) {
+func (b *Base) DialUDP(*M.Metadata) (net.PacketConn, error) {
 	return nil, errors.New("not supported")
 }

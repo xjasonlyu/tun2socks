@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	"github.com/xjasonlyu/tun2socks/component/socks5"
+	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
@@ -33,7 +33,7 @@ func NewSocks5(addr, user, pass string) (*Socks5, error) {
 	}, nil
 }
 
-func (ss *Socks5) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {
+func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Conn, err error) {
 	c, err = dialer.DialContext(ctx, "tcp", ss.Addr())
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", ss.Addr(), err)
@@ -58,7 +58,7 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *adapter.Metadata) (
 	return
 }
 
-func (ss *Socks5) DialUDP(_ *adapter.Metadata) (_ net.PacketConn, err error) {
+func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
 	defer cancel()
 
@@ -132,7 +132,7 @@ type socksPacketConn struct {
 
 func (pc *socksPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	var packet []byte
-	if m, ok := addr.(*adapter.Metadata); ok {
+	if m, ok := addr.(*M.Metadata); ok {
 		packet, err = socks5.EncodeUDPPacket(m.SerializesSocksAddr(), b)
 	} else {
 		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddrToSocksAddr(addr), b)

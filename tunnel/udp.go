@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/component/nat"
+	M "github.com/xjasonlyu/tun2socks/constant"
+	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
@@ -25,18 +26,25 @@ var (
 	natTable = nat.NewTable()
 )
 
-func newUDPTracker(conn net.PacketConn, metadata *adapter.Metadata) net.PacketConn {
+func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
 	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
 }
 
-func handleUDP(packet adapter.UDPPacket) {
-	metadata := packet.Metadata()
+func handleUDP(packet core.UDPPacket) {
+	id := packet.ID()
+	metadata := &M.Metadata{
+		Net:     M.UDP,
+		SrcIP:   net.IP(id.RemoteAddress),
+		SrcPort: id.RemotePort,
+		DstIP:   net.IP(id.LocalAddress),
+		DstPort: id.LocalPort,
+	}
 	if !metadata.Valid() {
 		log.Warnf("[Metadata] not valid: %#v", metadata)
 		return
 	}
 
-	generateNATKey := func(m *adapter.Metadata) string {
+	generateNATKey := func(m *M.Metadata) string {
 		return m.SourceAddress() /* Full Cone NAT Key */
 	}
 	key := generateNATKey(metadata)
@@ -101,7 +109,7 @@ func handleUDP(packet adapter.UDPPacket) {
 	}()
 }
 
-func handleUDPToRemote(packet adapter.UDPPacket, pc net.PacketConn, remote net.Addr, drop bool) {
+func handleUDPToRemote(packet core.UDPPacket, pc net.PacketConn, remote net.Addr, drop bool) {
 	defer func() {
 		if drop {
 			packet.Drop()
@@ -115,7 +123,7 @@ func handleUDPToRemote(packet adapter.UDPPacket, pc net.PacketConn, remote net.A
 	log.Infof("[UDP] %s --> %s", packet.RemoteAddr(), remote)
 }
 
-func handleUDPToLocal(packet adapter.UDPPacket, pc net.PacketConn, timeout time.Duration) {
+func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn, timeout time.Duration) {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 

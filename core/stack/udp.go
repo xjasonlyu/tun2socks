@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
-
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -39,18 +37,11 @@ func withUDPHandler() Option {
 
 			packet := &udpPacket{
 				s:        s,
-				id:       id,
+				id:       &id,
 				nicID:    pkt.NICID,
 				netHdr:   pkt.Network(),
 				netProto: pkt.NetworkProtocolNumber,
 				payload:  pkt.Data.ToView(),
-				metadata: &adapter.Metadata{
-					Net:     adapter.UDP,
-					SrcIP:   net.IP(id.RemoteAddress),
-					SrcPort: id.RemotePort,
-					DstIP:   net.IP(id.LocalAddress),
-					DstPort: id.LocalPort,
-				},
 			}
 
 			s.handler.AddPacket(packet)
@@ -63,12 +54,11 @@ func withUDPHandler() Option {
 
 type udpPacket struct {
 	s        *Stack
-	id       stack.TransportEndpointID
+	id       *stack.TransportEndpointID
 	nicID    tcpip.NICID
 	netHdr   header.Network
 	netProto tcpip.NetworkProtocolNumber
 	payload  []byte
-	metadata *adapter.Metadata
 }
 
 func (p *udpPacket) Data() []byte {
@@ -79,12 +69,12 @@ func (p *udpPacket) Drop() {
 	/* Release */
 }
 
-func (p *udpPacket) LocalAddr() net.Addr {
-	return &net.UDPAddr{IP: net.IP(p.id.LocalAddress), Port: int(p.id.LocalPort)}
+func (p *udpPacket) ID() *stack.TransportEndpointID {
+	return p.id
 }
 
-func (p *udpPacket) Metadata() *adapter.Metadata {
-	return p.metadata
+func (p *udpPacket) LocalAddr() net.Addr {
+	return &net.UDPAddr{IP: net.IP(p.id.LocalAddress), Port: int(p.id.LocalPort)}
 }
 
 func (p *udpPacket) RemoteAddr() net.Addr {

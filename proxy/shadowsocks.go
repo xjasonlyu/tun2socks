@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	obfs "github.com/xjasonlyu/tun2socks/component/simple-obfs"
 	"github.com/xjasonlyu/tun2socks/component/socks5"
+	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
 
 	"github.com/Dreamacro/go-shadowsocks2/core"
@@ -43,7 +43,7 @@ func NewShadowsocks(addr, method, password, obfsMode, obfsHost string) (*Shadows
 	}, nil
 }
 
-func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *adapter.Metadata) (c net.Conn, err error) {
+func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Conn, err error) {
 	c, err = dialer.DialContext(ctx, "tcp", ss.Addr())
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", ss.Addr(), err)
@@ -69,7 +69,7 @@ func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *adapter.Metada
 	return
 }
 
-func (ss *Shadowsocks) DialUDP(_ *adapter.Metadata) (net.PacketConn, error) {
+func (ss *Shadowsocks) DialUDP(*M.Metadata) (net.PacketConn, error) {
 	pc, err := dialer.ListenPacket("udp", "")
 	if err != nil {
 		return nil, fmt.Errorf("listen packet: %w", err)
@@ -92,7 +92,7 @@ type ssPacketConn struct {
 
 func (pc *ssPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	var packet []byte
-	if m, ok := addr.(*adapter.Metadata); ok {
+	if m, ok := addr.(*M.Metadata); ok {
 		packet, err = socks5.EncodeUDPPacket(m.SerializesSocksAddr(), b)
 	} else {
 		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddrToSocksAddr(addr), b)

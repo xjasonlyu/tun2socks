@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/common/pool"
+	M "github.com/xjasonlyu/tun2socks/constant"
+	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
@@ -18,14 +19,21 @@ const (
 	tcpWaitTimeout = 5 * time.Second
 )
 
-func newTCPTracker(conn net.Conn, metadata *adapter.Metadata) net.Conn {
+func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
 	return statistic.NewTCPTracker(conn, metadata, statistic.DefaultManager)
 }
 
-func handleTCP(localConn adapter.TCPConn) {
+func handleTCP(localConn core.TCPConn) {
 	defer localConn.Close()
 
-	metadata := localConn.Metadata()
+	id := localConn.ID()
+	metadata := &M.Metadata{
+		Net:     M.TCP,
+		SrcIP:   net.IP(id.RemoteAddress),
+		SrcPort: id.RemotePort,
+		DstIP:   net.IP(id.LocalAddress),
+		DstPort: id.LocalPort,
+	}
 	if !metadata.Valid() {
 		log.Warnf("[Metadata] not valid: %#v", metadata)
 		return

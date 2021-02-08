@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
+	M "github.com/xjasonlyu/tun2socks/constant"
 
 	"github.com/gofrs/uuid"
 	"go.uber.org/atomic"
@@ -16,11 +16,11 @@ type tracker interface {
 }
 
 type trackerInfo struct {
-	Start         time.Time         `json:"start"`
-	UUID          uuid.UUID         `json:"id"`
-	Metadata      *adapter.Metadata `json:"metadata"`
-	UploadTotal   *atomic.Int64     `json:"upload"`
-	DownloadTotal *atomic.Int64     `json:"download"`
+	Start         time.Time     `json:"start"`
+	UUID          uuid.UUID     `json:"id"`
+	Metadata      *M.Metadata   `json:"metadata"`
+	UploadTotal   *atomic.Int64 `json:"upload"`
+	DownloadTotal *atomic.Int64 `json:"download"`
 }
 
 type tcpTracker struct {
@@ -30,7 +30,7 @@ type tcpTracker struct {
 	manager *Manager
 }
 
-func NewTCPTracker(conn net.Conn, metadata *adapter.Metadata, manager *Manager) *tcpTracker {
+func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) *tcpTracker {
 	id, _ := uuid.NewV4()
 
 	tt := &tcpTracker{
@@ -81,7 +81,7 @@ type udpTracker struct {
 	manager *Manager
 }
 
-func NewUDPTracker(conn net.PacketConn, metadata *adapter.Metadata, manager *Manager) *udpTracker {
+func NewUDPTracker(conn net.PacketConn, metadata *M.Metadata, manager *Manager) *udpTracker {
 	id, _ := uuid.NewV4()
 
 	ut := &udpTracker{

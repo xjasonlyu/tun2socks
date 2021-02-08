@@ -1,12 +1,14 @@
-package adapter
+package core
 
 import (
 	"net"
+
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 type TCPConn interface {
 	net.Conn
-	Metadata() *Metadata
+	ID() *stack.TransportEndpointID
 }
 
 type UDPPacket interface {
@@ -16,11 +18,11 @@ type UDPPacket interface {
 	// Drop call after packet is used, could release resources in this function.
 	Drop()
 
+	// ID returns the transport endpoint id of packet.
+	ID() *stack.TransportEndpointID
+
 	// LocalAddr returns the source IP/Port of packet.
 	LocalAddr() net.Addr
-
-	// Metadata returns the metadata of packet.
-	Metadata() *Metadata
 
 	// RemoteAddr returns the destination IP/Port of packet.
 	RemoteAddr() net.Addr

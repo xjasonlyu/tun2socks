@@ -5,10 +5,9 @@ import (
 	"net"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
-
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
@@ -50,15 +49,8 @@ func withTCPHandler() Option {
 
 			conn := &tcpConn{
 				Conn: gonet.NewTCPConn(&wq, ep),
-				metadata: &adapter.Metadata{
-					Net:     adapter.TCP,
-					SrcIP:   net.IP(id.RemoteAddress),
-					SrcPort: id.RemotePort,
-					DstIP:   net.IP(id.LocalAddress),
-					DstPort: id.LocalPort,
-				},
+				id:   &id,
 			}
-
 			s.handler.Add(conn)
 		})
 		s.SetTransportProtocolHandler(tcp.ProtocolNumber, tcpForwarder.HandlePacket)
@@ -83,9 +75,9 @@ func setKeepalive(ep tcpip.Endpoint) error {
 
 type tcpConn struct {
 	net.Conn
-	metadata *adapter.Metadata
+	id *stack.TransportEndpointID
 }
 
-func (c *tcpConn) Metadata() *adapter.Metadata {
-	return c.metadata
+func (c *tcpConn) ID() *stack.TransportEndpointID {
+	return c.id
 }

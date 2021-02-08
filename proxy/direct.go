@@ -4,8 +4,8 @@ import (
 	"context"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/common/adapter"
 	"github.com/xjasonlyu/tun2socks/component/dialer"
+	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
 )
 
@@ -23,7 +23,7 @@ func NewDirect() *Direct {
 	}
 }
 
-func (d *Direct) DialContext(ctx context.Context, metadata *adapter.Metadata) (net.Conn, error) {
+func (d *Direct) DialContext(ctx context.Context, metadata *M.Metadata) (net.Conn, error) {
 	c, err := dialer.DialContext(ctx, "tcp", metadata.DestinationAddress())
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (d *Direct) DialContext(ctx context.Context, metadata *adapter.Metadata) (n
 	return c, nil
 }
 
-func (d *Direct) DialUDP(_ *adapter.Metadata) (net.PacketConn, error) {
+func (d *Direct) DialUDP(*M.Metadata) (net.PacketConn, error) {
 	pc, err := dialer.ListenPacket("udp", "")
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ type directPacketConn struct {
 }
 
 func (pc *directPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
-	if m, ok := addr.(*adapter.Metadata); ok && m.DstIP != nil {
+	if m, ok := addr.(*M.Metadata); ok && m.DstIP != nil {
 		return pc.PacketConn.WriteTo(b, m.UDPAddr())
 	}
 
