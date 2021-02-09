@@ -36,19 +36,19 @@
 - 纯 Go 实现，不再需要 CGO，提升了稳定性
 - 路由模式，可以用来转发及代理局域网内所有流量
 - 核心由 [gVisor](https://github.com/google/gvisor) 强力驱动的 TCP/IP 网络栈
-- 超过 2.5Gbps 的带宽吞吐量（ [v1](https://github.com/xjasonlyu/tun2socks/tree/v1) 版本的10x倍以上）
+- 超过 2.5Gbps 的带宽吞吐量（[v1](https://github.com/xjasonlyu/tun2socks/tree/v1) 版本的10x倍以上）
 
 ## 硬件需求
 
 | 目标 | 最小 | 建议 |
-| :----- | :-----: | :---------: |
+| :--- | :---: | :---: |
 | 系统 | Linux MacOS Freebsd OpenBSD Windows | Linux or MacOS |
 | 内存 | >20MB | >128MB |
 | 架构 | AMD64(x86_64) ARM64 | AMD64 with AES-NI & AVX2 |
 
 ## 使用文档
 
-文档以及使用方式，请看 [Github Wiki](https://github.com/xjasonlyu/tun2socks/wiki) 。
+文档以及使用方式，请看 [Github Wiki](https://github.com/xjasonlyu/tun2socks/wiki)。
 
 ## 源码编译
 
