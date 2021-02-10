@@ -1,47 +1,32 @@
 #!/bin/sh
 
 TUN="${TUN:-tun0}"
-ETH="${ETH:-eth0}"
-TUN_ADDR="${TUN_ADDR:-198.18.0.1}"
-TUN_MASK="${TUN_MASK:-255.254.0.0}"
-LOGLEVEL="${LOGLEVEL:-INFO}"
+TUN_ADDR="${TUN_ADDR:-198.18.0.1/15}"
+LOGLEVEL="${LOGLEVEL:-info}"
 
-mk_tun() {
-  # params
-  NAME="$1"
-  ADDR="$2"
-  MASK="$3"
+TABLE="${TABLE:-0x2d5}"
+FWMARK="${FWMARK:-0x2d5}"
+
+create_tun() {
   # create tun device
-  ip tuntap add mode tun dev "$NAME"
-  ip addr add "$ADDR/$MASK" dev "$NAME"
-  ip link set dev "$NAME" up
+  ip tuntap add mode tun dev "$TUN"
+  ip addr add "$TUN_ADDR" dev "$TUN"
+  ip link set dev "$TUN" up
 }
 
 config_route() {
-  # params
-  TABLE="$1"
-  TUN_IF="$2"
-  ETH_IF="$3"
-
-  # add custom table
-  printf "%s\t%s\n" 100 "$TABLE" >>/etc/iproute2/rt_tables
-
   # clone main route
   ip route show table main |
     while read -r route; do
       ip route add ${route%linkdown*} table "$TABLE"
     done
 
-  # config default route
-  ip route del default table "$TABLE"
-  ip route add default dev "$TUN_IF" table "$TABLE"
+  # replace default route
+  ip route replace default dev "$TUN" table "$TABLE"
 
   # policy routing
-  tun=$(ip -4 addr show "$TUN_IF" | awk 'NR==2 {print $2}')
-  eth=$(ip -4 addr show "$ETH_IF" | awk 'NR==2 {split($2,a,"/");print a[1]}')
-  ip rule add from "$eth" to "$tun" priority 9998 prohibit
-  ip rule add from "$eth" priority 9999 table main
-  ip rule add from all priority 10000 table "$TABLE"
+  ip rule add not fwmark "$FWMARK" table "$TABLE"
+  ip rule add fwmark "$FWMARK" to "$TUN_ADDR" prohibit
 
   # add tun included routes
   for addr in $(echo "$TUN_INCLUDED_ROUTES" | tr ',' '\n'); do
@@ -54,9 +39,16 @@ config_route() {
   done
 }
 
+disable_rp_filter() {
+  for path in /proc/sys/net/ipv4/conf/*; do
+    echo 0 > "$path/rp_filter"
+  done
+}
+
 main() {
-  mk_tun "$TUN" "$TUN_ADDR" "$TUN_MASK"
-  config_route "tun2socks" "$TUN" "$ETH"
+  create_tun
+  config_route
+  disable_rp_filter
 
   # execute extra commands
   if [ -n "$EXTRA_COMMANDS" ]; then
@@ -77,7 +69,7 @@ main() {
 
   exec tun2socks \
     --loglevel "$LOGLEVEL" \
-    --interface "$ETH" \
+    --fwmark "$FWMARK" \
     --device "$TUN" \
     --proxy "$PROXY" \
     $ARGS

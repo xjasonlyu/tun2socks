@@ -98,7 +98,7 @@ func (e *engine) setLogLevel() error {
 func (e *engine) setMark() error {
 	if e.Mark != 0 {
 		dialer.SetMark(e.Mark)
-		log.Infof("[DIALER] set fwmark: %d", e.Mark)
+		log.Infof("[DIALER] set fwmark: %#x", e.Mark)
 	}
 	return nil
 }
