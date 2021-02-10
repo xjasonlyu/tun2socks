@@ -1,69 +1,41 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 
-	"github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/engine"
 	"github.com/xjasonlyu/tun2socks/log"
 
 	flag "github.com/spf13/pflag"
 )
 
-var (
-	device  string
-	iface   string
-	level   string
-	proxy   string
-	stats   string
-	token   string
-	mtu     int
-	version bool
-)
+var key = new(engine.Key)
 
 func init() {
-	flag.StringVarP(&device, "device", "d", "", "Use this device [driver://]name")
-	flag.StringVarP(&iface, "interface", "i", "", "Use network INTERFACE (Linux and MacOS only)")
-	flag.StringVarP(&proxy, "proxy", "p", "", "Use this proxy [protocol://]host[:port]")
-	flag.StringVarP(&level, "loglevel", "l", "info", "Log level [debug|info|warn|error|silent]")
-	flag.StringVar(&stats, "stats", "", "HTTP statistic server listen address")
-	flag.StringVar(&token, "token", "", "HTTP statistic server auth token")
-	flag.IntVarP(&mtu, "mtu", "m", 0, "Set device maximum transmission unit (MTU)")
-	flag.BoolVarP(&version, "version", "v", false, "Show version information and quit")
+	flag.StringVarP(&key.Device, "device", "d", "", "use this device [driver://]name")
+	flag.StringVarP(&key.Interface, "interface", "i", "", "use network INTERFACE (Linux/MacOS only)")
+	flag.StringVarP(&key.Proxy, "proxy", "p", "", "use this proxy [protocol://]host[:port]")
+	flag.StringVarP(&key.LogLevel, "loglevel", "l", "info", "log level [debug|info|warn|error|silent]")
+	flag.StringVar(&key.Stats, "stats", "", "HTTP statistic server listen address")
+	flag.StringVar(&key.Token, "token", "", "HTTP statistic server auth token")
+	flag.Uint32VarP(&key.MTU, "mtu", "m", 0, "set device maximum transmission unit (MTU)")
+	flag.BoolVarP(&key.Version, "version", "v", false, "show version information and quit")
 	flag.Parse()
 }
 
 func main() {
-	if version {
-		fmt.Printf("%s %s\n%s/%s, %s, %s\n",
-			constant.Name,
-			constant.Version,
-			runtime.GOOS,
-			runtime.GOARCH,
-			runtime.Version(),
-			constant.BuildTime,
-		)
-		os.Exit(0)
+	engine.Insert(key)
+
+	checkErr := func(msg string, f func() error) {
+		if err := f(); err != nil {
+			log.Fatalf("Failed to %s: %v", msg, err)
+		}
 	}
 
-	options := []engine.Option{
-		engine.WithDevice(device),
-		engine.WithInterface(iface),
-		engine.WithLogLevel(level),
-		engine.WithMTU(mtu),
-		engine.WithProxy(proxy),
-		engine.WithStats(stats, token),
-	}
-
-	eng := engine.New(options...)
-	if err := eng.Start(); err != nil {
-		log.Fatalf("Start engine error: %v", err)
-	}
-	defer eng.Stop()
+	checkErr("start engine", engine.Start)
+	defer checkErr("stop engine", engine.Stop)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)

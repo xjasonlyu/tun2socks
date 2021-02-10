@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"os"
 
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	"github.com/xjasonlyu/tun2socks/core/device"
@@ -11,31 +12,53 @@ import (
 	"github.com/xjasonlyu/tun2socks/stats"
 )
 
-type Engine struct {
-	mtu       uint32
-	iface     string
-	stats     string
-	token     string
-	logLevel  string
-	rawProxy  string
-	rawDevice string
+var _engine = &engine{}
+
+// Start starts the default engine up.
+func Start() error {
+	return _engine.start()
+}
+
+// Stop shuts the default engine down.
+func Stop() error {
+	return _engine.stop()
+}
+
+// Insert loads *Key to the default engine.
+func Insert(k *Key) {
+	_engine.insert(k)
+}
+
+type Key struct {
+	MTU       uint32
+	Proxy     string
+	Stats     string
+	Token     string
+	Device    string
+	LogLevel  string
+	Interface string
+	Version   bool
+}
+
+type engine struct {
+	*Key
 
 	stack  *stack.Stack
 	proxy  proxy.Proxy
 	device device.Device
 }
 
-func New(opts ...Option) *Engine {
-	e := &Engine{}
-
-	for _, opt := range opts {
-		opt(e)
+func (e *engine) start() error {
+	if e.Key == nil {
+		return errors.New("empty key")
 	}
-	return e
-}
 
-func (e *Engine) Start() error {
-	for _, set := range []func() error{
+	if e.Version {
+		showVersion()
+		os.Exit(0)
+	}
+
+	for _, f := range []func() error{
 		e.setLogLevel,
 		e.setInterface,
 		e.setStats,
@@ -43,23 +66,26 @@ func (e *Engine) Start() error {
 		e.setDevice,
 		e.setStack,
 	} {
-		if err := set(); err != nil {
+		if err := f(); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (e *Engine) Stop() {
+func (e *engine) stop() error {
 	if e.device != nil {
-		if err := e.device.Close(); err != nil {
-			log.Fatalf("%v", err)
-		}
+		return e.device.Close()
 	}
+	return nil
 }
 
-func (e *Engine) setLogLevel() error {
-	level, err := log.ParseLevel(e.logLevel)
+func (e *engine) insert(k *Key) {
+	e.Key = k
+}
+
+func (e *engine) setLogLevel() error {
+	level, err := log.ParseLevel(e.LogLevel)
 	if err != nil {
 		return err
 	}
@@ -67,46 +93,46 @@ func (e *Engine) setLogLevel() error {
 	return nil
 }
 
-func (e *Engine) setInterface() error {
-	if e.iface != "" {
-		if err := dialer.BindToInterface(e.iface); err != nil {
+func (e *engine) setInterface() error {
+	if e.Interface != "" {
+		if err := dialer.BindToInterface(e.Interface); err != nil {
 			return err
 		}
-		log.Infof("[BOUND] bind to interface: %s", e.iface)
+		log.Infof("[BOUND] bind to interface: %s", e.Interface)
 	}
 	return nil
 }
 
-func (e *Engine) setStats() error {
-	if e.stats != "" {
+func (e *engine) setStats() error {
+	if e.Stats != "" {
 		go func() {
-			_ = stats.Start(e.stats, e.token)
+			_ = stats.Start(e.Stats, e.Token)
 		}()
-		log.Infof("[STATS] listen and serve at: http://%s", e.stats)
+		log.Infof("[STATS] stats server listen at: http://%s", e.Stats)
 	}
 	return nil
 }
 
-func (e *Engine) setProxy() (err error) {
-	if e.rawProxy == "" {
+func (e *engine) setProxy() (err error) {
+	if e.Proxy == "" {
 		return errors.New("empty proxy")
 	}
 
-	e.proxy, err = parseProxy(e.rawProxy)
+	e.proxy, err = parseProxy(e.Proxy)
 	proxy.SetDialer(e.proxy)
 	return
 }
 
-func (e *Engine) setDevice() (err error) {
-	if e.rawDevice == "" {
+func (e *engine) setDevice() (err error) {
+	if e.Device == "" {
 		return errors.New("empty device")
 	}
 
-	e.device, err = parseDevice(e.rawDevice, e.mtu)
+	e.device, err = parseDevice(e.Device, e.MTU)
 	return
 }
 
-func (e *Engine) setStack() (err error) {
+func (e *engine) setStack() (err error) {
 	defer func() {
 		if err == nil {
 			log.Infof(
