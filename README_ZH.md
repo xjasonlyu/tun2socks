@@ -32,11 +32,12 @@
 ## 特性介绍
 
 - ICMP 回应 / IPv6 支持 / Socks5 和 SS 代理支持
+- `SO_BINDTODEVICE` & `SO_MARK` 套接字选项支持
 - 适用于游戏加速，针对UDP流量传输的专门优化
 - 纯 Go 实现，不再需要 CGO，提升了稳定性
 - 路由模式，可以用来转发及代理局域网内所有流量
-- 核心由 [gVisor](https://github.com/google/gvisor) 强力驱动的 TCP/IP 网络栈
-- 超过 2.5Gbps 的带宽吞吐量（[v1](https://github.com/xjasonlyu/tun2socks/tree/v1) 版本的10x倍以上）
+- 核心由 *[gVisor](https://github.com/google/gvisor)* 强力驱动的 TCP/IP 网络栈
+- 超过 *2.5Gbps* 的带宽吞吐量（[v1](https://github.com/xjasonlyu/tun2socks/tree/v1) 版本的10x倍以上）
 
 ## 硬件需求
 
@@ -93,4 +94,4 @@ make all-arch
 - [x] Windows 支持
 - [x] FreeBSD 支持
 - [x] OpenBSD 支持
-- [ ] 自动路由模式
+- [ ] ~~自动路由模式~~

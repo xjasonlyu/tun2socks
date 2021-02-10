@@ -23,11 +23,12 @@ English | [简体中文](README_ZH.md)
 ## Features
 
 - ICMP echoing / IPv6 support / Socks5 & SS proxy
+- `SO_BINDTODEVICE` & `SO_MARK` option support
 - Optimized UDP transmission for game acceleration
 - Pure Go implementation, no more CGO required
 - Router mode, routing all the traffic in LAN
-- TCP/IP stack powered by [gVisor](https://github.com/google/gvisor)
-- More than 2.5Gbps throughput (10x faster than [v1](https://github.com/xjasonlyu/tun2socks/tree/v1))
+- TCP/IP stack powered by *[gVisor](https://github.com/google/gvisor)*
+- More than *2.5Gbps* throughput (10x faster than [v1](https://github.com/xjasonlyu/tun2socks/tree/v1))
 
 ## Requirements
 
@@ -72,10 +73,3 @@ make all-arch
 - [google/gvisor](https://github.com/google/gvisor)
 - [majek/slirpnetstack](https://github.com/majek/slirpnetstack)
 - [WireGuard/wireguard-go](https://git.zx2c4.com/wireguard-go)
-
-## TODO
-
-- [x] Windows support
-- [x] FreeBSD support
-- [x] OpenBSD support
-- [ ] Auto route mode
