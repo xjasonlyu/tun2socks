@@ -1,8 +1,11 @@
 package dialer
 
-import "net"
+import (
+	"net"
+	"sync"
+)
 
-var _boundInterface *net.Interface
+var _bindOnce sync.Once
 
 // BindToInterface binds dialer to specific interface.
 func BindToInterface(name string) error {
@@ -10,6 +13,9 @@ func BindToInterface(name string) error {
 	if err != nil {
 		return err
 	}
-	_boundInterface = i
+
+	_bindOnce.Do(func() {
+		addControl(bindToInterface(i))
+	})
 	return nil
 }

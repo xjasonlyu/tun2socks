@@ -31,6 +31,7 @@ func Insert(k *Key) {
 
 type Key struct {
 	MTU       uint32
+	Mark      int
 	Proxy     string
 	Stats     string
 	Token     string
@@ -60,6 +61,7 @@ func (e *engine) start() error {
 
 	for _, f := range []func() error{
 		e.setLogLevel,
+		e.setMark,
 		e.setInterface,
 		e.setStats,
 		e.setProxy,
@@ -93,12 +95,20 @@ func (e *engine) setLogLevel() error {
 	return nil
 }
 
+func (e *engine) setMark() error {
+	if e.Mark != 0 {
+		dialer.SetMark(e.Mark)
+		log.Infof("[DIALER] set fwmark: %d", e.Mark)
+	}
+	return nil
+}
+
 func (e *engine) setInterface() error {
 	if e.Interface != "" {
 		if err := dialer.BindToInterface(e.Interface); err != nil {
 			return err
 		}
-		log.Infof("[BOUND] bind to interface: %s", e.Interface)
+		log.Infof("[DIALER] use interface: %s", e.Interface)
 	}
 	return nil
 }
@@ -108,7 +118,7 @@ func (e *engine) setStats() error {
 		go func() {
 			_ = stats.Start(e.Stats, e.Token)
 		}()
-		log.Infof("[STATS] stats server listen at: http://%s", e.Stats)
+		log.Infof("[STATS] serve at: http://%s", e.Stats)
 	}
 	return nil
 }

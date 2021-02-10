@@ -4,9 +4,12 @@ package dialer
 
 import (
 	"errors"
+	"net"
 	"syscall"
 )
 
-func bindToInterface(network, address string, c syscall.RawConn) error {
-	return errors.New("unsupported platform")
+func bindToInterface(_ *net.Interface) controlFunc {
+	return func(string, string, syscall.RawConn) error {
+		return errors.New("unsupported platform")
+	}
 }

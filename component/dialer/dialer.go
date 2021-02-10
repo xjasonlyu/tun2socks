@@ -11,20 +11,12 @@ func Dial(network, address string) (net.Conn, error) {
 
 func DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	d := &net.Dialer{}
-
-	if _boundInterface != nil {
-		d.Control = bindToInterface
-	}
-
+	setControl(d)
 	return d.DialContext(ctx, network, address)
 }
 
 func ListenPacket(network, address string) (net.PacketConn, error) {
 	lc := &net.ListenConfig{}
-
-	if _boundInterface != nil {
-		lc.Control = bindToInterface
-	}
-
+	setControl(lc)
 	return lc.ListenPacket(context.Background(), network, address)
 }
