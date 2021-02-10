@@ -4,8 +4,9 @@ TUN="${TUN:-tun0}"
 TUN_ADDR="${TUN_ADDR:-198.18.0.1/15}"
 LOGLEVEL="${LOGLEVEL:-info}"
 
-TABLE="${TABLE:-0x2d5}"
-FWMARK="${FWMARK:-0x2d5}"
+# default values
+TABLE="${TABLE:-0x22b}"
+FWMARK="${FWMARK:-0x22b}"
 
 create_tun() {
   # create tun device
@@ -15,7 +16,7 @@ create_tun() {
 }
 
 config_route() {
-  # clone main route
+  # clone main route table
   ip route show table main |
     while read -r route; do
       ip route add ${route%linkdown*} table "$TABLE"
@@ -39,16 +40,9 @@ config_route() {
   done
 }
 
-disable_rp_filter() {
-  for path in /proc/sys/net/ipv4/conf/*; do
-    echo 0 > "$path/rp_filter"
-  done
-}
-
 main() {
   create_tun
   config_route
-  disable_rp_filter
 
   # execute extra commands
   if [ -n "$EXTRA_COMMANDS" ]; then

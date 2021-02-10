@@ -11,9 +11,7 @@ services:
       - GODEBUG=madvdontneed=1
       - LOGLEVEL=
       - TUN=
-      - ETH=
       - TUN_ADDR=
-      - TUN_MASK=
       - PROXY=
       - STATS=
       - TOKEN=
