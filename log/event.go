@@ -8,8 +8,8 @@ import (
 )
 
 var (
-	logCh  = make(chan interface{})
-	source = observable.NewObservable(logCh)
+	_logCh  = make(chan interface{})
+	_source = observable.NewObservable(_logCh)
 )
 
 type Event struct {
@@ -24,16 +24,16 @@ func newEvent(level Level, format string, args ...interface{}) *Event {
 		Time:    time.Now(),
 		Message: fmt.Sprintf(format, args...),
 	}
-	logCh <- event /* send all events to logCh */
+	_logCh <- event /* send all events to logCh */
 
 	return event
 }
 
 func Subscribe() observable.Subscription {
-	sub, _ := source.Subscribe()
+	sub, _ := _source.Subscribe()
 	return sub
 }
 
 func UnSubscribe(sub observable.Subscription) {
-	source.UnSubscribe(sub)
+	_source.UnSubscribe(sub)
 }

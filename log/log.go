@@ -2,14 +2,14 @@ package log
 
 import (
 	"os"
-	"sync/atomic"
 
 	"github.com/sirupsen/logrus"
+	"go.uber.org/atomic"
 )
 
 var (
-	// defaultLevel is package default logging level.
-	defaultLevel = InfoLevel
+	// _defaultLevel is package default logging level.
+	_defaultLevel = atomic.NewUint32(uint32(InfoLevel))
 )
 
 func init() {
@@ -18,7 +18,7 @@ func init() {
 }
 
 func SetLevel(level Level) {
-	atomic.StoreUint32((*uint32)(&defaultLevel), uint32(level))
+	_defaultLevel.Store(uint32(level))
 }
 
 func Debugf(format string, args ...interface{}) {
@@ -43,7 +43,7 @@ func Fatalf(format string, args ...interface{}) {
 
 func logf(level Level, format string, args ...interface{}) {
 	event := newEvent(level, format, args...)
-	if event.Level > defaultLevel {
+	if uint32(event.Level) > _defaultLevel.Load() {
 		return
 	}
 
