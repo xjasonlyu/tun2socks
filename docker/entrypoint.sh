@@ -50,22 +50,22 @@ main() {
   fi
 
   if [ -n "$MTU" ]; then
-    ARGS="--mtu $MTU"
+    ARGS="-mtu $MTU"
   fi
 
   if [ -n "$STATS" ]; then
-    ARGS="$ARGS --stats $STATS"
+    ARGS="$ARGS -stats $STATS"
   fi
 
   if [ -n "$TOKEN" ]; then
-    ARGS="$ARGS --token $TOKEN"
+    ARGS="$ARGS -token $TOKEN"
   fi
 
   exec tun2socks \
-    --loglevel "$LOGLEVEL" \
-    --fwmark "$FWMARK" \
-    --device "$TUN" \
-    --proxy "$PROXY" \
+    -loglevel "$LOGLEVEL" \
+    -fwmark "$FWMARK" \
+    -device "$TUN" \
+    -proxy "$PROXY" \
     $ARGS
 }
 

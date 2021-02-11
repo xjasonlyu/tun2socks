@@ -30,7 +30,7 @@ func Insert(k *Key) {
 }
 
 type Key struct {
-	MTU       uint32
+	MTU       int
 	Mark      int
 	Proxy     string
 	Stats     string
@@ -138,7 +138,7 @@ func (e *engine) setDevice() (err error) {
 		return errors.New("empty device")
 	}
 
-	e.device, err = parseDevice(e.Device, e.MTU)
+	e.device, err = parseDevice(e.Device, uint32(e.MTU))
 	return
 }
 
