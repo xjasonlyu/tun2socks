@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/constant"
+	V "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
 
@@ -60,7 +60,7 @@ func Start(addr, token string) error {
 }
 
 func hello(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, render.M{"hello": constant.Name})
+	render.JSON(w, r, render.M{"hello": V.Name})
 }
 
 func authenticator(token string) func(http.Handler) http.Handler {
@@ -203,5 +203,5 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 }
 
 func version(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, render.M{"version": constant.Version})
+	render.JSON(w, r, render.M{"version": V.Version, "commit": V.GitCommit})
 }

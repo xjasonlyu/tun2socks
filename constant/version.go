@@ -1,8 +1,10 @@
 package constant
 
-const Name = "tun2socks"
+const (
+	Name = "tun2socks"
+)
 
 var (
-	Version   = ""
-	BuildTime = ""
+	Version   string
+	GitCommit string
 )

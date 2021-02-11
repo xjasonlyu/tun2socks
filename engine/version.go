@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/xjasonlyu/tun2socks/constant"
+	V "github.com/xjasonlyu/tun2socks/constant"
 )
 
 func showVersion() {
@@ -14,9 +14,9 @@ func showVersion() {
 }
 
 func versionString() string {
-	return fmt.Sprintf("%s %s\n", constant.Name, strings.TrimPrefix(constant.Version, "v"))
+	return fmt.Sprintf("%s-%s\n", V.Name, strings.TrimPrefix(V.Version, "v"))
 }
 
 func releaseString() string {
-	return fmt.Sprintf("%s/%s, %s, %s\n", runtime.GOOS, runtime.GOARCH, runtime.Version(), constant.BuildTime)
+	return fmt.Sprintf("%s/%s, %s, %s\n", runtime.GOOS, runtime.GOARCH, runtime.Version(), V.GitCommit)
 }
