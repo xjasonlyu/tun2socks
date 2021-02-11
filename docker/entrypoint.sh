@@ -1,33 +1,40 @@
 #!/bin/sh
 
 TUN="${TUN:-tun0}"
-TUN_ADDR="${TUN_ADDR:-198.18.0.1/15}"
+ADDR="${ADDR:-198.18.0.1/15}"
 LOGLEVEL="${LOGLEVEL:-info}"
 
 # default values
 TABLE="${TABLE:-0x22b}"
 FWMARK="${FWMARK:-0x22b}"
+CLONE_MAIN="${CLONE_MAIN:-1}"
 
 create_tun() {
   # create tun device
   ip tuntap add mode tun dev "$TUN"
-  ip addr add "$TUN_ADDR" dev "$TUN"
+  ip addr add "$ADDR" dev "$TUN"
   ip link set dev "$TUN" up
 }
 
+create_table() {
+  if [ "$CLONE_MAIN" -ne 0 ]; then
+    # clone main route table
+    ip route show table main |
+      while read -r route; do
+        ip route add ${route%linkdown*} table "$TABLE"
+      done
+    # replace default route
+    ip route replace default dev "$TUN" table "$TABLE"
+  else
+    # just add default route
+    ip route add default dev "$TUN" table "$TABLE"
+  fi
+}
+
 config_route() {
-  # clone main route table
-  ip route show table main |
-    while read -r route; do
-      ip route add ${route%linkdown*} table "$TABLE"
-    done
-
-  # replace default route
-  ip route replace default dev "$TUN" table "$TABLE"
-
   # policy routing
   ip rule add not fwmark "$FWMARK" table "$TABLE"
-  ip rule add fwmark "$FWMARK" to "$TUN_ADDR" prohibit
+  ip rule add fwmark "$FWMARK" to "$ADDR" prohibit
 
   # add tun included routes
   for addr in $(echo "$TUN_INCLUDED_ROUTES" | tr ',' '\n'); do
@@ -42,6 +49,7 @@ config_route() {
 
 main() {
   create_tun
+  create_table
   config_route
 
   # execute extra commands

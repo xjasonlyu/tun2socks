@@ -18,7 +18,7 @@ RUN apk add --update --no-cache iptables iproute2 \
     && chmod +x /entrypoint.sh
 
 ENV TUN=tun0
-ENV TUN_ADDR=198.18.0.1/15
+ENV ADDR=198.18.0.1/15
 ENV LOGLEVEL=info
 ENV PROXY=direct://
 ENV MTU=9000
