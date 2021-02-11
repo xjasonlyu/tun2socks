@@ -39,13 +39,9 @@ func handleUDP(packet core.UDPPacket) {
 		DstIP:   net.IP(id.LocalAddress),
 		DstPort: id.LocalPort,
 	}
-	if !metadata.Valid() {
-		log.Warnf("[Metadata] not valid: %#v", metadata)
-		return
-	}
 
 	generateNATKey := func(m *M.Metadata) string {
-		return m.SourceAddress() /* Full Cone NAT Key */
+		return m.SourceAddress() /* as Full Cone NAT Key */
 	}
 	key := generateNATKey(metadata)
 

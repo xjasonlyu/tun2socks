@@ -34,10 +34,6 @@ func handleTCP(localConn core.TCPConn) {
 		DstIP:   net.IP(id.LocalAddress),
 		DstPort: id.LocalPort,
 	}
-	if !metadata.Valid() {
-		log.Warnf("[Metadata] not valid: %#v", metadata)
-		return
-	}
 
 	targetConn, err := proxy.Dial(metadata)
 	if err != nil {

@@ -87,7 +87,3 @@ func (m *Metadata) Network() string {
 func (m *Metadata) String() string {
 	return m.DestinationAddress()
 }
-
-func (m *Metadata) Valid() bool {
-	return m.SrcIP != nil && m.DstIP != nil
-}
