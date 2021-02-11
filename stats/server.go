@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	upgrader = websocket.Upgrader{
+	_upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool {
 			return true
 		},
@@ -114,7 +114,7 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 
 	var wsConn *websocket.Conn
 	if websocket.IsWebSocketUpgrade(r) {
-		wsConn, err = upgrader.Upgrade(w, r, nil)
+		wsConn, err = _upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
 		}
@@ -163,7 +163,7 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 	var wsConn *websocket.Conn
 	if websocket.IsWebSocketUpgrade(r) {
 		var err error
-		wsConn, err = upgrader.Upgrade(w, r, nil)
+		wsConn, err = _upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
 		}

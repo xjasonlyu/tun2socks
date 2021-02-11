@@ -15,9 +15,9 @@ const (
 )
 
 var (
-	tcpQueue      = make(chan core.TCPConn) /* unbuffered */
-	udpQueue      = make(chan core.UDPPacket, maxUDPQueueSize)
-	numUDPWorkers = max(runtime.NumCPU(), 4 /* at least 4 workers */)
+	_tcpQueue      = make(chan core.TCPConn) /* unbuffered */
+	_udpQueue      = make(chan core.UDPPacket, maxUDPQueueSize)
+	_numUDPWorkers = max(runtime.NumCPU(), 4 /* at least 4 workers */)
 )
 
 func init() {
@@ -26,13 +26,13 @@ func init() {
 
 // Add adds tcpConn to tcpQueue.
 func Add(conn core.TCPConn) {
-	tcpQueue <- conn
+	_tcpQueue <- conn
 }
 
 // AddPacket adds udpPacket to udpQueue.
 func AddPacket(packet core.UDPPacket) {
 	select {
-	case udpQueue <- packet:
+	case _udpQueue <- packet:
 	default:
 		log.Warnf("queue is currently full, packet will be dropped")
 		packet.Drop()
@@ -47,8 +47,8 @@ func max(a, b int) int {
 }
 
 func process() {
-	for i := 0; i < numUDPWorkers; i++ {
-		queue := udpQueue
+	for i := 0; i < _numUDPWorkers; i++ {
+		queue := _udpQueue
 		go func() {
 			for packet := range queue {
 				handleUDP(packet)
@@ -56,7 +56,7 @@ func process() {
 		}()
 	}
 
-	for conn := range tcpQueue {
+	for conn := range _tcpQueue {
 		go handleTCP(conn)
 	}
 }

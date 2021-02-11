@@ -21,9 +21,9 @@ const (
 )
 
 var (
-	// natTable uses source udp packet information
+	// _natTable uses source udp packet information
 	// as key to store destination udp packetConn.
-	natTable = nat.NewTable()
+	_natTable = nat.NewTable()
 )
 
 func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
@@ -46,7 +46,7 @@ func handleUDP(packet core.UDPPacket) {
 	key := generateNATKey(metadata)
 
 	handle := func(drop bool) bool {
-		pc := natTable.Get(key)
+		pc := _natTable.Get(key)
 		if pc != nil {
 			handleUDPToRemote(packet, pc, metadata /* as net.Addr */, drop)
 			return true
@@ -59,7 +59,7 @@ func handleUDP(packet core.UDPPacket) {
 	}
 
 	lockKey := key + "-lock"
-	cond, loaded := natTable.GetOrCreateLock(lockKey)
+	cond, loaded := _natTable.GetOrCreateLock(lockKey)
 	go func() {
 		if loaded {
 			cond.L.Lock()
@@ -70,7 +70,7 @@ func handleUDP(packet core.UDPPacket) {
 		}
 
 		defer func() {
-			natTable.Delete(lockKey)
+			_natTable.Delete(lockKey)
 			cond.Broadcast()
 		}()
 
@@ -95,12 +95,12 @@ func handleUDP(packet core.UDPPacket) {
 		go func() {
 			defer pc.Close()
 			defer packet.Drop()
-			defer natTable.Delete(key)
+			defer _natTable.Delete(key)
 
 			handleUDPToLocal(packet, pc, udpSessionTimeout)
 		}()
 
-		natTable.Set(key, pc)
+		_natTable.Set(key, pc)
 		handle(false /* drop */)
 	}()
 }

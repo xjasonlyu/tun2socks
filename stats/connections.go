@@ -31,7 +31,7 @@ func getConnections(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, nil)
+	conn, err := _upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		return
 	}
