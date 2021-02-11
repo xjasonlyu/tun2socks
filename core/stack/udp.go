@@ -65,9 +65,7 @@ func (p *udpPacket) Data() []byte {
 	return p.payload
 }
 
-func (p *udpPacket) Drop() {
-	/* Release */
-}
+func (p *udpPacket) Drop() {}
 
 func (p *udpPacket) ID() *stack.TransportEndpointID {
 	return p.id
@@ -97,7 +95,7 @@ func (p *udpPacket) WriteBack(b []byte, addr net.Addr) (int, error) {
 	data := v.ToVectorisedView()
 	// if addr is not provided, write back use original dst Addr as src Addr.
 	if addr == nil {
-		if err := sendUDP(route, data, p.id.LocalPort, p.id.RemotePort, udpNoChecksum); err != nil {
+		if err = sendUDP(route, data, p.id.LocalPort, p.id.RemotePort, udpNoChecksum); err != nil {
 			return 0, fmt.Errorf("%v", err)
 		}
 		return data.Size(), nil
@@ -114,7 +112,7 @@ func (p *udpPacket) WriteBack(b []byte, addr net.Addr) (int, error) {
 		route.LocalAddress = tcpip.Address(udpAddr.IP)
 	}
 
-	if err := sendUDP(route, data, uint16(udpAddr.Port), p.id.RemotePort, udpNoChecksum); err != nil {
+	if err = sendUDP(route, data, uint16(udpAddr.Port), p.id.RemotePort, udpNoChecksum); err != nil {
 		return 0, fmt.Errorf("%v", err)
 	}
 	return data.Size(), nil
