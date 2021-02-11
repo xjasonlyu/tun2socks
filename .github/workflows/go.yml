@@ -9,6 +9,7 @@ on:
       - '*'
     paths-ignore:
       - 'docs/**'
+      - 'docker/**'
       - '**.md'
 
 jobs:
