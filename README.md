@@ -4,31 +4,25 @@
 [![Go Version][2]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
 [![Go Report][3]](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks)
 [![GitHub License][4]](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
-[![Total Lines][5]](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square)
-[![Releases][6]](https://github.com/xjasonlyu/tun2socks/releases)
+[![Releases][5]](https://github.com/xjasonlyu/tun2socks/releases)
 
 [1]: https://img.shields.io/github/workflow/status/xjasonlyu/tun2socks/Go?style=flat-square
 [2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks/main?style=flat-square
 [3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks?style=flat-square
 [4]: https://img.shields.io/github/license/xjasonlyu/tun2socks?style=flat-square
-[5]: https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square
-[6]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square
+[5]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square
 
 English | [简体中文](README_ZH.md)
 
-# What is tun2socks?
-
-`tun2socks` is an application used to "socksify" TCP/UDP (IPv4 and IPv6) traffic at the network layer. It implements a TUN virtual network interface which accepts all incoming TCP/UDP packets and forwards them through a SOCKS server.
-
 ## Features
 
-- ICMP echoing / IPv6 support / Socks5 & SS proxy
-- `SO_BINDTODEVICE` & `SO_MARK` option support
-- Optimized UDP transmission for game acceleration
-- Pure Go implementation, no more CGO required
-- Router mode, routing all the traffic in LAN
-- TCP/IP stack powered by *[gVisor](https://github.com/google/gvisor)*
-- More than *2.5Gbps* throughput (10x faster than [v1](https://github.com/xjasonlyu/tun2socks/tree/v1))
+- **Fully support:** IPv4/IPv6/ICMP/TCP/UDP
+- **Proxy protocol:** Socks5/Shadowsocks
+- **Game ready:** optimized UDP transmission
+- **Pure Go:** no CGO required, stability improved
+- **Router mode:** forwarding packets in LAN
+- **TCP/IP stack:** powered by **[gVisor](https://github.com/google/gvisor)**
+- **High performance:** >2.5Gbps throughput
 
 ## Requirements
 
@@ -36,40 +30,20 @@ English | [简体中文](README_ZH.md)
 | :----- | :-----: | :---------: |
 | System | Linux MacOS Freebsd OpenBSD Windows | Linux or MacOS |
 | Memory | >20MB | >128MB |
-| CPU | AMD64(x86_64) ARM64 | AMD64 with AES-NI & AVX2 |
+| CPU | AMD64 ARM64 | AMD64 with AES-NI & AVX2 |
 
 ## Documentation
 
 Documentations and quick start guides can be found at [Github Wiki](https://github.com/xjasonlyu/tun2socks/wiki).
 
-## Building from source
-
-Due to the limitation of gVisor, tun2socks only supports x86_64 and ARM64 for now. Other architectures may become available in the future.
-
-### Environments
-
-Make sure the following dependencies are installed:
-
-- Go 1.15+
-
-### Building
-
-Build and install the `tun2socks` binary:
-
-```shell
-make tun2socks
-sudo cp ./bin/tun2socks /usr/local/bin
-```
-
-Build for all architectures:
-
-```shell
-make all-arch
-```
-
 ## Credits
 
-- [Dreamacro/clash](https://github.com/Dreamacro/clash)
-- [google/gvisor](https://github.com/google/gvisor)
-- [majek/slirpnetstack](https://github.com/majek/slirpnetstack)
-- [WireGuard/wireguard-go](https://git.zx2c4.com/wireguard-go)
+- [Dreamacro/clash](https://github.com/Dreamacro/clash) - A rule-based tunnel in Go
+- [google/gvisor](https://github.com/google/gvisor) - Application Kernel for Containers
+- [wireguard-go](https://git.zx2c4.com/wireguard-go) - Go Implementation of WireGuard
+
+## License
+
+[GPL-3.0](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks?ref=badge_large)

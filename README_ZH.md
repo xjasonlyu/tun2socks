@@ -4,21 +4,15 @@
 [![Go Version][2]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
 [![Go Report][3]](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks)
 [![GitHub License][4]](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
-[![Total Lines][5]](https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square)
-[![Releases][6]](https://github.com/xjasonlyu/tun2socks/releases)
+[![Releases][5]](https://github.com/xjasonlyu/tun2socks/releases)
 
 [1]: https://img.shields.io/github/workflow/status/xjasonlyu/tun2socks/Go?style=flat-square
 [2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks/main?style=flat-square
 [3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks?style=flat-square
 [4]: https://img.shields.io/github/license/xjasonlyu/tun2socks?style=flat-square
-[5]: https://img.shields.io/tokei/lines/github/xjasonlyu/tun2socks?style=flat-square
-[6]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square
+[5]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?include_prereleases&style=flat-square
 
 [English](README.md) | 简体中文
-
-## 什么是 tun2socks ？
-
-`tun2socks`是一个用来将网络层的`TCP/UDP`（包括`IPv4`和`IPv6`）流量套接字化的应用。它实现了一个`TUN`虚拟网卡接口，可以把所有到来的`TCP/UDP`包处理并转发给SOCKS服务器。
 
 ## 为什么使用 tun2socks ？
 
@@ -31,13 +25,13 @@
 
 ## 特性介绍
 
-- ICMP 回应 / IPv6 支持 / Socks5 和 SS 代理支持
-- `SO_BINDTODEVICE` & `SO_MARK` 套接字选项支持
-- 适用于游戏加速，针对UDP流量传输的专门优化
-- 纯 Go 实现，不再需要 CGO，提升了稳定性
-- 路由模式，可以用来转发及代理局域网内所有流量
-- 核心由 *[gVisor](https://github.com/google/gvisor)* 强力驱动的 TCP/IP 网络栈
-- 超过 *2.5Gbps* 的带宽吞吐量（[v1](https://github.com/xjasonlyu/tun2socks/tree/v1) 版本的10x倍以上）
+- **全面支持：** IPv4/IPv6/ICMP/TCP/UDP
+- **代理协议：** Socks5/Shadowsocks
+- **游戏加速：** 针对UDP传输的优化
+- **纯Go实现：** 无需CGO，稳定性提升
+- **路由模式：** 转发代理局域网内所有流量
+- **TCP/IP栈：** 由 **[gVisor](https://github.com/google/gvisor)** 强力驱动 
+- **高性能：** >2.5Gbps 的带宽吞吐量
 
 ## 硬件需求
 
@@ -45,43 +39,11 @@
 | :--- | :---: | :---: |
 | 系统 | Linux MacOS Freebsd OpenBSD Windows | Linux or MacOS |
 | 内存 | >20MB | >128MB |
-| 架构 | AMD64(x86_64) ARM64 | AMD64 with AES-NI & AVX2 |
+| 架构 | AMD64 ARM64 | AMD64 with AES-NI & AVX2 |
 
 ## 使用文档
 
 文档以及使用方式，请看 [Github Wiki](https://github.com/xjasonlyu/tun2socks/wiki)。
-
-## 源码编译
-
-由于 tun2socks 是基于 gVisor 的 TCP/IP 栈，所以目前只支持 x86_64 和 ARM64 架构。以后其他的架构的支持取决于 gVisor。
-
-### 环境依赖
-
-确保安装了以下环境:
-
-- Go 1.15+
-
-### 开始编译
-
-编译以及安装 `tun2socks` 二进制文件:
-
-```shell
-make tun2socks
-sudo cp ./bin/tun2socks /usr/local/bin
-```
-
-编译所有架构的二进制文件:
-
-```shell
-make all-arch
-```
-
-## 特别感谢
-
-- [Dreamacro/clash](https://github.com/Dreamacro/clash)
-- [google/gvisor](https://github.com/google/gvisor)
-- [majek/slirpnetstack](https://github.com/majek/slirpnetstack)
-- [WireGuard/wireguard-go](https://git.zx2c4.com/wireguard-go)
 
 ## 注意事项
 
@@ -89,9 +51,14 @@ make all-arch
 2. `tun2socks`只应该专注于将网络层的TCP/UDP流量转发给SOCKS服务器，其他的如DNS（DoH）、DHCP等模块功能应该交由第三方应用实现，所以弃用了DNS模块。
 3. 因为是通过用户空间的网络栈接管所有流量并处理转发，在高吞吐时CPU的使用量会剧增，所以CPU的性能直接与可以达到的最大带宽挂钩。
 
-## TODO
+## 特别感谢
 
-- [x] Windows 支持
-- [x] FreeBSD 支持
-- [x] OpenBSD 支持
-- [ ] ~~自动路由模式~~
+- [Dreamacro/clash](https://github.com/Dreamacro/clash) - A rule-based tunnel in Go
+- [google/gvisor](https://github.com/google/gvisor) - Application Kernel for Containers
+- [wireguard-go](https://git.zx2c4.com/wireguard-go) - Go Implementation of WireGuard
+
+## License
+
+[GPL-3.0](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks?ref=badge_large)
