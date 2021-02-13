@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	udpSessionTimeout = 30 * time.Second
+	udpSessionTimeout = 60 * time.Second
 )
 
 var (
