@@ -4,7 +4,6 @@
 package tun
 
 import (
-	"errors"
 	"fmt"
 	"unsafe"
 
@@ -33,7 +32,7 @@ func Open(opts ...Option) (device.Device, error) {
 	}
 
 	if len(t.name) >= unix.IFNAMSIZ {
-		return nil, errors.New("interface name too long")
+		return nil, fmt.Errorf("interface name too long: %s", t.name)
 	}
 
 	fd, err := tun.Open(t.name)
@@ -103,7 +102,7 @@ func setMTU(name string, n uint32) error {
 	)
 
 	if errno != 0 {
-		return errors.New("failed to set MTU")
+		return fmt.Errorf("failed to set MTU: %w", errno)
 	}
 
 	return nil
