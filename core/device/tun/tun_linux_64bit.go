@@ -1,3 +1,6 @@
+// +build linux
+// +build amd64 arm64
+
 package tun
 
 import (

@@ -1,4 +1,4 @@
-// +build darwin freebsd openbsd
+// +build darwin freebsd linux openbsd
 
 package tun
 
