@@ -39,7 +39,7 @@
 | :--- | :---: | :---: |
 | 系统 | Linux MacOS Freebsd OpenBSD Windows | Linux or MacOS |
 | 内存 | >20MB | >128MB |
-| 架构 | AMD64 ARM64 MIPS64 PPC64 | AMD64 with AES-NI & AVX2 |
+| 架构 | 64bit | AMD64 with AES-NI & AVX2 |
 
 ## 使用文档
 
