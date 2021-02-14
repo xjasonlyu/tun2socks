@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-bin/
+build/
 
 # IDE
 .idea/

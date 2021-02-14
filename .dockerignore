@@ -2,5 +2,5 @@
 .gitignore
 
 # Other
-bin/*
+build/*
 docs/*
