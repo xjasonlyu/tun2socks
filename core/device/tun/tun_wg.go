@@ -5,7 +5,6 @@ package tun
 import (
 	"fmt"
 
-	"github.com/xjasonlyu/tun2socks/common/pool"
 	"github.com/xjasonlyu/tun2socks/core/device"
 	"github.com/xjasonlyu/tun2socks/core/device/rwbased"
 
@@ -46,26 +45,6 @@ func Open(opts ...Option) (device.Device, error) {
 	t.Endpoint = ep
 
 	return t, nil
-}
-
-func (t *TUN) Read(packet []byte) (n int, err error) {
-	buf := pool.Get(offset + len(packet))
-	defer pool.Put(buf)
-
-	if n, err = t.nt.Read(buf, offset); err != nil {
-		return
-	}
-
-	copy(packet, buf[offset:offset+n])
-	return
-}
-
-func (t *TUN) Write(packet []byte) (int, error) {
-	buf := pool.Get(offset + len(packet))
-	defer pool.Put(buf)
-
-	copy(buf[offset:], packet)
-	return t.nt.Write(buf[:offset+len(packet)], offset)
 }
 
 func (t *TUN) Name() string {

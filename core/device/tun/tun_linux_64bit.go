@@ -108,5 +108,3 @@ func setMTU(name string, n uint32) error {
 
 	return nil
 }
-
-var _ = offset /* ignore static check */
