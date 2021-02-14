@@ -26,7 +26,7 @@ UNIX_ARCH_LIST = \
 	linux-mips64 \
 	linux-mips64le \
 	linux-ppc64 \
-    linux-ppc64le \
+	linux-ppc64le \
 	openbsd-amd64 \
 	openbsd-arm64 \
 
