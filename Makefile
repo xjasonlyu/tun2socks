@@ -19,6 +19,7 @@ GO_BUILD = GO111MODULE=$(GO111MODULE) CGO_ENABLED=$(CGO_ENABLED) \
 
 UNIX_ARCH_LIST = \
 	darwin-amd64 \
+	darwin-arm64 \
 	freebsd-amd64 \
 	freebsd-arm64 \
 	linux-amd64 \
@@ -41,6 +42,9 @@ tun2socks:
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
+darwin-arm64:
+	GOARCH=arm64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
 freebsd-amd64:
 	GOARCH=amd64 GOOS=freebsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
