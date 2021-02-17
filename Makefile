@@ -4,7 +4,7 @@ MODULE := github.com/xjasonlyu/tun2socks
 BUILD_DIR     := build
 BUILD_TAGS    :=
 BUILD_FLAGS   := -v
-BUILD_COMMIT  := $(shell git describe --dirty --always)
+BUILD_COMMIT  := $(shell git rev-parse --short HEAD)
 BUILD_VERSION := $(shell git describe --abbrev=0 --tags HEAD)
 
 CGO_ENABLED := 0
