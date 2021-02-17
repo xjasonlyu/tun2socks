@@ -30,7 +30,7 @@ English | [简体中文](README_ZH.md)
 | :----- | :-----: | :---------: |
 | System | Linux MacOS Freebsd OpenBSD Windows | Linux or MacOS |
 | Memory | >20MB | >128MB |
-| CPU | 64bit | AMD64 with AES-NI & AVX2 |
+| CPU | ANY | AMD64 or ARM64 |
 
 ## Documentation
 
