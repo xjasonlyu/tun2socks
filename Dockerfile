@@ -4,7 +4,6 @@ WORKDIR /tun2socks-src
 COPY . /tun2socks-src
 
 RUN apk add --no-cache make git \
-    && go mod download \
     && make tun2socks \
     && mv ./build/tun2socks /tun2socks
 
