@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 
 	"github.com/xjasonlyu/tun2socks/component/dialer"
@@ -104,7 +103,7 @@ func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 	}
 
 	go func() {
-		io.Copy(ioutil.Discard, c)
+		io.Copy(io.Discard, c)
 		c.Close()
 		// A UDP association terminates when the TCP connection that the UDP
 		// ASSOCIATE request arrived on terminates. RFC1928
