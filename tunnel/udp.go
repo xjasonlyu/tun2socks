@@ -97,7 +97,7 @@ func handleUDP(packet core.UDPPacket) {
 			defer packet.Drop()
 			defer _natTable.Delete(key)
 
-			handleUDPToLocal(packet, pc, udpSessionTimeout)
+			handleUDPToLocal(packet, pc)
 		}()
 
 		_natTable.Set(key, pc)
@@ -115,16 +115,17 @@ func handleUDPToRemote(packet core.UDPPacket, pc net.PacketConn, remote net.Addr
 	if _, err := pc.WriteTo(packet.Data() /* data */, remote); err != nil {
 		log.Warnf("[UDP] write to %s error: %v", remote, err)
 	}
+	pc.SetReadDeadline(time.Now().Add(udpSessionTimeout)) /* reset timeout */
 
 	log.Infof("[UDP] %s --> %s", packet.RemoteAddr(), remote)
 }
 
-func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn, timeout time.Duration) {
+func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn) {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 
 	for /* just loop */ {
-		pc.SetReadDeadline(time.Now().Add(timeout))
+		pc.SetReadDeadline(time.Now().Add(udpSessionTimeout))
 		n, from, err := pc.ReadFrom(buf)
 		if err != nil {
 			if !errors.Is(err, os.ErrDeadlineExceeded) /* ignore i/o timeout */ {
