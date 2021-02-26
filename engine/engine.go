@@ -10,6 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/stats"
+	"github.com/xjasonlyu/tun2socks/tunnel"
 )
 
 var _engine = &engine{}
@@ -30,15 +31,16 @@ func Insert(k *Key) {
 }
 
 type Key struct {
-	MTU       int
-	Mark      int
-	Proxy     string
-	Stats     string
-	Token     string
-	Device    string
-	LogLevel  string
-	Interface string
-	Version   bool
+	MTU        int
+	Mark       int
+	UDPTimeout int
+	Proxy      string
+	Stats      string
+	Token      string
+	Device     string
+	LogLevel   string
+	Interface  string
+	Version    bool
 }
 
 type engine struct {
@@ -64,6 +66,7 @@ func (e *engine) start() error {
 		e.setMark,
 		e.setInterface,
 		e.setStats,
+		e.setUDPTimeout,
 		e.setProxy,
 		e.setDevice,
 		e.setStack,
@@ -119,6 +122,13 @@ func (e *engine) setStats() error {
 			_ = stats.Start(e.Stats, e.Token)
 		}()
 		log.Infof("[STATS] serve at: http://%s", e.Stats)
+	}
+	return nil
+}
+
+func (e *engine) setUDPTimeout() error {
+	if e.UDPTimeout > 0 {
+		tunnel.SetUDPTimeout(e.UDPTimeout)
 	}
 	return nil
 }
