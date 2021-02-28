@@ -69,6 +69,10 @@ main() {
     ARGS="$ARGS -token $TOKEN"
   fi
 
+  if [ -n "$UDP_TIMEOUT" ]; then
+    ARGS="$ARGS -udp-timeout $UDP_TIMEOUT"
+  fi
+
   exec tun2socks \
     -loglevel "$LOGLEVEL" \
     -fwmark "$FWMARK" \
