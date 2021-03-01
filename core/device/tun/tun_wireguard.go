@@ -26,7 +26,12 @@ func Open(opts ...Option) (device.Device, error) {
 		opt(t)
 	}
 
-	nt, err := tun.CreateTUN(t.name, int(t.mtu))
+	forcedMTU := defaultMTU
+	if t.mtu > 0 {
+		forcedMTU = int(t.mtu)
+	}
+
+	nt, err := tun.CreateTUN(t.name, forcedMTU)
 	if err != nil {
 		return nil, fmt.Errorf("create tun: %w", err)
 	}
@@ -38,7 +43,7 @@ func Open(opts ...Option) (device.Device, error) {
 	}
 	t.mtu = uint32(mtu)
 
-	ep, err := rwbased.New(t, uint32(mtu))
+	ep, err := rwbased.New(t, t.mtu)
 	if err != nil {
 		return nil, fmt.Errorf("create endpoint: %w", err)
 	}

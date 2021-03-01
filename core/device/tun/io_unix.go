@@ -6,7 +6,11 @@ import (
 	"github.com/xjasonlyu/tun2socks/common/pool"
 )
 
-const offset = 4 /* 4 bytes TUN_PI */
+const (
+	offset = 4 /* 4 bytes TUN_PI */
+
+	defaultMTU = 1500
+)
 
 func (t *TUN) Read(packet []byte) (n int, err error) {
 	buf := pool.Get(offset + len(packet))
