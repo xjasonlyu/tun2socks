@@ -13,12 +13,11 @@ require (
 	github.com/sirupsen/logrus v1.8.0
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/atomic v1.7.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
-	golang.org/x/net v0.0.0-20210220033124-5f55cee0dc0d // indirect
-	golang.org/x/sys v0.0.0-20210220050731-9a76102bfb43
+	golang.org/x/net v0.0.0-20210226172049-e18ecbb05110 // indirect
+	golang.org/x/sys v0.0.0-20210301091718-77cc2087c03b
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
-	golang.zx2c4.com/wireguard v0.0.0-20210222013812-386a61306bd6
-	gvisor.dev/gvisor v0.0.0-20210220013851-93fc09248a2f
+	golang.zx2c4.com/wireguard v0.0.0-20210225140808-70b7b7158fc9
+	gvisor.dev/gvisor v0.0.0-20210301201720-865ca64ee8c0
 )
 
-replace gvisor.dev/gvisor => github.com/xjasonlyu/gvisor v0.0.0-20210222043145-15b944d12b4f
+replace gvisor.dev/gvisor => github.com/xjasonlyu/gvisor v0.0.0-20210302152121-27a6751e19c2
