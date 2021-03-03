@@ -35,6 +35,34 @@ const (
 	AtypIPv6       Atyp = 0x04
 )
 
+// SOCKS reply field as defined in RFC 1928 section 6.
+type Reply uint8
+
+func (r Reply) String() string {
+	switch r {
+	case 0x00:
+		return "succeeded"
+	case 0x01:
+		return "general SOCKS server failure"
+	case 0x02:
+		return "connection not allowed by ruleset"
+	case 0x03:
+		return "network unreachable"
+	case 0x04:
+		return "host unreachable"
+	case 0x05:
+		return "connection refused"
+	case 0x06:
+		return "TTL expired"
+	case 0x07:
+		return "command not supported"
+	case 0x08:
+		return "address type not supported"
+	default:
+		return "unassigned"
+	}
+}
+
 // MaxAddrLen is the maximum size of SOCKS address in bytes.
 const MaxAddrLen = 1 + 1 + 255 + 2
 
@@ -184,8 +212,8 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 		return nil, err
 	}
 
-	if buf[1] != 0x00 /* SUCCEEDED */ {
-		return nil, fmt.Errorf("unsucceed reply: %X", buf[1])
+	if rep := Reply(buf[1]); rep != 0x00 /* SUCCEEDED */ {
+		return nil, fmt.Errorf("%#X: %s", rep, rep.String())
 	}
 
 	return ReadAddr(rw, buf)
