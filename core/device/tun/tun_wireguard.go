@@ -1,4 +1,4 @@
-// +build !linux !amd64,!arm64
+// +build !linux
 
 package tun
 

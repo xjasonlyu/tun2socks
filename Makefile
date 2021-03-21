@@ -23,6 +23,7 @@ UNIX_ARCH_LIST = \
 	freebsd-386 \
 	freebsd-amd64 \
 	freebsd-arm64 \
+	linux-386 \
 	linux-amd64 \
 	linux-arm64 \
 	linux-armv5 \
@@ -65,6 +66,9 @@ freebsd-amd64:
 
 freebsd-arm64:
 	GOARCH=arm64 GOOS=freebsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
+linux-386:
+	GOARCH=386 GOOS=linux $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
 linux-amd64:
 	GOARCH=amd64 GOOS=linux $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
