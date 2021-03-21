@@ -8,8 +8,6 @@ import (
 
 	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
-
-	"go.uber.org/atomic"
 )
 
 const (
@@ -17,7 +15,7 @@ const (
 )
 
 var (
-	_defaultDialer atomic.Value
+	_defaultDialer Dialer = &Base{}
 )
 
 type Dialer interface {
@@ -31,28 +29,24 @@ type Proxy interface {
 	Proto() proto.Proto
 }
 
-func init() {
-	_defaultDialer.Store(&Base{})
-}
-
 // SetDialer sets default Dialer.
 func SetDialer(d Dialer) {
-	_defaultDialer.Store(d)
+	_defaultDialer = d
 }
 
 // Dial uses default Dialer to dial TCP.
 func Dial(metadata *M.Metadata) (net.Conn, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
 	defer cancel()
-	return _defaultDialer.Load().(Dialer).DialContext(ctx, metadata)
+	return _defaultDialer.DialContext(ctx, metadata)
 }
 
 // DialContext uses default Dialer to dial TCP with context.
 func DialContext(ctx context.Context, metadata *M.Metadata) (net.Conn, error) {
-	return _defaultDialer.Load().(Dialer).DialContext(ctx, metadata)
+	return _defaultDialer.DialContext(ctx, metadata)
 }
 
 // DialUDP uses default Dialer to dial UDP.
 func DialUDP(metadata *M.Metadata) (net.PacketConn, error) {
-	return _defaultDialer.Load().(Dialer).DialUDP(metadata)
+	return _defaultDialer.DialUDP(metadata)
 }
