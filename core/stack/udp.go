@@ -21,7 +21,7 @@ func withUDPHandler() Option {
 		udpHandlePacket := func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 			// Ref: gVisor pkg/tcpip/transport/udp/endpoint.go HandlePacket
 			udpHdr := header.UDP(pkt.TransportHeader().View())
-			if int(udpHdr.Length()) > pkt.Data.Size()+header.UDPMinimumSize {
+			if int(udpHdr.Length()) > pkt.Data().Size()+header.UDPMinimumSize {
 				// Malformed packet.
 				s.Stats().UDP.MalformedPacketsReceived.Increment()
 				return true
@@ -38,10 +38,10 @@ func withUDPHandler() Option {
 			packet := &udpPacket{
 				s:        s,
 				id:       &id,
+				data:     pkt.Data().ExtractVV(),
 				nicID:    pkt.NICID,
 				netHdr:   pkt.Network(),
 				netProto: pkt.NetworkProtocolNumber,
-				payload:  pkt.Data.ToView(),
 			}
 
 			s.handler.AddPacket(packet)
@@ -55,14 +55,14 @@ func withUDPHandler() Option {
 type udpPacket struct {
 	s        *Stack
 	id       *stack.TransportEndpointID
+	data     buffer.VectorisedView
 	nicID    tcpip.NICID
 	netHdr   header.Network
 	netProto tcpip.NetworkProtocolNumber
-	payload  []byte
 }
 
 func (p *udpPacket) Data() []byte {
-	return p.payload
+	return p.data.ToView()
 }
 
 func (p *udpPacket) Drop() {}
@@ -175,7 +175,7 @@ func verifyChecksum(hdr header.UDP, pkt *stack.PacketBuffer) bool {
 		(hdr.Checksum() != 0 || pkt.NetworkProtocolNumber == header.IPv6ProtocolNumber) {
 		netHdr := pkt.Network()
 		xsum := header.PseudoHeaderChecksum(udp.ProtocolNumber, netHdr.DestinationAddress(), netHdr.SourceAddress(), hdr.Length())
-		for _, v := range pkt.Data.Views() {
+		for _, v := range pkt.Data().Views() {
 			xsum = header.Checksum(v, xsum)
 		}
 		return hdr.CalculateChecksum(xsum) == 0xffff
