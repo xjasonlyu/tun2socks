@@ -73,8 +73,10 @@ func parseShadowsocks(u *url.URL) (address, method, password, obfsMode, obfsHost
 	} else {
 		data, _ := base64.RawURLEncoding.DecodeString(u.User.String())
 		userInfo := strings.SplitN(string(data), ":", 2)
-		method = userInfo[0]
-		password = userInfo[1]
+		if len(userInfo) == 2 {
+			method = userInfo[0]
+			password = userInfo[1]
+		}
 	}
 
 	rawQuery, _ := url.QueryUnescape(u.RawQuery)
