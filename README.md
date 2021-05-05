@@ -36,6 +36,10 @@ English | [简体中文](README_ZH.md)
 
 Documentations and quick start guides can be found at [Github Wiki](https://github.com/xjasonlyu/tun2socks/wiki).
 
+## Community
+
+Welcome and feel free to ask any questions at [Github Discussions](https://github.com/xjasonlyu/tun2socks/discussions).
+
 ## Credits
 
 - [Dreamacro/clash](https://github.com/Dreamacro/clash) - A rule-based tunnel in Go

@@ -45,6 +45,10 @@
 
 文档以及使用方式，请看 [Github Wiki](https://github.com/xjasonlyu/tun2socks/wiki)。
 
+## 交流讨论
+
+欢迎来讨论区交流提问，[Github Discussions](https://github.com/xjasonlyu/tun2socks/discussions)。
+
 ## 注意事项
 
 1. 由于采用了纯Go实现，所以这一版本的`tun2socks`在有大量连接时内存消耗通常较多。如果您的需求对内存消耗极为敏感，请继续使用 [v1](https://github.com/xjasonlyu/tun2socks/tree/v1) 版本。
