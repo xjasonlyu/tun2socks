@@ -1,4 +1,4 @@
-// Package channel provides the implementation of io.ReadWriter
+// Package rwbased provides the implementation of io.ReadWriter
 // based data-link layer endpoints.
 package rwbased
 
@@ -90,12 +90,12 @@ func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
 }
 
 // WritePacket writes packet back into io.ReadWriter.
-func (e *Endpoint) WritePacket(_ stack.RouteInfo, _ *stack.GSO, _ tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) tcpip.Error {
+func (e *Endpoint) WritePacket(_ stack.RouteInfo, _ tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) tcpip.Error {
 	return e.writePacket(pkt)
 }
 
 // WritePackets writes packets back into io.ReadWriter.
-func (e *Endpoint) WritePackets(_ stack.RouteInfo, _ *stack.GSO, pkts stack.PacketBufferList, _ tcpip.NetworkProtocolNumber) (int, tcpip.Error) {
+func (e *Endpoint) WritePackets(_ stack.RouteInfo, pkts stack.PacketBufferList, _ tcpip.NetworkProtocolNumber) (int, tcpip.Error) {
 	n := 0
 	for pkt := pkts.Front(); pkt != nil; pkt = pkt.Next() {
 		if err := e.writePacket(pkt); err != nil {
