@@ -35,7 +35,7 @@ const (
 	AtypIPv6       Atyp = 0x04
 )
 
-// SOCKS reply field as defined in RFC 1928 section 6.
+// Reply field as defined in RFC 1928 section 6.
 type Reply uint8
 
 func (r Reply) String() string {
