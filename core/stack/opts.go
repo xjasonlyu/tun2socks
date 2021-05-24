@@ -111,10 +111,10 @@ func WithDefaultTTL(ttl uint8) Option {
 // WithForwarding sets packet forwarding between NICs for IPv4 & IPv6.
 func WithForwarding(v bool) Option {
 	return func(s *Stack) error {
-		if err := s.SetForwarding(ipv4.ProtocolNumber, v); err != nil {
+		if err := s.SetForwardingDefaultAndAllNICs(ipv4.ProtocolNumber, v); err != nil {
 			return fmt.Errorf("set ipv4 forwarding: %s", err)
 		}
-		if err := s.SetForwarding(ipv6.ProtocolNumber, v); err != nil {
+		if err := s.SetForwardingDefaultAndAllNICs(ipv6.ProtocolNumber, v); err != nil {
 			return fmt.Errorf("set ipv6 forwarding: %s", err)
 		}
 		return nil
