@@ -48,6 +48,8 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	switch protocol {
 	case proto.Direct.String():
 		return proxy.NewDirect(), nil
+	case proto.Reject.String():
+		return proxy.NewReject(), nil
 	case proto.Socks5.String():
 		return proxy.NewSocks5(parseSocks(u))
 	case proto.Shadowsocks.String():
