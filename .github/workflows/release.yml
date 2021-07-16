@@ -30,17 +30,17 @@ jobs:
         run: make -j releases
 
       - name: Upload Releases (nightly)
-          uses: softprops/action-gh-release@v1
-          if: github.ref == 'refs/heads/main'
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            files: build/*
-            draft: false
-            prerelease: true
-            name: Nightly Build
-            tag_name: nightly
-            body: Automatically Released by Actions.
+        uses: softprops/action-gh-release@v1
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: build/*
+          draft: false
+          prerelease: true
+          name: Nightly Build
+          tag_name: nightly
+          body: Automatically Released by Actions.
 
       - name: Upload Releases
         uses: softprops/action-gh-release@v1
