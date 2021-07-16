@@ -3,12 +3,12 @@ name: Publish Docker Image
 on:
   push:
     branches:
-      - dev
+      - 'main'
     tags:
       - '*'
     paths-ignore:
-      - 'docs/**'
       - '**.md'
+      - 'docs/**'
 
 jobs:
 
@@ -45,21 +45,21 @@ jobs:
           username: xjasonlyu
           password: ${{ secrets.CR_PAT }}
 
-      - name: Build and Push (dev)
-        if: github.ref == 'refs/heads/dev'
+      - name: Get Version
+        id: shell
+        run: |
+          echo ::set-output name=version::$(git describe --tags --abbrev=0)
+
+      - name: Build and Push (nightly)
+        if: github.ref == 'refs/heads/main'
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
           platforms: linux/amd64,linux/arm/v7,linux/arm64
           tags: |
-            xjasonlyu/tun2socks:dev
-            ghcr.io/xjasonlyu/tun2socks:dev
-
-      - name: Get Version
-        id: shell
-        run: |
-          echo ::set-output name=version::$(git describe --tags --abbrev=0)
+            xjasonlyu/tun2socks:nightly
+            ghcr.io/xjasonlyu/tun2socks:nightly
 
       - name: Build and Push (latest)
         if: startsWith(github.ref, 'refs/tags/')
