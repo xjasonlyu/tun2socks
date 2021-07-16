@@ -5,8 +5,9 @@ import "fmt"
 const (
 	Direct Proto = iota
 	Reject
-	Shadowsocks
+	HTTP
 	Socks5
+	Shadowsocks
 )
 
 type Proto uint8
@@ -17,10 +18,12 @@ func (proto Proto) String() string {
 		return "direct"
 	case Reject:
 		return "reject"
-	case Shadowsocks:
-		return "ss"
+	case HTTP:
+		return "http"
 	case Socks5:
 		return "socks5"
+	case Shadowsocks:
+		return "ss"
 	default:
 		return fmt.Sprintf("proto(%d)", proto)
 	}

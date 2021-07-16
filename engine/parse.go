@@ -50,8 +50,10 @@ func parseProxy(s string) (proxy.Proxy, error) {
 		return proxy.NewDirect(), nil
 	case proto.Reject.String():
 		return proxy.NewReject(), nil
+	case proto.HTTP.String():
+		return proxy.NewHTTP(parseAddrUser(u))
 	case proto.Socks5.String():
-		return proxy.NewSocks5(parseSocks(u))
+		return proxy.NewSocks5(parseAddrUser(u))
 	case proto.Shadowsocks.String():
 		return proxy.NewShadowsocks(parseShadowsocks(u))
 	default:
@@ -59,7 +61,7 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	}
 }
 
-func parseSocks(u *url.URL) (address, username, password string) {
+func parseAddrUser(u *url.URL) (address, username, password string) {
 	address = u.Host
 	username = u.User.Username()
 	password, _ = u.User.Password()
