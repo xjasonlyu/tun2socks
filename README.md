@@ -17,7 +17,7 @@ English | [简体中文](README_ZH.md)
 ## Features
 
 - **Fully support:** IPv4/IPv6/ICMP/TCP/UDP
-- **Proxy protocol:** Socks5/Shadowsocks
+- **Proxy protocol:** HTTP/Socks4/Socks5/Shadowsocks
 - **Game ready:** optimized UDP transmission
 - **Pure Go:** no CGO required, stability improved
 - **Router mode:** forwarding packets in LAN

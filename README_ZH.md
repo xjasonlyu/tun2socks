@@ -26,7 +26,7 @@
 ## 特性介绍
 
 - **全面支持：** IPv4/IPv6/ICMP/TCP/UDP
-- **代理协议：** Socks5/Shadowsocks
+- **代理协议：** HTTP/Socks4/Socks5/Shadowsocks
 - **游戏加速：** 针对UDP传输的优化
 - **纯Go实现：** 无需CGO，稳定性提升
 - **路由模式：** 转发代理局域网内所有流量
