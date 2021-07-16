@@ -6,6 +6,7 @@ const (
 	Direct Proto = iota
 	Reject
 	HTTP
+	Socks4
 	Socks5
 	Shadowsocks
 )
@@ -20,6 +21,8 @@ func (proto Proto) String() string {
 		return "reject"
 	case HTTP:
 		return "http"
+	case Socks4:
+		return "socks4"
 	case Socks5:
 		return "socks5"
 	case Shadowsocks:
