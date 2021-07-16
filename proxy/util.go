@@ -16,3 +16,10 @@ func setKeepAlive(c net.Conn) {
 		tcp.SetKeepAlivePeriod(tcpKeepAlivePeriod)
 	}
 }
+
+// safeConnClose closes tcp connection safely.
+func safeConnClose(c net.Conn, err error) {
+	if c != nil && err != nil {
+		c.Close()
+	}
+}
