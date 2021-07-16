@@ -16,10 +16,6 @@ type Base struct {
 	proto proto.Proto
 }
 
-func NewBase(addr string, proto proto.Proto) *Base {
-	return &Base{addr: addr, proto: proto}
-}
-
 func (b *Base) Addr() string {
 	return b.addr
 }
