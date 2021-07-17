@@ -50,7 +50,7 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 	req.WriteString(userID)
 	req.WriteByte(0) /* NULL */
 
-	if bytes.Equal(dstIP[:3], []byte{0, 0, 0}) && dstIP[3] != 0 /* SOCKS4A */ {
+	if isReservedIP(dstIP[:]) /* SOCKS4A */ {
 		req.WriteString(host)
 		req.WriteByte(0) /* NULL */
 	}
@@ -80,6 +80,25 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 	default:
 		return errors.New("request failed with unknown reply code")
 	}
+}
+
+// For version 4A, if the client cannot resolve the destination host's
+// domain name to find its IP address, it should set the first three bytes
+// of DSTIP to NULL and the last byte to a non-zero value. (This corresponds
+// to IP address 0.0.0.x, with x nonzero. As decreed by IANA  -- The
+// Internet Assigned Numbers Authority -- such an address is inadmissible
+// as a destination IP address and thus should never occur if the client
+// can resolve the domain name.)
+func isReservedIP(ip net.IP) bool {
+	subnet := net.IPNet{
+		IP:   net.IPv4zero,
+		Mask: net.IPv4Mask(0xff, 0xff, 0xff, 0x00),
+	}
+
+	if !ip.IsUnspecified() && subnet.Contains(ip) {
+		return true
+	}
+	return false
 }
 
 func splitHostPort(addr string) (string, uint16, error) {
