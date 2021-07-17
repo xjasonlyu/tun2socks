@@ -60,7 +60,7 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 	}
 
 	var resp [8]byte
-	if _, err = rw.Read(resp[:]); err != nil {
+	if _, err = io.ReadFull(rw, resp[:]); err != nil {
 		return err
 	}
 
