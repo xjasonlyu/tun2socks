@@ -19,6 +19,25 @@ const (
 	CmdBind    Command = 0x02
 )
 
+type Code = uint8
+
+const (
+	RequestGranted          Code = 90
+	RequestRejected         Code = 91
+	RequestIdentdFailed     Code = 92
+	RequestIdentdMismatched Code = 93
+)
+
+var (
+	errVersionMismatched = errors.New("version code mismatched")
+	errIPv6NotSupported  = errors.New("IPv6 not supported")
+
+	ErrRequestRejected         = errors.New("request rejected or failed")
+	ErrRequestIdentdFailed     = errors.New("request rejected because SOCKS server cannot connect to identd on the client")
+	ErrRequestIdentdMismatched = errors.New("request rejected because the client program and identd report different user-ids")
+	ErrRequestUnknownCode      = errors.New("request failed with unknown code")
+)
+
 func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID string) (err error) {
 	var (
 		host string
@@ -30,27 +49,22 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 
 	ip := net.ParseIP(host)
 	if ip == nil /* HOST */ {
-		ip = net.IPv4(0, 0, 0, 1).To4()
+		ip = net.IPv4(0, 0, 0, 1)
 	} else if ip.To4() == nil /* IPv6 */ {
-		return errors.New("IPv6 not supported")
+		return errIPv6NotSupported
 	}
 
-	var (
-		dstIP   [4]byte
-		dstPort [2]byte
-	)
-	copy(dstIP[:], ip.To4())
-	binary.BigEndian.PutUint16(dstPort[:], port)
+	dstIP := /* [4]byte */ ip.To4()
 
 	req := &bytes.Buffer{}
 	req.WriteByte(Version)
 	req.WriteByte(command)
-	req.Write(dstPort[:])
-	req.Write(dstIP[:])
+	binary.Write(req, binary.BigEndian, port)
+	req.Write(dstIP)
 	req.WriteString(userID)
 	req.WriteByte(0) /* NULL */
 
-	if isReservedIP(dstIP[:]) /* SOCKS4A */ {
+	if isReservedIP(dstIP) /* SOCKS4A */ {
 		req.WriteString(host)
 		req.WriteByte(0) /* NULL */
 	}
@@ -65,20 +79,20 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 	}
 
 	if resp[0] != 0x00 {
-		return errors.New("reply version code mismatched")
+		return errVersionMismatched
 	}
 
 	switch resp[1] {
-	case 90:
-		return nil // request granted
-	case 91:
-		return errors.New("request rejected or failed")
-	case 92:
-		return errors.New("request rejected because SOCKS server cannot connect to identd on the client")
-	case 93:
-		return errors.New("request rejected because the client program and identd report different user-ids")
+	case RequestGranted:
+		return nil
+	case RequestRejected:
+		return ErrRequestRejected
+	case RequestIdentdFailed:
+		return ErrRequestIdentdFailed
+	case RequestIdentdMismatched:
+		return ErrRequestIdentdMismatched
 	default:
-		return errors.New("request failed with unknown reply code")
+		return ErrRequestUnknownCode
 	}
 }
 
@@ -95,10 +109,7 @@ func isReservedIP(ip net.IP) bool {
 		Mask: net.IPv4Mask(0xff, 0xff, 0xff, 0x00),
 	}
 
-	if !ip.IsUnspecified() && subnet.Contains(ip) {
-		return true
-	}
-	return false
+	return !ip.IsUnspecified() && subnet.Contains(ip)
 }
 
 func splitHostPort(addr string) (string, uint16, error) {
