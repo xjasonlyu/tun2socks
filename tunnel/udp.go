@@ -4,7 +4,6 @@ import (
 	"errors"
 	"net"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/pool"
@@ -88,10 +87,7 @@ func handleUDP(packet core.UDPPacket) {
 			metadata.MidIP = dialerAddr.IP
 			metadata.MidPort = uint16(dialerAddr.Port)
 		} else { /* fallback */
-			ip, p, _ := net.SplitHostPort(pc.LocalAddr().String())
-			port, _ := strconv.ParseUint(p, 10, 16)
-			metadata.MidIP = net.ParseIP(ip)
-			metadata.MidPort = uint16(port)
+			metadata.MidIP, metadata.MidPort = parseAddr(pc.LocalAddr().String())
 		}
 
 		pc = newUDPTracker(pc, metadata)

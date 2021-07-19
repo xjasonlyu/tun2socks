@@ -3,7 +3,6 @@ package tunnel
 import (
 	"io"
 	"net"
-	"strconv"
 	"sync"
 	"time"
 
@@ -45,10 +44,7 @@ func handleTCP(localConn core.TCPConn) {
 		metadata.MidIP = dialerAddr.IP
 		metadata.MidPort = uint16(dialerAddr.Port)
 	} else { /* fallback */
-		ip, p, _ := net.SplitHostPort(targetConn.LocalAddr().String())
-		port, _ := strconv.ParseUint(p, 10, 16)
-		metadata.MidIP = net.ParseIP(ip)
-		metadata.MidPort = uint16(port)
+		metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr().String())
 	}
 
 	targetConn = newTCPTracker(targetConn, metadata)

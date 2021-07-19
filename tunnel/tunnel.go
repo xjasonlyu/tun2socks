@@ -39,13 +39,6 @@ func AddPacket(packet core.UDPPacket) {
 	}
 }
 
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
 func process() {
 	for i := 0; i < _numUDPWorkers; i++ {
 		queue := _udpQueue
