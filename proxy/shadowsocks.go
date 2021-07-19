@@ -8,9 +8,9 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	obfs "github.com/xjasonlyu/tun2socks/component/simple-obfs"
-	"github.com/xjasonlyu/tun2socks/component/socks5"
 	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/transport/socks5"
 
 	"github.com/Dreamacro/go-shadowsocks2/core"
 )

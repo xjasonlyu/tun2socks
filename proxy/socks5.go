@@ -7,9 +7,9 @@ import (
 	"net"
 
 	"github.com/xjasonlyu/tun2socks/component/dialer"
-	"github.com/xjasonlyu/tun2socks/component/socks5"
 	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/transport/socks5"
 )
 
 var _ Proxy = (*Socks5)(nil)
