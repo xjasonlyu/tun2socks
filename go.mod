@@ -17,7 +17,7 @@ require (
 	golang.org/x/sys v0.0.0-20210809222454-d867a43fc93e
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	golang.zx2c4.com/wireguard v0.0.0-20210805125648-3957e9b9dd19
-	gvisor.dev/gvisor v0.0.0-20210813013607-83f71d012799
+	gvisor.dev/gvisor v0.0.0-20210821010134-571f7889f5f0
 )
 
 require (
