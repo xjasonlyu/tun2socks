@@ -1,6 +1,6 @@
 module github.com/xjasonlyu/tun2socks
 
-go 1.16
+go 1.17
 
 require (
 	github.com/Dreamacro/go-shadowsocks2 v0.1.7
@@ -18,4 +18,11 @@ require (
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
 	golang.zx2c4.com/wireguard v0.0.0-20210805125648-3957e9b9dd19
 	gvisor.dev/gvisor v0.0.0-20210813013607-83f71d012799
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/google/btree v1.0.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
 )
