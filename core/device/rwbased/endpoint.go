@@ -106,6 +106,10 @@ func (e *Endpoint) WritePackets(_ stack.RouteInfo, pkts stack.PacketBufferList, 
 	return n, nil
 }
 
+func (e *Endpoint) WriteRawPacket(packetBuffer *stack.PacketBuffer) tcpip.Error {
+	return &tcpip.ErrNotSupported{}
+}
+
 // MTU implements stack.LinkEndpoint.MTU.
 func (e *Endpoint) MTU() uint32 {
 	return e.mtu
