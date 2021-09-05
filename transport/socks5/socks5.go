@@ -148,15 +148,16 @@ type User struct {
 // ClientHandshake fast-tracks SOCKS initialization to get target address to connect on client side.
 func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (Addr, error) {
 	buf := make([]byte, MaxAddrLen)
-	var err error
+
+	var method uint8
+	if user != nil {
+		method = 0x02 /* USERNAME/PASSWORD */
+	} else {
+		method = 0x00 /* NO AUTHENTICATION REQUIRED */
+	}
 
 	// VER, NMETHODS, METHODS
-	if user != nil {
-		_, err = rw.Write([]byte{Version, 0x01 /* NMETHODS */, 0x02 /* USERNAME/PASSWORD */})
-	} else {
-		_, err = rw.Write([]byte{Version, 0x01 /* NMETHODS */, 0x00 /* NO AUTHENTICATION REQUIRED */})
-	}
-	if err != nil {
+	if _, err := rw.Write([]byte{Version, 0x01 /* NMETHODS */, method}); err != nil {
 		return nil, err
 	}
 
@@ -213,7 +214,7 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 	}
 
 	if rep := Reply(buf[1]); rep != 0x00 /* SUCCEEDED */ {
-		return nil, fmt.Errorf("%#X: %s", rep, rep.String())
+		return nil, fmt.Errorf("%#02x: %s", uint8(rep), rep)
 	}
 
 	return ReadAddr(rw, buf)
