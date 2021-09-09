@@ -13,13 +13,13 @@ import (
 )
 
 func parseDevice(s string, mtu uint32) (device.Device, error) {
+	if !strings.Contains(s, "://") {
+		s = fmt.Sprintf("%s://%s", tun.Driver /* default driver */, s)
+	}
+
 	u, err := url.Parse(s)
 	if err != nil {
 		return nil, err
-	}
-
-	if u.Scheme == "" {
-		u.Scheme = tun.Driver /* default driver */
 	}
 
 	name := u.Host
@@ -34,13 +34,13 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
+	if !strings.Contains(s, "://") {
+		s = fmt.Sprintf("%s://%s", proto.Socks5 /* default protocol */, s)
+	}
+
 	u, err := url.Parse(s)
 	if err != nil {
 		return nil, err
-	}
-
-	if u.Scheme == "" {
-		u.Scheme = proto.Socks5.String() /* default protocol */
 	}
 
 	protocol := strings.ToLower(u.Scheme)
