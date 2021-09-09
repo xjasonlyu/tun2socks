@@ -51,11 +51,11 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	case proto.Reject.String():
 		return proxy.NewReject(), nil
 	case proto.HTTP.String():
-		return proxy.NewHTTP(parseAddrUserPass(u))
+		return proxy.NewHTTP(parseHTTP(u))
 	case proto.Socks4.String():
-		return proxy.NewSocks4(parseAddrUser(u))
+		return proxy.NewSocks4(parseSocks4(u))
 	case proto.Socks5.String():
-		return proxy.NewSocks5(parseAddrUserPass(u))
+		return proxy.NewSocks5(parseSocks5(u))
 	case proto.Shadowsocks.String():
 		return proxy.NewShadowsocks(parseShadowsocks(u))
 	default:
@@ -63,14 +63,25 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	}
 }
 
-func parseAddrUser(u *url.URL) (address, username string) {
+func parseHTTP(u *url.URL) (address, username, password string) {
+	address, username = u.Host, u.User.Username()
+	password, _ = u.User.Password()
+	return
+}
+
+func parseSocks4(u *url.URL) (address, username string) {
 	address, username = u.Host, u.User.Username()
 	return
 }
 
-func parseAddrUserPass(u *url.URL) (address, username, password string) {
-	address, username = parseAddrUser(u)
+func parseSocks5(u *url.URL) (address, username, password string) {
+	address, username = u.Host, u.User.Username()
 	password, _ = u.User.Password()
+
+	// Socks5 over UDS
+	if address == "" {
+		address = u.Path
+	}
 	return
 }
 

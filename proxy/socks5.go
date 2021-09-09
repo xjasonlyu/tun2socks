@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -19,6 +20,9 @@ type Socks5 struct {
 
 	user string
 	pass string
+
+	// unix indicates if socks5 over UDS is enabled.
+	unix bool
 }
 
 func NewSocks5(addr, user, pass string) (*Socks5, error) {
@@ -29,11 +33,17 @@ func NewSocks5(addr, user, pass string) (*Socks5, error) {
 		},
 		user: user,
 		pass: pass,
+		unix: len(addr) > 0 && addr[0] == '/',
 	}, nil
 }
 
 func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Conn, err error) {
-	c, err = dialer.DialContext(ctx, "tcp", ss.Addr())
+	var network = "tcp"
+	if ss.unix {
+		network = "unix"
+	}
+
+	c, err = dialer.DialContext(ctx, network, ss.Addr())
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", ss.Addr(), err)
 	}
@@ -54,6 +64,10 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 }
 
 func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
+	if ss.unix {
+		return nil, errors.New("not supported when unix domain socket is enabled")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
 	defer cancel()
 
