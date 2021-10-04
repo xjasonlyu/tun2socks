@@ -45,6 +45,7 @@ UNIX_ARCH_LIST = \
 WINDOWS_ARCH_LIST = \
 	windows-386 \
 	windows-amd64 \
+	windows-arm64 \
 	windows-arm32v7
 
 all: linux-amd64 darwin-amd64 windows-amd64
@@ -126,6 +127,9 @@ windows-386:
 
 windows-amd64:
 	GOARCH=amd64 GOOS=windows $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe
+
+windows-arm64:
+	GOARCH=arm64 GOOS=windows $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe
 
 windows-arm32v7:
 	GOARCH=arm GOARM=7 GOOS=windows $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe
