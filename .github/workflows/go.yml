@@ -2,6 +2,10 @@ name: Go Static Check
 
 on:
   push:
+    branches:
+      - '*'
+    tags-ignore:
+      - '*'
   pull_request:
 
 jobs:
