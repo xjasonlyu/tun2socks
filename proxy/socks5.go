@@ -104,7 +104,7 @@ func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 
 	addr, err := socks5.ClientHandshake(c, targetAddr, socks5.CmdUDPAssociate, user)
 	if err != nil {
-		return nil, fmt.Errorf("client hanshake: %w", err)
+		return nil, fmt.Errorf("client handshake: %w", err)
 	}
 
 	pc, err := dialer.ListenPacket("udp", "")
