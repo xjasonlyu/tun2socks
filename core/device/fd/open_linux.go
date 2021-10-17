@@ -7,7 +7,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
 )
 
-func Open(fd int, mtu uint32) (device.Device, error) {
+func open(fd int, mtu uint32) (device.Device, error) {
 	f := &FD{fd: fd, mtu: mtu}
 
 	ep, err := fdbased.New(&fdbased.Options{

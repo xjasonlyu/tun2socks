@@ -1,6 +1,7 @@
 package fd
 
 import (
+	"fmt"
 	"strconv"
 
 	"github.com/xjasonlyu/tun2socks/core/device"
@@ -15,6 +16,14 @@ type FD struct {
 
 	fd  int
 	mtu uint32
+}
+
+func Open(name string, mtu uint32) (device.Device, error) {
+	fd, err := strconv.Atoi(name)
+	if err != nil {
+		return nil, fmt.Errorf("cannot open fd: %s", name)
+	}
+	return open(fd, mtu)
 }
 
 func (f *FD) Type() string {
