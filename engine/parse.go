@@ -27,10 +27,10 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 	driver := strings.ToLower(u.Scheme)
 
 	switch driver {
-	case tun.Driver:
-		return tun.Open(name, mtu)
 	case fd.Driver:
 		return fd.Open(name, mtu)
+	case tun.Driver:
+		return tun.Open(name, mtu)
 	default:
 		return nil, fmt.Errorf("unsupported driver: %s", driver)
 	}
