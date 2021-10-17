@@ -23,12 +23,8 @@ type TUN struct {
 	name string
 }
 
-func Open(opts ...Option) (device.Device, error) {
-	t := &TUN{}
-
-	for _, opt := range opts {
-		opt(t)
-	}
+func Open(name string, mtu uint32) (device.Device, error) {
+	t := &TUN{name: name, mtu: mtu}
 
 	if len(t.name) >= unix.IFNAMSIZ {
 		return nil, fmt.Errorf("interface name too long: %s", t.name)
@@ -46,11 +42,11 @@ func Open(opts ...Option) (device.Device, error) {
 		}
 	}
 
-	mtu, err := rawfile.GetMTU(t.name)
+	_mtu, err := rawfile.GetMTU(t.name)
 	if err != nil {
 		return nil, fmt.Errorf("get mtu: %w", err)
 	}
-	t.mtu = mtu
+	t.mtu = _mtu
 
 	ep, err := fdbased.New(&fdbased.Options{
 		MTU: t.mtu,

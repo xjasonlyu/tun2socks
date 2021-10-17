@@ -27,7 +27,7 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 
 	switch driver {
 	case tun.Driver:
-		return tun.Open(tun.WithName(name), tun.WithMTU(mtu))
+		return tun.Open(name, mtu)
 	default:
 		return nil, fmt.Errorf("unsupported driver: %s", driver)
 	}

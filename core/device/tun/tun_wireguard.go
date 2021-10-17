@@ -19,12 +19,8 @@ type TUN struct {
 	name string
 }
 
-func Open(opts ...Option) (device.Device, error) {
-	t := &TUN{}
-
-	for _, opt := range opts {
-		opt(t)
-	}
+func Open(name string, mtu uint32) (device.Device, error) {
+	t := &TUN{name: name, mtu: mtu}
 
 	forcedMTU := defaultMTU
 	if t.mtu > 0 {
@@ -37,11 +33,11 @@ func Open(opts ...Option) (device.Device, error) {
 	}
 	t.nt = nt.(*tun.NativeTun)
 
-	mtu, err := nt.MTU()
+	_mtu, err := nt.MTU()
 	if err != nil {
 		return nil, fmt.Errorf("get mtu: %w", err)
 	}
-	t.mtu = uint32(mtu)
+	t.mtu = uint32(_mtu)
 
 	ep, err := rwbased.New(t, t.mtu)
 	if err != nil {
