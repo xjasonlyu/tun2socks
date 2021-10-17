@@ -7,17 +7,17 @@ require (
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-chi/cors v1.2.0
 	github.com/go-chi/render v1.0.1
-	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gofrs/uuid v4.1.0+incompatible
 	github.com/gorilla/websocket v1.4.2
 	github.com/sirupsen/logrus v1.8.1
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20210929193557-e81a3d93ecf6 // indirect
-	golang.org/x/sys v0.0.0-20211003122950-b1ebd4e1001c
+	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
+	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.zx2c4.com/wireguard v0.0.0-20210927201915-bb745b2ea326
-	gvisor.dev/gvisor v0.0.0-20211002000755-82b90506164f
+	golang.zx2c4.com/wireguard v0.0.0-20211017052713-f87e87af0d9a
+	gvisor.dev/gvisor v0.0.0-20211015225752-e44bf784bcc9
 )
 
 require (
