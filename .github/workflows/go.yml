@@ -6,6 +6,9 @@ on:
       - '*'
     tags-ignore:
       - '*'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   pull_request:
 
 jobs:
