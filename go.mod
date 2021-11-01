@@ -13,11 +13,11 @@ require (
 	github.com/stretchr/testify v1.7.0
 	go.uber.org/atomic v1.9.0
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519 // indirect
-	golang.org/x/net v0.0.0-20211015210444-4f30a5c0130f // indirect
-	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744
+	golang.org/x/net v0.0.0-20211029224645-99673261e6eb // indirect
+	golang.org/x/sys v0.0.0-20211031064116-611d5d643895
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac
-	golang.zx2c4.com/wireguard v0.0.0-20211017052713-f87e87af0d9a
-	gvisor.dev/gvisor v0.0.0-20211015225752-e44bf784bcc9
+	golang.zx2c4.com/wireguard v0.0.0-20211030003956-52704c4b9288
+	gvisor.dev/gvisor v0.0.0-20211029210705-806fa5c3235c
 )
 
 require (
