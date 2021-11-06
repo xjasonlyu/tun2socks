@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/pool"
+	"github.com/xjasonlyu/tun2socks/component/remotedns"
 	"github.com/xjasonlyu/tun2socks/component/nat"
 	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
@@ -34,7 +35,12 @@ func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
 }
 
 func handleUDP(packet core.UDPPacket) {
+	if remotedns.HandleDNSQuery(&packet) {
+		return
+	}
+
 	id := packet.ID()
+
 	metadata := &M.Metadata{
 		Net:     M.UDP,
 		SrcIP:   net.IP(id.RemoteAddress),
@@ -42,6 +48,8 @@ func handleUDP(packet core.UDPPacket) {
 		DstIP:   net.IP(id.LocalAddress),
 		DstPort: id.LocalPort,
 	}
+
+	remotedns.RewriteMetadata(metadata, true)
 
 	generateNATKey := func(m *M.Metadata) string {
 		return m.SourceAddress() /* as Full Cone NAT Key */
@@ -97,7 +105,7 @@ func handleUDP(packet core.UDPPacket) {
 			defer packet.Drop()
 			defer _natTable.Delete(key)
 
-			handleUDPToLocal(packet, pc)
+			handleUDPToLocal(packet, pc, metadata.VirtualIP)
 		}()
 
 		_natTable.Set(key, pc)
@@ -120,7 +128,7 @@ func handleUDPToRemote(packet core.UDPPacket, pc net.PacketConn, remote net.Addr
 	log.Infof("[UDP] %s --> %s", packet.RemoteAddr(), remote)
 }
 
-func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn) {
+func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn, virtualIP net.IP) {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 
@@ -134,7 +142,7 @@ func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn) {
 			return
 		}
 
-		if _, err := packet.WriteBack(buf[:n], from); err != nil {
+		if _, err := packet.WriteBack(buf[:n], from, virtualIP); err != nil {
 			log.Warnf("[UDP] write back from %s error: %v", from, err)
 			return
 		}

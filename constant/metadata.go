@@ -34,17 +34,25 @@ func (n Network) MarshalText() ([]byte, error) {
 
 // Metadata implements the net.Addr interface.
 type Metadata struct {
-	Net     Network `json:"network"`
-	SrcIP   net.IP  `json:"sourceIP"`
-	MidIP   net.IP  `json:"dialerIP"`
-	DstIP   net.IP  `json:"destinationIP"`
-	SrcPort uint16  `json:"sourcePort"`
-	MidPort uint16  `json:"dialerPort"`
-	DstPort uint16  `json:"destinationPort"`
+	Net       Network `json:"network"`
+	SrcIP     net.IP  `json:"sourceIP"`
+	MidIP     net.IP  `json:"dialerIP"`
+	DstIP     net.IP  `json:"destinationIP"`
+	DstName   string  `json:"destinationName"`
+	SrcPort   uint16  `json:"sourcePort"`
+	MidPort   uint16  `json:"dialerPort"`
+	DstPort   uint16  `json:"destinationPort"`
+	VirtualIP net.IP  `json:"virtualIP"`
 }
 
 func (m *Metadata) DestinationAddress() string {
-	return net.JoinHostPort(m.DstIP.String(), strconv.FormatUint(uint64(m.DstPort), 10))
+	var destination string
+	if m.DstIP != nil {
+		destination = m.DstIP.String()
+	} else {
+		destination = m.DstName
+	}
+	return net.JoinHostPort(destination, strconv.FormatUint(uint64(m.DstPort), 10))
 }
 
 func (m *Metadata) SourceAddress() string {
@@ -71,9 +79,13 @@ func (m *Metadata) SerializesSocksAddr() socks5.Addr {
 	if m.DstIP.To4() != nil /* IPv4 */ {
 		aType := socks5.AtypIPv4
 		buf = [][]byte{{aType}, m.DstIP.To4(), port[:]}
-	} else /* IPv6 */ {
+	} else if m.DstIP.To16() != nil /* IPv6 */ {
 		aType := socks5.AtypIPv6
 		buf = [][]byte{{aType}, m.DstIP.To16(), port[:]}
+	} else /* DNS name */ {
+		aType := socks5.AtypDomainName
+		nameBytes := []byte(m.DstName)
+		buf = [][]byte{{aType}, {byte(len(nameBytes))}, nameBytes, port[:]}
 	}
 	return bytes.Join(buf, nil)
 }

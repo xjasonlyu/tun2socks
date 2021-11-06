@@ -2,9 +2,12 @@ package engine
 
 import (
 	"errors"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
+	"net"
 	"os"
 
 	"github.com/xjasonlyu/tun2socks/component/dialer"
+	"github.com/xjasonlyu/tun2socks/component/remotedns"
 	"github.com/xjasonlyu/tun2socks/core/device"
 	"github.com/xjasonlyu/tun2socks/core/stack"
 	"github.com/xjasonlyu/tun2socks/log"
@@ -31,16 +34,19 @@ func Insert(k *Key) {
 }
 
 type Key struct {
-	MTU        int
-	Mark       int
-	UDPTimeout int
-	Proxy      string
-	Stats      string
-	Token      string
-	Device     string
-	LogLevel   string
-	Interface  string
-	Version    bool
+	MTU              int
+	Mark             int
+	UDPTimeout       int
+	Proxy            string
+	Stats            string
+	Token            string
+	Device           string
+	LogLevel         string
+	Interface        string
+	Version          bool
+	RemoteDNS        bool
+	RemoteDNSNetIPv4 string
+	RemoteDNSNetIPv6 string
 }
 
 type engine struct {
@@ -70,6 +76,7 @@ func (e *engine) start() error {
 		e.setProxy,
 		e.setDevice,
 		e.setStack,
+		e.setRemoteDNS,
 	} {
 		if err := f(); err != nil {
 			return err
@@ -164,5 +171,30 @@ func (e *engine) setStack() (err error) {
 	}()
 
 	e.stack, err = stack.New(e.device, &fakeTunnel{}, stack.WithDefault())
+	return
+}
+
+func (e *engine) setRemoteDNS() (err error) {
+	if !e.RemoteDNS {
+		return
+	}
+	if e.proxy.Proto() != proto.Socks5 && e.proxy.Proto() != proto.HTTP {
+		return errors.New("remote DNS not supported with this proxy protocol")
+	}
+
+	_, ipnet, err := net.ParseCIDR(e.RemoteDNSNetIPv4)
+	if err != nil {
+		return err
+	}
+	remotedns.SetNetwork(ipnet)
+
+	_, ipnet, err = net.ParseCIDR(e.RemoteDNSNetIPv6)
+	if err != nil {
+		return err
+	}
+	remotedns.SetNetwork(ipnet)
+
+	remotedns.Enable()
+	log.Infof("[DNS] Remote DNS enabled")
 	return
 }

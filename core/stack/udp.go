@@ -79,7 +79,7 @@ func (p *udpPacket) RemoteAddr() net.Addr {
 	return &net.UDPAddr{IP: net.IP(p.id.RemoteAddress), Port: int(p.id.RemotePort)}
 }
 
-func (p *udpPacket) WriteBack(b []byte, addr net.Addr) (int, error) {
+func (p *udpPacket) WriteBack(b []byte, addr net.Addr, customLocalAddress net.IP) (int, error) {
 	v := buffer.View(b)
 	if len(v) > header.UDPMaximumPacketSize {
 		// Payload can't possibly fit in a packet.
@@ -100,6 +100,10 @@ func (p *udpPacket) WriteBack(b []byte, addr net.Addr) (int, error) {
 	} else {
 		localAddress = tcpip.Address(udpAddr.IP)
 		localPort = uint16(udpAddr.Port)
+	}
+
+	if customLocalAddress != nil {
+		localAddress = tcpip.Address(customLocalAddress)
 	}
 
 	route, err := p.s.FindRoute(p.nicID, localAddress, p.netHdr.SourceAddress(), p.netProto, false /* multicastLoop */)
