@@ -8,10 +8,6 @@ import (
 	"net"
 )
 
-func RemoveFromCache(virtualIP net.IP) {
-	_cache.Delete(string(virtualIP))
-}
-
 func RewriteMetadata(metadata *M.Metadata, removeFromCache bool) bool {
 	if !IsEnabled() {
 		return false

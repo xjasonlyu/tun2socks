@@ -26,7 +26,7 @@ func init() {
 	flag.BoolVar(&key.RemoteDNS, "remote-dns", false, "Enable remote DNS (SOCKS5 and HTTP)")
 	flag.StringVar(&key.RemoteDNSNetIPv4, "remote-dns-net-ipv4", "169.254.0.0/16",
 		"IPv4 network for remote DNS A records")
-	flag.StringVar(&key.RemoteDNSNetIPv6, "remote-dns-net-ipv6", "fe80:dead:beef::/48",
+	flag.StringVar(&key.RemoteDNSNetIPv6, "remote-dns-net-ipv6", "fd80:dead:beef:badc:0ded:c0de:ba5e::/112",
 		"IPv6 network for remote DNS AAAA records")
 	flag.Parse()
 }
