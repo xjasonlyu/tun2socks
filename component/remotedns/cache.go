@@ -42,15 +42,6 @@ func getNetworkAddress(ipnet *net.IPNet) net.IP {
 	return result
 }
 
-func debug() {
-	print("ip4net.ip: ", _ip4net.IP.String(), "\n")
-	print("ip6net.ip: ", _ip6net.IP.String(), "\n")
-	print("ip4next: ", _ip4NextAddress.String(), "\n")
-	print("ip6next: ", _ip6NextAddress.String(), "\n")
-	print("ip4broad: ", _ip4BroadcastAddress.String(), "\n")
-	print("ip6broad: ", _ip6BroadcastAddress.String(), "\n")
-}
-
 func insertNameIntoCache(ipVersion int, name string) net.IP {
 	var result net.IP = nil
 	var ipnet *net.IPNet
