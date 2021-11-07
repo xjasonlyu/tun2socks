@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/common/pool"
-	"github.com/xjasonlyu/tun2socks/component/remotedns"
 	"github.com/xjasonlyu/tun2socks/component/nat"
+	"github.com/xjasonlyu/tun2socks/component/remotedns"
 	M "github.com/xjasonlyu/tun2socks/constant"
 	"github.com/xjasonlyu/tun2socks/core"
 	"github.com/xjasonlyu/tun2socks/log"
@@ -30,6 +30,10 @@ func SetUDPTimeout(v int) {
 	_udpSessionTimeout = time.Duration(v) * time.Second
 }
 
+func GetUDPTimeout() time.Duration {
+	return _udpSessionTimeout
+}
+
 func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
 	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
 }
@@ -49,7 +53,7 @@ func handleUDP(packet core.UDPPacket) {
 		DstPort: id.LocalPort,
 	}
 
-	remotedns.RewriteMetadata(metadata, false)
+	remotedns.RewriteMetadata(metadata)
 
 	generateNATKey := func(m *M.Metadata) string {
 		return m.SourceAddress() /* as Full Cone NAT Key */
@@ -104,7 +108,6 @@ func handleUDP(packet core.UDPPacket) {
 			defer pc.Close()
 			defer packet.Drop()
 			defer _natTable.Delete(key)
-			defer remotedns.RemoveFromCache(metadata.VirtualIP)
 
 			handleUDPToLocal(packet, pc, metadata.VirtualIP)
 		}()
@@ -125,7 +128,7 @@ func handleUDPToRemote(packet core.UDPPacket, pc net.PacketConn, remote net.Addr
 		log.Warnf("[UDP] write to %s error: %v", remote, err)
 	}
 	pc.SetReadDeadline(time.Now().Add(_udpSessionTimeout)) /* reset timeout */
-	remotedns.PostponeCacheExpiry(virtualIP, _udpSessionTimeout)
+	remotedns.PostponeCacheExpiry(virtualIP)
 
 	log.Infof("[UDP] %s --> %s", packet.RemoteAddr(), remote)
 }
@@ -136,7 +139,7 @@ func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn, virtualIP net.IP
 
 	for /* just loop */ {
 		pc.SetReadDeadline(time.Now().Add(_udpSessionTimeout))
-		remotedns.PostponeCacheExpiry(virtualIP, _udpSessionTimeout)
+		remotedns.PostponeCacheExpiry(virtualIP)
 		n, from, err := pc.ReadFrom(buf)
 		if err != nil {
 			if !errors.Is(err, os.ErrDeadlineExceeded) /* ignore i/o timeout */ {

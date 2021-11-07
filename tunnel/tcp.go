@@ -35,7 +35,7 @@ func handleTCP(localConn core.TCPConn) {
 		DstPort: id.LocalPort,
 	}
 
-	remotedns.RewriteMetadata(metadata, true)
+	remotedns.RewriteMetadata(metadata)
 
 	targetConn, err := proxy.Dial(metadata)
 	if err != nil {
@@ -54,11 +54,11 @@ func handleTCP(localConn core.TCPConn) {
 	defer targetConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	relay(localConn, targetConn) /* relay connections */
+	relay(localConn, targetConn, metadata) /* relay connections */
 }
 
 // relay copies between left and right bidirectionally.
-func relay(left, right net.Conn) {
+func relay(left, right net.Conn, metadata *M.Metadata) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 

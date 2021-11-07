@@ -2,18 +2,17 @@ package engine
 
 import (
 	"errors"
-	"github.com/xjasonlyu/tun2socks/proxy/proto"
-	"net"
-	"os"
-
 	"github.com/xjasonlyu/tun2socks/component/dialer"
 	"github.com/xjasonlyu/tun2socks/component/remotedns"
 	"github.com/xjasonlyu/tun2socks/core/device"
 	"github.com/xjasonlyu/tun2socks/core/stack"
 	"github.com/xjasonlyu/tun2socks/log"
 	"github.com/xjasonlyu/tun2socks/proxy"
+	"github.com/xjasonlyu/tun2socks/proxy/proto"
 	"github.com/xjasonlyu/tun2socks/stats"
 	"github.com/xjasonlyu/tun2socks/tunnel"
+	"net"
+	"os"
 )
 
 var _engine = &engine{}
@@ -194,6 +193,12 @@ func (e *engine) setRemoteDNS() (err error) {
 		return err
 	}
 	remotedns.SetNetwork(ipnet)
+
+	// Use the UDP timeout as cache timeout, so a DNS value is present in the cache for the duration of a connection
+	err = remotedns.SetCacheTimeout(tunnel.GetUDPTimeout())
+	if err != nil {
+		return err
+	}
 
 	remotedns.Enable()
 	log.Infof("[DNS] Remote DNS enabled")

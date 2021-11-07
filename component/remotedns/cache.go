@@ -3,13 +3,13 @@ package remotedns
 import (
 	"net"
 	"sync"
-	"time"
 
-	"github.com/dossy/go-cache"
+	"github.com/ReneKroon/ttlcache/v2"
 )
 
-var _cache = cache.New(30 * time.Second, 30 * time.Second)
+var _cache = ttlcache.NewCache()
 var _mutex = sync.Mutex{}
+var _ttl uint32 = 0
 
 func copyIP(ip net.IP) net.IP {
 	dup := make(net.IP, len(ip))
@@ -65,20 +65,27 @@ func insertNameIntoCache(ipVersion int, name string) net.IP {
 	// until either a free IP is found or the space is exhausted
 	passedBroadcastAddress := false
 	for result == nil {
-		// We have seen the broadcast address twice during looping
-		// This means that our IP address space is exhausted
 		if nextAddress.Equal(broadcastAddress) {
 			*nextAddress = getNetworkAddress(ipnet)
 			*nextAddress = incrementIp(ipnet.IP)
+
+			// We have seen the broadcast address twice during looping
+			// This means that our IP address space is exhausted
 			if passedBroadcastAddress {
 				return nil
 			}
 			passedBroadcastAddress = true
 		}
 
-		if _cache.Add((*nextAddress).String(), name, cache.DefaultExpiration) == nil {
+		// This method is protected by a mutex, and we are only inserting elements into the cache here.
+		_, err := _cache.Get((*nextAddress).String())
+		if err == ttlcache.ErrNotFound {
+			_ = _cache.Set((*nextAddress).String(), name)
 			result = *nextAddress
+		} else if err != nil { // Should never happen
+			panic(nil)
 		}
+
 		*nextAddress = incrementIp(*nextAddress)
 	}
 
@@ -86,20 +93,13 @@ func insertNameIntoCache(ipVersion int, name string) net.IP {
 }
 
 func getCachedName(address net.IP) (interface{}, bool) {
-	name, found := _cache.Get(address.String())
-	return name, found
+	name, err := _cache.Get(address.String())
+	return name, err == nil
 }
 
-func RemoveFromCache(virtualIP net.IP) {
+func PostponeCacheExpiry(virtualIP net.IP) {
 	if !IsEnabled() || virtualIP == nil {
 		return
 	}
-	_cache.Delete(virtualIP.String())
-}
-
-func PostponeCacheExpiry(virtualIP net.IP, expiry time.Duration) {
-	if !IsEnabled() || virtualIP == nil {
-		return
-	}
-	_cache.UpdateExpiration(virtualIP.String(), expiry)
+	_ = _cache.Touch(virtualIP.String())
 }

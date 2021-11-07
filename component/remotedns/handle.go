@@ -8,7 +8,7 @@ import (
 	"net"
 )
 
-func RewriteMetadata(metadata *M.Metadata, removeFromCache bool) bool {
+func RewriteMetadata(metadata *M.Metadata) bool {
 	if !IsEnabled() {
 		return false
 	}
@@ -19,9 +19,6 @@ func RewriteMetadata(metadata *M.Metadata, removeFromCache bool) bool {
 	metadata.VirtualIP = metadata.DstIP
 	metadata.DstIP = nil
 	metadata.DstName = dstName.(string)
-	if removeFromCache {
-		RemoveFromCache(metadata.VirtualIP)
-	}
 	return true
 }
 
@@ -65,7 +62,7 @@ func HandleDNSQuery(packet *core.UDPPacket) bool {
 		return true
 	}
 	(*hdr).Name = qname
-	(*hdr).Ttl = 60
+	(*hdr).Ttl = _ttl
 	(*hdr).Class = dns.ClassINET
 	(*hdr).Rrtype = qtype
 
