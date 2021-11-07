@@ -23,7 +23,7 @@ func init() {
 	flag.StringVar(&key.Proxy, "proxy", "", "Use this proxy [protocol://]host[:port]")
 	flag.StringVar(&key.Stats, "stats", "", "HTTP statistic server listen address")
 	flag.StringVar(&key.Token, "token", "", "HTTP statistic server auth token")
-	flag.BoolVar(&key.RemoteDNS, "remote-dns", false, "Enable remote DNS (SOCKS5 and HTTP)")
+	flag.BoolVar(&key.RemoteDNS, "remote-dns", false, "Enable remote DNS (HTTP, Shadowsocks, SOCKS)")
 	flag.StringVar(&key.RemoteDNSNetIPv4, "remote-dns-net-ipv4", "169.254.0.0/16",
 		"IPv4 network for remote DNS A records")
 	flag.StringVar(&key.RemoteDNSNetIPv6, "remote-dns-net-ipv6", "fd80:dead:beef:badc:0ded:c0de:ba5e::/112",

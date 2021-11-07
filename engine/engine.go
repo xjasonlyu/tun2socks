@@ -178,7 +178,8 @@ func (e *engine) setRemoteDNS() (err error) {
 	if !e.RemoteDNS {
 		return
 	}
-	if e.proxy.Proto() != proto.Socks5 && e.proxy.Proto() != proto.HTTP {
+	if e.proxy.Proto() != proto.Socks5 && e.proxy.Proto() != proto.HTTP && e.proxy.Proto() != proto.Shadowsocks &&
+		e.proxy.Proto() != proto.Socks4 {
 		return errors.New("remote DNS not supported with this proxy protocol")
 	}
 
