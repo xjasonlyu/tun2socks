@@ -74,7 +74,7 @@ func HandleDNSQuery(packet *core.UDPPacket) bool {
 		return true
 	}
 
-	_, err = (*packet).WriteBack(packed, (*packet).LocalAddr(), nil)
+	_, _ = (*packet).WriteBack(packed, (*packet).LocalAddr(), nil)
 
 	log.Infof("[DNS] query %s %s", dns.TypeToString[qtype], qname)
 	return true
