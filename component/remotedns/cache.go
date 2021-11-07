@@ -68,6 +68,7 @@ func insertNameIntoCache(ipVersion int, name string) net.IP {
 		// We have seen the broadcast address twice during looping
 		// This means that our IP address space is exhausted
 		if nextAddress.Equal(broadcastAddress) {
+			*nextAddress = getNetworkAddress(ipnet)
 			*nextAddress = incrementIp(ipnet.IP)
 			if passedBroadcastAddress {
 				return nil
