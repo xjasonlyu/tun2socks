@@ -1,6 +1,7 @@
 package remotedns
 
 import (
+	"errors"
 	"net"
 	"time"
 )
@@ -33,12 +34,20 @@ func SetCacheTimeout(timeout time.Duration) error {
 	return cache.SetTTL(timeout + 10*time.Second)
 }
 
-func SetNetwork(ipnet *net.IPNet) {
+func SetNetwork(ipnet *net.IPNet) error {
+	leadingOnes, _ := ipnet.Mask.Size()
 	if len(ipnet.IP) == 4 {
+		if leadingOnes > 30 {
+			return errors.New("IPv4 remote DNS subnet too small")
+		}
 		ip4net = ipnet
 	} else {
+		if leadingOnes > 126 {
+			return errors.New("IPv6 remote DNS subnet too small")
+		}
 		ip6net = ipnet
 	}
+	return nil
 }
 
 func Enable() {

@@ -186,13 +186,19 @@ func (e *engine) setRemoteDNS() (err error) {
 	if err != nil {
 		return err
 	}
-	remotedns.SetNetwork(ipnet)
+	err = remotedns.SetNetwork(ipnet)
+	if err != nil {
+		return err
+	}
 
 	_, ipnet, err = net.ParseCIDR(e.RemoteDNSNetIPv6)
 	if err != nil {
 		return err
 	}
-	remotedns.SetNetwork(ipnet)
+	err = remotedns.SetNetwork(ipnet)
+	if err != nil {
+		return err
+	}
 
 	// Use the UDP timeout as cache timeout, so a DNS value is present in the cache for the duration of a connection
 	err = remotedns.SetCacheTimeout(tunnel.GetUDPTimeout())
