@@ -62,7 +62,7 @@ func HandleDNSQuery(packet *core.UDPPacket) bool {
 		return true
 	}
 	(*hdr).Name = qname
-	(*hdr).Ttl = _ttl
+	(*hdr).Ttl = ttl
 	(*hdr).Class = dns.ClassINET
 	(*hdr).Rrtype = qtype
 

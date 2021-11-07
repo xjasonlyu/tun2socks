@@ -5,37 +5,46 @@ import (
 	"time"
 )
 
-var _enabled = false
-var _ip4net, _ip6net *net.IPNet
-var _ip4NextAddress, _ip4BroadcastAddress , _ip6NextAddress, _ip6BroadcastAddress net.IP
-var _minTimeout = 30 * time.Second
+const (
+	minTimeout = 30 * time.Second
+)
+
+var (
+	enabled             = false
+	ip4net              *net.IPNet
+	ip6net              *net.IPNet
+	ip4NextAddress      net.IP
+	ip6NextAddress      net.IP
+	ip4BroadcastAddress net.IP
+	ip6BroadcastAddress net.IP
+)
 
 func IsEnabled() bool {
-	return _enabled
+	return enabled
 }
 
 func SetCacheTimeout(timeout time.Duration) error {
-	if timeout < _minTimeout {
-		timeout = _minTimeout
+	if timeout < minTimeout {
+		timeout = minTimeout
 	}
-	_ttl = uint32(timeout.Seconds())
+	ttl = uint32(timeout.Seconds())
 
 	// Keep the value a little longer in cache than propagated via DNS
-	return _cache.SetTTL(timeout + 10 * time.Second)
+	return cache.SetTTL(timeout + 10*time.Second)
 }
 
 func SetNetwork(ipnet *net.IPNet) {
 	if len(ipnet.IP) == 4 {
-		_ip4net = ipnet
+		ip4net = ipnet
 	} else {
-		_ip6net = ipnet
+		ip6net = ipnet
 	}
 }
 
 func Enable() {
-	_ip4NextAddress = incrementIp(getNetworkAddress(_ip4net))
-	_ip4BroadcastAddress = getBroadcastAddress(_ip4net)
-	_ip6NextAddress = incrementIp(getNetworkAddress(_ip6net))
-	_ip6BroadcastAddress = getBroadcastAddress(_ip6net)
-	_enabled = true
+	ip4NextAddress = incrementIp(getNetworkAddress(ip4net))
+	ip4BroadcastAddress = getBroadcastAddress(ip4net)
+	ip6NextAddress = incrementIp(getNetworkAddress(ip6net))
+	ip6BroadcastAddress = getBroadcastAddress(ip6net)
+	enabled = true
 }

@@ -7,58 +7,34 @@ import (
 	"github.com/ReneKroon/ttlcache/v2"
 )
 
-var _cache = ttlcache.NewCache()
-var _mutex = sync.Mutex{}
-var _ttl uint32 = 0
+var (
+	cache        = ttlcache.NewCache()
+	mutex        = sync.Mutex{}
+	ttl   uint32 = 0
+)
 
-func copyIP(ip net.IP) net.IP {
-	dup := make(net.IP, len(ip))
-	copy(dup, ip)
-	return dup
-}
-
-func incrementIp(ip net.IP) net.IP {
-	result := copyIP(ip)
-	for i := len(result) - 1; i >= 0; i-- {
-		result[i]++
-		if result[i] != 0 {
-			break
-		}
+func PostponeCacheExpiry(virtualIP net.IP) {
+	if !IsEnabled() || virtualIP == nil {
+		return
 	}
-	return result
-}
-
-func getBroadcastAddress(ipnet *net.IPNet) net.IP {
-	result := copyIP(ipnet.IP)
-	for i := 0; i < len(ipnet.IP); i++ {
-		result[i] |= ^ipnet.Mask[i]
-	}
-	return result
-}
-
-func getNetworkAddress(ipnet *net.IPNet) net.IP {
-	result := copyIP(ipnet.IP)
-	for i := 0; i < len(ipnet.IP); i++ {
-		result[i] &= ipnet.Mask[i]
-	}
-	return result
+	_ = cache.Touch(virtualIP.String())
 }
 
 func insertNameIntoCache(ipVersion int, name string) net.IP {
-	_mutex.Lock()
-	defer _mutex.Unlock()
+	mutex.Lock()
+	defer mutex.Unlock()
 	var result net.IP = nil
 	var ipnet *net.IPNet
 	var nextAddress *net.IP
 	var broadcastAddress net.IP
 	if ipVersion == 4 {
-		ipnet = _ip4net
-		nextAddress = &_ip4NextAddress
-		broadcastAddress = _ip4BroadcastAddress
+		ipnet = ip4net
+		nextAddress = &ip4NextAddress
+		broadcastAddress = ip4BroadcastAddress
 	} else {
-		ipnet = _ip6net
-		nextAddress = &_ip6NextAddress
-		broadcastAddress = _ip6BroadcastAddress
+		ipnet = ip6net
+		nextAddress = &ip6NextAddress
+		broadcastAddress = ip6BroadcastAddress
 	}
 
 	// Beginning from the pointer to the next most likely free IP, loop through the IP address space
@@ -78,9 +54,9 @@ func insertNameIntoCache(ipVersion int, name string) net.IP {
 		}
 
 		// This method is protected by a mutex, and we are only inserting elements into the cache here.
-		_, err := _cache.Get((*nextAddress).String())
+		_, err := cache.Get((*nextAddress).String())
 		if err == ttlcache.ErrNotFound {
-			_ = _cache.Set((*nextAddress).String(), name)
+			_ = cache.Set((*nextAddress).String(), name)
 			result = *nextAddress
 		} else if err != nil { // Should never happen
 			panic(nil)
@@ -93,13 +69,6 @@ func insertNameIntoCache(ipVersion int, name string) net.IP {
 }
 
 func getCachedName(address net.IP) (interface{}, bool) {
-	name, err := _cache.Get(address.String())
+	name, err := cache.Get(address.String())
 	return name, err == nil
-}
-
-func PostponeCacheExpiry(virtualIP net.IP) {
-	if !IsEnabled() || virtualIP == nil {
-		return
-	}
-	_ = _cache.Touch(virtualIP.String())
 }
