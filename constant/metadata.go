@@ -83,7 +83,7 @@ func (m *Metadata) Network() string {
 }
 
 // String returns destination address of this metadata.
-// Also for implementing net.Addr interface.
+// Also, it implements net.Addr interface.
 func (m *Metadata) String() string {
 	return m.DestinationAddress()
 }
