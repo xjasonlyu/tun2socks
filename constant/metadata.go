@@ -61,7 +61,7 @@ func (m *Metadata) UDPAddr() *net.UDPAddr {
 	}
 }
 
-func (m *Metadata) SerializesSocksAddr() socks5.Addr {
+func (m *Metadata) SerializeSocksAddr() socks5.Addr {
 	var (
 		buf  [][]byte
 		port [2]byte
