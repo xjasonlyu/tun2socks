@@ -11,6 +11,8 @@ import (
 	"github.com/xjasonlyu/tun2socks/proxy"
 	"github.com/xjasonlyu/tun2socks/stats"
 	"github.com/xjasonlyu/tun2socks/tunnel"
+
+	"gopkg.in/yaml.v3"
 )
 
 var _engine = &engine{}
@@ -31,16 +33,17 @@ func Insert(k *Key) {
 }
 
 type Key struct {
-	MTU        int
-	Mark       int
-	UDPTimeout int
-	Proxy      string
-	Stats      string
-	Token      string
-	Device     string
-	LogLevel   string
-	Interface  string
-	Version    bool
+	MTU        int    `yaml:"mtu"`
+	Mark       int    `yaml:"fwmark"`
+	UDPTimeout int    `yaml:"udp-timeout"`
+	Proxy      string `yaml:"proxy"`
+	Stats      string `yaml:"stats"`
+	Token      string `yaml:"token"`
+	Device     string `yaml:"device"`
+	LogLevel   string `yaml:"loglevel"`
+	Interface  string `yaml:"interface"`
+	Config     string `yaml:"-"`
+	Version    bool   `yaml:"-"`
 }
 
 type engine struct {
@@ -62,6 +65,7 @@ func (e *engine) start() error {
 	}
 
 	for _, f := range []func() error{
+		e.setConfig,
 		e.setLogLevel,
 		e.setMark,
 		e.setInterface,
@@ -87,6 +91,18 @@ func (e *engine) stop() error {
 
 func (e *engine) insert(k *Key) {
 	e.Key = k
+}
+
+func (e *engine) setConfig() error {
+	if e.Config == "" {
+		return nil
+	}
+
+	data, err := os.ReadFile(e.Config)
+	if err != nil {
+		return err
+	}
+	return yaml.Unmarshal(data, e.Key)
 }
 
 func (e *engine) setLogLevel() error {

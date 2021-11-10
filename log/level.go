@@ -60,7 +60,7 @@ func ParseLevel(lvl string) (Level, error) {
 		return SilentLevel, nil
 	case "error":
 		return ErrorLevel, nil
-	case "warn":
+	case "warning":
 		return WarnLevel, nil
 	case "info":
 		return InfoLevel, nil

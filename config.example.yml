@@ -1,0 +1,26 @@
+# debug / info / warning / error / silent
+loglevel: debug
+
+# URL format: [protocol://]host[:port]
+proxy: direct://
+
+# URL format: [driver://]name
+device: tun://tun0
+
+# Maximum transmission unit for each packet
+mtu: 1500
+
+# Network interface to bind, Linux/macOS only
+interface: eth0
+
+# Timeout for each UDP session, default value: 60 seconds
+udp-timeout: 60
+
+# SO_MARK socket option, Linux only
+fwmark: 0
+
+# Statistic server listen address
+stats: 0.0.0.0:9000
+
+# Statistic server authorization token
+token: secret
