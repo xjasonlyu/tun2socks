@@ -11,6 +11,7 @@ assignees: ''
  - OS: [e.g. `Ubuntu-20.04`]
  - Version: [e.g. `v2.1.0`]
  - Network: [e.g. route tables, iptables rules]
+ - Proxy Server: [e.g. Clash, GOST, Squid]
 
 **Log**
 Paste the tun2socks log below with the log level set to `DEBUG`.
