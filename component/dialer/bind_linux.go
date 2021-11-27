@@ -8,14 +8,20 @@ import (
 )
 
 func bindToInterface(i *net.Interface) controlFunc {
-	return func(network, address string, c syscall.RawConn) error {
-		ipStr, _, _ := net.SplitHostPort(address)
-		if ip := net.ParseIP(ipStr); ip != nil && !ip.IsGlobalUnicast() {
+	return func(network, address string, c syscall.RawConn) (err error) {
+		host, _, _ := net.SplitHostPort(address)
+		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
 			return nil
 		}
 
-		return c.Control(func(fd uintptr) {
-			unix.BindToDevice(int(fd), i.Name)
+		var innerErr error
+		err = c.Control(func(fd uintptr) {
+			innerErr = unix.BindToDevice(int(fd), i.Name)
 		})
+
+		if innerErr != nil {
+			err = innerErr
+		}
+		return
 	}
 }

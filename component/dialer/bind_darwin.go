@@ -8,19 +8,25 @@ import (
 )
 
 func bindToInterface(i *net.Interface) controlFunc {
-	return func(network, address string, c syscall.RawConn) error {
-		ipStr, _, _ := net.SplitHostPort(address)
-		if ip := net.ParseIP(ipStr); ip != nil && !ip.IsGlobalUnicast() {
-			return nil
+	return func(network, address string, c syscall.RawConn) (err error) {
+		host, _, _ := net.SplitHostPort(address)
+		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
+			return
 		}
 
-		return c.Control(func(fd uintptr) {
+		var innerErr error
+		err = c.Control(func(fd uintptr) {
 			switch network {
 			case "tcp4", "udp4":
-				unix.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_BOUND_IF, i.Index)
+				innerErr = unix.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_BOUND_IF, i.Index)
 			case "tcp6", "udp6":
-				unix.SetsockoptInt(int(fd), syscall.IPPROTO_IPV6, syscall.IPV6_BOUND_IF, i.Index)
+				innerErr = unix.SetsockoptInt(int(fd), syscall.IPPROTO_IPV6, syscall.IPV6_BOUND_IF, i.Index)
 			}
 		})
+
+		if innerErr != nil {
+			err = innerErr
+		}
+		return
 	}
 }
