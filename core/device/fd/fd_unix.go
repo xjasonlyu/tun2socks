@@ -23,6 +23,9 @@ func Open(name string, mtu uint32) (device.Device, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot open fd: %s", name)
 	}
+	if mtu == 0 {
+		mtu = defaultMTU
+	}
 	return open(fd, mtu)
 }
 
