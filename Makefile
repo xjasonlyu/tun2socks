@@ -53,6 +53,10 @@ all: linux-amd64 darwin-amd64 windows-amd64
 tun2socks:
 	$(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)
 
+debug: BUILD_TAGS += debug
+debug:
+	$(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 

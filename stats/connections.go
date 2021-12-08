@@ -16,6 +16,10 @@ import (
 
 const defaultInterval = 1000
 
+func init() {
+	addMountPoint("/connections", connectionRouter())
+}
+
 func connectionRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", getConnections)

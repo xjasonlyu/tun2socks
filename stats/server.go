@@ -24,7 +24,13 @@ var (
 			return true
 		},
 	}
+
+	_mountPoints = make(map[string]http.Handler)
 )
+
+func addMountPoint(pattern string, handler http.Handler) {
+	_mountPoints[pattern] = handler
+}
 
 func Start(addr, token string) error {
 	r := chi.NewRouter()
@@ -43,7 +49,10 @@ func Start(addr, token string) error {
 		r.Get("/logs", getLogs)
 		r.Get("/traffic", traffic)
 		r.Get("/version", version)
-		r.Mount("/connections", connectionRouter())
+
+		for pattern, handler := range _mountPoints {
+			r.Mount(pattern, handler)
+		}
 	})
 
 	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
