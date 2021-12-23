@@ -6,12 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/pool"
-	M "github.com/xjasonlyu/tun2socks/constant"
-	"github.com/xjasonlyu/tun2socks/core"
-	"github.com/xjasonlyu/tun2socks/log"
-	"github.com/xjasonlyu/tun2socks/proxy"
-	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
+	"github.com/xjasonlyu/tun2socks/v2/common/pool"
+	M "github.com/xjasonlyu/tun2socks/v2/constant"
+	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/log"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
 const (

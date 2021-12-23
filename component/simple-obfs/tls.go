@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/pool"
+	"github.com/xjasonlyu/tun2socks/v2/common/pool"
 )
 
 func init() {

@@ -1,8 +1,8 @@
 package engine
 
 import (
-	"github.com/xjasonlyu/tun2socks/core"
-	"github.com/xjasonlyu/tun2socks/tunnel"
+	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 )
 
 var _ core.Handler = (*fakeTunnel)(nil)

@@ -6,11 +6,11 @@ import (
 	"fmt"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/component/dialer"
-	obfs "github.com/xjasonlyu/tun2socks/component/simple-obfs"
-	M "github.com/xjasonlyu/tun2socks/constant"
-	"github.com/xjasonlyu/tun2socks/proxy/proto"
-	"github.com/xjasonlyu/tun2socks/transport/socks5"
+	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
+	obfs "github.com/xjasonlyu/tun2socks/v2/component/simple-obfs"
+	M "github.com/xjasonlyu/tun2socks/v2/constant"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 
 	"github.com/Dreamacro/go-shadowsocks2/core"
 )

@@ -2,7 +2,7 @@
 package stack
 
 import (
-	"github.com/xjasonlyu/tun2socks/core"
+	"github.com/xjasonlyu/tun2socks/v2/core"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"

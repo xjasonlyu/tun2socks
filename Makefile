@@ -1,5 +1,5 @@
 BINARY := tun2socks
-MODULE := github.com/xjasonlyu/tun2socks
+MODULE := github.com/xjasonlyu/tun2socks/v2
 
 BUILD_DIR     := build
 BUILD_TAGS    :=

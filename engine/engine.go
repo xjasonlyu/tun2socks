@@ -4,13 +4,13 @@ import (
 	"errors"
 	"os"
 
-	"github.com/xjasonlyu/tun2socks/component/dialer"
-	"github.com/xjasonlyu/tun2socks/core/device"
-	"github.com/xjasonlyu/tun2socks/core/stack"
-	"github.com/xjasonlyu/tun2socks/log"
-	"github.com/xjasonlyu/tun2socks/proxy"
-	"github.com/xjasonlyu/tun2socks/stats"
-	"github.com/xjasonlyu/tun2socks/tunnel"
+	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
+	"github.com/xjasonlyu/tun2socks/v2/core/device"
+	"github.com/xjasonlyu/tun2socks/v2/core/stack"
+	"github.com/xjasonlyu/tun2socks/v2/log"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/stats"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 
 	"gopkg.in/yaml.v3"
 )

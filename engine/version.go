@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"strings"
 
-	V "github.com/xjasonlyu/tun2socks/constant"
+	V "github.com/xjasonlyu/tun2socks/v2/constant"
 )
 
 func showVersion() {

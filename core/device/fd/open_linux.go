@@ -3,7 +3,7 @@ package fd
 import (
 	"fmt"
 
-	"github.com/xjasonlyu/tun2socks/core/device"
+	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
 )
 

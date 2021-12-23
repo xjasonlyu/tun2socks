@@ -6,11 +6,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/xjasonlyu/tun2socks/core/device"
-	"github.com/xjasonlyu/tun2socks/core/device/fd"
-	"github.com/xjasonlyu/tun2socks/core/device/tun"
-	"github.com/xjasonlyu/tun2socks/proxy"
-	"github.com/xjasonlyu/tun2socks/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/core/device"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/fd"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )
 
 func parseDevice(s string, mtu uint32) (device.Device, error) {

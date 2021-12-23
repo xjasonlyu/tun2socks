@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/tunnel/statistic"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
