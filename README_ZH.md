@@ -51,7 +51,7 @@
 
 ## 注意事项
 
-1. 由于采用了纯Go实现，所以这一版本的`tun2socks`在有大量连接时内存消耗通常较多。如果您的需求对内存消耗极为敏感，请继续使用 [v1](https://github.com/xjasonlyu/tun2socks/tree/v1) 版本。
+1. 由于采用了纯Go实现，所以这一版本的`tun2socks`在有大量连接时内存消耗通常较多。如果您的需求对内存消耗极为敏感，请继续使用 [go-tun2socks](https://github.com/xjasonlyu/go-tun2socks) 版本。
 2. `tun2socks`只应该专注于将网络层的TCP/UDP流量转发给SOCKS服务器，其他的如DNS（DoH）、DHCP等模块功能应该交由第三方应用实现，所以弃用了DNS模块。
 3. 因为是通过用户空间的网络栈接管所有流量并处理转发，在高吞吐时CPU的使用量会剧增，所以CPU的性能直接与可以达到的最大带宽挂钩。
 
