@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/xjasonlyu/tun2socks/engine"
-	"github.com/xjasonlyu/tun2socks/log"
+	"github.com/xjasonlyu/tun2socks/v2/engine"
+	"github.com/xjasonlyu/tun2socks/v2/log"
 )
 
 var key = new(engine.Key)

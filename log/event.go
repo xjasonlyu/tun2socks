@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/common/observable"
+	"github.com/xjasonlyu/tun2socks/v2/common/observable"
 )
 
 var (

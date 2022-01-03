@@ -6,8 +6,8 @@ import (
 	"net"
 	"time"
 
-	M "github.com/xjasonlyu/tun2socks/constant"
-	"github.com/xjasonlyu/tun2socks/proxy/proto"
+	M "github.com/xjasonlyu/tun2socks/v2/constant"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )
 
 const (

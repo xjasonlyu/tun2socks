@@ -7,7 +7,7 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/xjasonlyu/tun2socks/transport/socks5"
+	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 )
 
 const (

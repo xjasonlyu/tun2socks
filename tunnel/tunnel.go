@@ -3,8 +3,8 @@ package tunnel
 import (
 	"runtime"
 
-	"github.com/xjasonlyu/tun2socks/core"
-	"github.com/xjasonlyu/tun2socks/log"
+	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/log"
 )
 
 const (

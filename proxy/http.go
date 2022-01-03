@@ -13,9 +13,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/xjasonlyu/tun2socks/component/dialer"
-	M "github.com/xjasonlyu/tun2socks/constant"
-	"github.com/xjasonlyu/tun2socks/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
+	M "github.com/xjasonlyu/tun2socks/v2/constant"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )
 
 type HTTP struct {

@@ -4,7 +4,7 @@ import (
 	"net"
 	"time"
 
-	M "github.com/xjasonlyu/tun2socks/constant"
+	M "github.com/xjasonlyu/tun2socks/v2/constant"
 
 	"github.com/gofrs/uuid"
 	"go.uber.org/atomic"
