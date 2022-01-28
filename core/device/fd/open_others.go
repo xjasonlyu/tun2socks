@@ -7,13 +7,13 @@ import (
 	"os"
 
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
-	"github.com/xjasonlyu/tun2socks/v2/core/device/rwbased"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
 )
 
 func open(fd int, mtu uint32) (device.Device, error) {
 	f := &FD{fd: fd, mtu: mtu}
 
-	ep, err := rwbased.New(os.NewFile(uintptr(fd), f.Name()), mtu)
+	ep, err := iobased.New(os.NewFile(uintptr(fd), f.Name()), mtu)
 	if err != nil {
 		return nil, fmt.Errorf("create endpoint: %w", err)
 	}

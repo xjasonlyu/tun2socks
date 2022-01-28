@@ -6,13 +6,13 @@ import (
 	"fmt"
 
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
-	"github.com/xjasonlyu/tun2socks/v2/core/device/rwbased"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
 
 	"golang.zx2c4.com/wireguard/tun"
 )
 
 type TUN struct {
-	*rwbased.Endpoint
+	*iobased.Endpoint
 
 	nt   *tun.NativeTun
 	mtu  uint32
@@ -39,7 +39,7 @@ func Open(name string, mtu uint32) (device.Device, error) {
 	}
 	t.mtu = uint32(_mtu)
 
-	ep, err := rwbased.New(t, t.mtu)
+	ep, err := iobased.New(t, t.mtu)
 	if err != nil {
 		return nil, fmt.Errorf("create endpoint: %w", err)
 	}

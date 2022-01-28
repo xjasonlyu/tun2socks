@@ -1,6 +1,6 @@
-// Package rwbased provides the implementation of io.ReadWriter
+// Package iobased provides the implementation of io.ReadWriter
 // based data-link layer endpoints.
-package rwbased
+package iobased
 
 import (
 	"errors"
