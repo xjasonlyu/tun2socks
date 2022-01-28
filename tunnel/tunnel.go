@@ -17,7 +17,7 @@ const (
 var (
 	_tcpQueue      = make(chan core.TCPConn) /* unbuffered */
 	_udpQueue      = make(chan core.UDPPacket, maxUDPQueueSize)
-	_numUDPWorkers = max(runtime.NumCPU(), 4 /* at least 4 workers */)
+	_numUDPWorkers = max(runtime.GOMAXPROCS(0), 4 /* at least 4 workers */)
 )
 
 func init() {
