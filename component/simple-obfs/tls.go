@@ -68,8 +68,8 @@ func (to *TLSObfs) Read(b []byte) (int, error) {
 	}
 
 	if to.firstResponse {
-		// type + ver + len_size + 91 = 96
-		// type + ver + len_size + 1 = 6
+		// type + ver + lensize + 91 = 96
+		// type + ver + lensize + 1 = 6
 		// type + ver = 3
 		to.firstResponse = false
 		return to.read(b, 105)
@@ -78,6 +78,7 @@ func (to *TLSObfs) Read(b []byte) (int, error) {
 	// type + ver = 3
 	return to.read(b, 3)
 }
+
 func (to *TLSObfs) Write(b []byte) (int, error) {
 	length := len(b)
 	for i := 0; i < length; i += chunkSize {
@@ -102,7 +103,8 @@ func (to *TLSObfs) write(b []byte) (int, error) {
 		return len(b), err
 	}
 
-	buf := &bytes.Buffer{}
+	buf := pool.GetBuffer()
+	defer pool.PutBuffer(buf)
 	buf.Write([]byte{0x17, 0x03, 0x03})
 	binary.Write(buf, binary.BigEndian, uint16(len(b)))
 	buf.Write(b)
