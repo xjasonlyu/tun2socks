@@ -56,7 +56,7 @@ func (e *Endpoint) IsAttached() bool {
 // dispatchLoop dispatches packets to upper layer.
 func (e *Endpoint) dispatchLoop() {
 	for {
-		packet := make([]byte, e.mtu)
+		packet := make([]byte, e.MTU())
 
 		n, err := e.rw.Read(packet)
 		if err != nil {
