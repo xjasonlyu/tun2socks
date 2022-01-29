@@ -1,0 +1,55 @@
+name: Bug Report
+description: Create a report to help us improve
+title: "[Bug] "
+body:
+  - type: checkboxes
+    id: ensure
+    attributes:
+      label: Verify steps
+      description: Please verify that you've followed these steps
+      options:
+        - label: Is this something you can **debug and fix**? Send a pull request! Bug fixes and documentation fixes are welcome.
+          required: true
+
+        - label: I have searched on the [issue tracker](……/) for a related issue.
+          required: true
+
+  - type: input
+    attributes:
+      label: Version
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: What OS are you seeing the problem on?
+      multiple: true
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - OpenBSD/FreeBSD
+        - Other
+
+  - type: textarea
+    attributes:
+      label: Description
+    validations:
+      required: true
+
+  - type: textarea
+    attributes:
+      label: CLI or Config
+      description: Paste the command line parameters or configuration below.
+
+  - type: textarea
+    attributes:
+      render: shell
+      label: Log Output
+      description: Paste the log output below with the log level set to `DEBUG`.
+
+  - type: textarea
+    attributes:
+      label: How to Reproduce
+      description: Steps to reproduce the behavior, if any.
