@@ -47,7 +47,7 @@ config_route() {
   done
 }
 
-main() {
+run() {
   create_tun
   create_table
   config_route
@@ -58,27 +58,27 @@ main() {
   fi
 
   if [ -n "$MTU" ]; then
-    ARGS="-mtu $MTU"
+    ARGS="--mtu $MTU"
   fi
 
   if [ -n "$STATS" ]; then
-    ARGS="$ARGS -stats $STATS"
+    ARGS="$ARGS --stats $STATS"
   fi
 
   if [ -n "$TOKEN" ]; then
-    ARGS="$ARGS -token $TOKEN"
+    ARGS="$ARGS --token $TOKEN"
   fi
 
   if [ -n "$UDP_TIMEOUT" ]; then
-    ARGS="$ARGS -udp-timeout $UDP_TIMEOUT"
+    ARGS="$ARGS --udp-timeout $UDP_TIMEOUT"
   fi
 
   exec tun2socks \
-    -loglevel "$LOGLEVEL" \
-    -fwmark "$FWMARK" \
-    -device "$TUN" \
-    -proxy "$PROXY" \
+    --loglevel "$LOGLEVEL" \
+    --fwmark "$FWMARK" \
+    --device "$TUN" \
+    --proxy "$PROXY" \
     $ARGS
 }
 
-main || exit 1
+run || exit 1
