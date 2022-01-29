@@ -14,9 +14,7 @@ const (
 	tcpConnectTimeout = 5 * time.Second
 )
 
-var (
-	_defaultDialer Dialer = &Base{}
-)
+var _defaultDialer Dialer = &Base{}
 
 type Dialer interface {
 	DialContext(context.Context, *M.Metadata) (net.Conn, error)

@@ -8,9 +8,7 @@ import (
 
 type controlFunc func(string, string, syscall.RawConn) error
 
-var (
-	_controlPool = make([]controlFunc, 0, 2)
-)
+var _controlPool = make([]controlFunc, 0, 2)
 
 func addControl(f controlFunc) {
 	_controlPool = append(_controlPool, f)

@@ -38,7 +38,7 @@ func NewSocks5(addr, user, pass string) (*Socks5, error) {
 }
 
 func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Conn, err error) {
-	var network = "tcp"
+	network := "tcp"
 	if ss.unix {
 		network = "unix"
 	}

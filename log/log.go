@@ -7,10 +7,8 @@ import (
 	"go.uber.org/atomic"
 )
 
-var (
-	// _defaultLevel is package default logging level.
-	_defaultLevel = atomic.NewUint32(uint32(InfoLevel))
-)
+// _defaultLevel is package default logging level.
+var _defaultLevel = atomic.NewUint32(uint32(InfoLevel))
 
 func init() {
 	logrus.SetOutput(os.Stdout)
