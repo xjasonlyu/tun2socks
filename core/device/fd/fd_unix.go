@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
+
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
