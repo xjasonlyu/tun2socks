@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	V "github.com/xjasonlyu/tun2socks/v2/constant"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
+	V "github.com/xjasonlyu/tun2socks/v2/version"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"

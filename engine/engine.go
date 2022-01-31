@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"os"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
@@ -11,6 +12,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/stats"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
+	"github.com/xjasonlyu/tun2socks/v2/version"
 
 	"gopkg.in/yaml.v3"
 )
@@ -60,7 +62,8 @@ func (e *engine) start() error {
 	}
 
 	if e.Version {
-		showVersion()
+		fmt.Println(version.String())
+		fmt.Println(version.BuildString())
 		os.Exit(0)
 	}
 
