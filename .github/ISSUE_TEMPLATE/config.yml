@@ -1,6 +1,9 @@
 blank_issues_enabled: true
 
 contact_links:
-  - name: Get help in GitHub Discussions
+  - name: tun2socks GitHub Wiki
+    url: https://github.com/xjasonlyu/tun2socks/wiki
+    about: Please see the wiki for common configurations
+  - name: tun2socks GitHub Discussions
     url: https://github.com/xjasonlyu/tun2socks/discussions
-    about: Have a question? Not sure if your issue affects everyone reproducibly? The easiest way to get help is on GitHub Discussions!
+    about: Ask questions and get help on GitHub Discussions

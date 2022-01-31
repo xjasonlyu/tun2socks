@@ -1,4 +1,4 @@
-name: Bug Report
+name: Bug report
 description: Create a report to help us improve
 title: "[Bug] "
 body:
@@ -46,8 +46,8 @@ body:
   - type: textarea
     attributes:
       render: shell
-      label: Log Output
-      description: Paste the log output below with the log level set to `DEBUG`.
+      label: Logs
+      description: Paste the logs below with the log level set to `DEBUG`.
 
   - type: textarea
     attributes:
