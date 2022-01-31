@@ -1,4 +1,4 @@
-package constant
+package metadata
 
 import (
 	"bytes"

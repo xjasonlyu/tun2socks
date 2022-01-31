@@ -6,7 +6,7 @@ import (
 	"net"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
-	M "github.com/xjasonlyu/tun2socks/v2/constant"
+	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks4"
 )
