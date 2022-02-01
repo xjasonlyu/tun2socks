@@ -23,7 +23,14 @@ const (
 // withCreatingNIC creates NIC for stack.
 func withCreatingNIC(ep stack.LinkEndpoint) Option {
 	return func(s *Stack) error {
-		if err := s.CreateNIC(s.nicID, ep); err != nil {
+		if err := s.CreateNICWithOptions(s.nicID, ep,
+			stack.NICOptions{
+				Disabled: false,
+				// If no queueing discipline was specified
+				// provide a stub implementation that just
+				// delegates to the lower link endpoint.
+				QDisc: nil,
+			}); err != nil {
 			return fmt.Errorf("create NIC: %s", err)
 		}
 		return nil
