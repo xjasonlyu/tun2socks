@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
-	"github.com/xjasonlyu/tun2socks/v2/core/device/fd"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
@@ -27,8 +27,8 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 	driver := strings.ToLower(u.Scheme)
 
 	switch driver {
-	case fd.Driver:
-		return fd.Open(name, mtu)
+	case fdbased.Driver:
+		return fdbased.Open(name, mtu)
 	case tun.Driver:
 		return tun.Open(name, mtu)
 	default:

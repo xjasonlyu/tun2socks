@@ -1,6 +1,6 @@
 //go:build !windows
 
-package fd
+package fdbased
 
 import (
 	"fmt"
