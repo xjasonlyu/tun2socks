@@ -49,10 +49,18 @@ func Open(name string, mtu uint32) (device.Device, error) {
 	t.mtu = _mtu
 
 	ep, err := fdbased.New(&fdbased.Options{
-		MTU: t.mtu,
 		FDs: []int{fd},
-		// TUN only
+		MTU: t.mtu,
+		// TUN only, ignore ethernet header.
 		EthernetHeader: false,
+		// SYS_READV support only for TUN fd.
+		PacketDispatchMode: fdbased.Readv,
+		// TODO: set this field to zero in the future.
+		// it's a only temporary hack to avoid `socket operation
+		// on non-socket` error caused by SYS_SENDMMSG syscall.
+		//
+		// Ref: https://github.com/google/gvisor/issues/7125
+		MaxSyscallHeaderBytes: 0x40,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("create endpoint: %w", err)

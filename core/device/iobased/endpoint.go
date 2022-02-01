@@ -73,9 +73,9 @@ func (e *Endpoint) dispatchLoop() {
 
 		switch header.IPVersion(packet) {
 		case header.IPv4Version:
-			e.dispatcher.DeliverNetworkPacket("", "", header.IPv4ProtocolNumber, pkb)
+			e.dispatcher.DeliverNetworkPacket(header.IPv4ProtocolNumber, pkb)
 		case header.IPv6Version:
-			e.dispatcher.DeliverNetworkPacket("", "", header.IPv6ProtocolNumber, pkb)
+			e.dispatcher.DeliverNetworkPacket(header.IPv6ProtocolNumber, pkb)
 		}
 	}
 }
@@ -89,13 +89,8 @@ func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
 	return nil
 }
 
-// WritePacket writes packet back into io.ReadWriter.
-func (e *Endpoint) WritePacket(_ stack.RouteInfo, _ tcpip.NetworkProtocolNumber, pkt *stack.PacketBuffer) tcpip.Error {
-	return e.writePacket(pkt)
-}
-
 // WritePackets writes packets back into io.ReadWriter.
-func (e *Endpoint) WritePackets(_ stack.RouteInfo, pkts stack.PacketBufferList, _ tcpip.NetworkProtocolNumber) (int, tcpip.Error) {
+func (e *Endpoint) WritePackets(pkts stack.PacketBufferList) (int, tcpip.Error) {
 	n := 0
 	for pkt := pkts.Front(); pkt != nil; pkt = pkt.Next() {
 		if err := e.writePacket(pkt); err != nil {
@@ -104,10 +99,6 @@ func (e *Endpoint) WritePackets(_ stack.RouteInfo, pkts stack.PacketBufferList, 
 		n++
 	}
 	return n, nil
-}
-
-func (e *Endpoint) WriteRawPacket(packetBuffer *stack.PacketBuffer) tcpip.Error {
-	return &tcpip.ErrNotSupported{}
 }
 
 // MTU implements stack.LinkEndpoint.MTU.
@@ -137,8 +128,7 @@ func (*Endpoint) ARPHardwareType() header.ARPHardwareType {
 }
 
 // AddHeader implements stack.LinkEndpoint.AddHeader.
-func (e *Endpoint) AddHeader(tcpip.LinkAddress, tcpip.LinkAddress, tcpip.NetworkProtocolNumber, *stack.PacketBuffer) {
-}
+func (e *Endpoint) AddHeader(*stack.PacketBuffer) {}
 
 // Wait implements stack.LinkEndpoint.Wait.
 func (e *Endpoint) Wait() {}
