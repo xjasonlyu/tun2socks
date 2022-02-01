@@ -11,18 +11,12 @@ import (
 )
 
 const (
-	// maxBufferSize is the maximum permitted size of a send/receive buffer.
-	maxBufferSize = 4 << 20 // 4 MiB
-
-	// minBufferSize is the smallest size of a receive or send buffer.
-	minBufferSize = 4 << 10 // 4 KiB
-
-	// defaultBufferSize is the default size of the send/recv buffer for
-	// a transport endpoint.
-	defaultBufferSize = 212 << 10 // 212 KiB
-
 	// defaultTimeToLive specifies the default TTL used by stack.
 	defaultTimeToLive uint8 = 64
+
+	// ipForwardingEnabled is the value used by stack to enable packet
+	// forwarding between NICs.
+	ipForwardingEnabled = true
 
 	// icmpBurst is the default number of ICMP messages that can be sent in
 	// a single burst.
@@ -31,10 +25,6 @@ const (
 	// icmpLimit is the default maximum number of ICMP messages permitted
 	// by this rate limiter.
 	icmpLimit rate.Limit = 1000
-
-	// ipForwardingEnabled is the value used by stack to enable packet
-	// forwarding between NICs.
-	ipForwardingEnabled = true
 
 	// tcpCongestionControl is the congestion control algorithm used by
 	// stack. ccReno is the default option in gVisor stack.
@@ -51,6 +41,16 @@ const (
 	// tcpSACKEnabled is the value used by stack to enable or disable
 	// tcp selective ACK.
 	tcpSACKEnabled = true
+
+	// tcpMinBufferSize is the smallest size of a send/recv buffer.
+	tcpMinBufferSize = tcp.MinBufferSize // 4 KiB
+
+	// tcpMaxBufferSize is the maximum permitted size of a send/recv buffer.
+	tcpMaxBufferSize = tcp.MaxBufferSize // 4 MiB
+
+	// tcpDefaultBufferSize is the default size of the send/recv buffer for
+	// a transport endpoint.
+	tcpDefaultBufferSize = 212 << 10 // 212 KiB
 )
 
 type Option func(*Stack) error
@@ -69,8 +69,8 @@ func WithDefault() Option {
 			// Too large buffers thrash cache, so there is little point
 			// in too large buffers.
 			//
-			// Ref: https://github.com/majek/slirpnetstack/blob/master/stack.go
-			WithTCPBufferSizeRange(minBufferSize, defaultBufferSize, maxBufferSize),
+			// Ref: https://github.com/cloudflare/slirpnetstack/blob/master/stack.go
+			WithTCPBufferSizeRange(tcpMinBufferSize, tcpDefaultBufferSize, tcpMaxBufferSize),
 
 			WithTCPCongestionControl(tcpCongestionControlAlgorithm),
 			WithTCPDelay(tcpDelayEnabled),
