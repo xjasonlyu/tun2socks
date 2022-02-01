@@ -13,6 +13,7 @@ import (
 )
 
 var _ stack.LinkEndpoint = (*Endpoint)(nil)
+var _ stack.GSOEndpoint = (*Endpoint)(nil)
 
 // Endpoint implements the interface of stack.LinkEndpoint from io.ReadWriter.
 type Endpoint struct {
@@ -81,8 +82,10 @@ func (e *Endpoint) dispatchLoop() {
 }
 
 func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
-	vView := buffer.NewVectorisedView(pkt.Size(), pkt.Views())
-
+	vView := buffer.NewVectorisedView(
+		pkt.Size(),
+		pkt.Views(),
+	)
 	if _, err := e.rw.Write(vView.ToView()); err != nil {
 		return &tcpip.ErrInvalidEndpointState{}
 	}
@@ -132,3 +135,13 @@ func (e *Endpoint) AddHeader(*stack.PacketBuffer) {}
 
 // Wait implements stack.LinkEndpoint.Wait.
 func (e *Endpoint) Wait() {}
+
+// GSOMaxSize implements stack.GSOEndpoint.
+func (e *Endpoint) GSOMaxSize() uint32 {
+	return 0
+}
+
+// SupportedGSO implements stack.GSOEndpoint.
+func (e *Endpoint) SupportedGSO() stack.SupportedGSO {
+	return stack.GSONotSupported
+}
