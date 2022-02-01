@@ -49,13 +49,13 @@ func New(ep stack.LinkEndpoint, handler core.Handler, opts ...Option) (*Stack, e
 		// Create stack NIC and then bind link endpoint.
 		withCreatingNIC(ep),
 
-		// In past we did s.AddAddressRange to assign 0.0.0.0/0 onto
-		// the interface. We need that to be able to terminate all the
-		// incoming connections - to any ip. AddressRange API has been
-		// removed and the suggested workaround is to use Promiscuous
-		// mode. https://github.com/google/gvisor/issues/3876
+		// In the past we did s.AddAddressRange to assign 0.0.0.0/0
+		// onto the interface. We need that to be able to terminate
+		// all the incoming connections - to any ip. AddressRange API
+		// has been removed and the suggested workaround is to use
+		// Promiscuous mode. https://github.com/google/gvisor/issues/3876
 		//
-		// Ref: https://github.com/majek/slirpnetstack/blob/master/stack.go
+		// Ref: https://github.com/cloudflare/slirpnetstack/blob/master/stack.go
 		withPromiscuousMode(nicPromiscuousModeEnabled),
 
 		// Enable spoofing if a stack may send packets from unowned addresses.
