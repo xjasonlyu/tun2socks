@@ -31,12 +31,15 @@ type Endpoint struct {
 	// mtu (maximum transmission unit) is the maximum size of a packet.
 	mtu uint32
 
+	// offset can be useful when perform TUN device I/O with TUN_PI enabled.
+	offset int
+
 	// once is used to perform the init action once when attaching.
 	once sync.Once
 }
 
 // New returns stack.LinkEndpoint(.*Endpoint) and error.
-func New(rw io.ReadWriter, mtu uint32) (*Endpoint, error) {
+func New(rw io.ReadWriter, mtu uint32, offset int) (*Endpoint, error) {
 	if mtu == 0 {
 		return nil, errors.New("MTU size is zero")
 	}
@@ -45,10 +48,15 @@ func New(rw io.ReadWriter, mtu uint32) (*Endpoint, error) {
 		return nil, errors.New("RW interface is nil")
 	}
 
+	if offset < 0 {
+		return nil, errors.New("offset must be non-negative")
+	}
+
 	return &Endpoint{
 		Endpoint: channel.New(defaultOutQueueLen, mtu, ""),
 		rw:       rw,
 		mtu:      mtu,
+		offset:   offset,
 	}, nil
 }
 
@@ -65,7 +73,7 @@ func (e *Endpoint) Attach(dispatcher stack.NetworkDispatcher) {
 // dispatchLoop dispatches packets to upper layer.
 func (e *Endpoint) dispatchLoop() {
 	for {
-		data := make([]byte, e.MTU())
+		data := make([]byte, e.offset+int(e.mtu))
 
 		n, err := e.rw.Read(data)
 		if err != nil {
@@ -77,10 +85,10 @@ func (e *Endpoint) dispatchLoop() {
 		}
 
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
-			Data: buffer.View(data[:n]).ToVectorisedView(),
+			Data: buffer.View(data[e.offset : e.offset+n]).ToVectorisedView(),
 		})
 
-		switch header.IPVersion(data) {
+		switch header.IPVersion(data[e.offset:]) {
 		case header.IPv4Version:
 			e.InjectInbound(header.IPv4ProtocolNumber, pkt)
 		case header.IPv6Version:
@@ -107,10 +115,15 @@ func (e *Endpoint) outboundLoop() {
 
 // writePacket writes outbound packets to the io.Writer.
 func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
-	vView := buffer.NewVectorisedView(
-		pkt.Size(),
-		pkt.Views(),
-	)
+	size := pkt.Size()
+	views := pkt.Views()
+	if e.offset != 0 {
+		views = append([]buffer.View{
+			make(buffer.View, e.offset),
+		}, views...)
+	}
+
+	vView := buffer.NewVectorisedView(size, views)
 	if _, err := e.rw.Write(vView.ToView()); err != nil {
 		return &tcpip.ErrInvalidEndpointState{}
 	}

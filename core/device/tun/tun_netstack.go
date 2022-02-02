@@ -78,6 +78,7 @@ func (t *TUN) Close() error {
 	return unix.Close(t.fd)
 }
 
+// Ref: wireguard tun/tun_linux.go setMTU.
 func setMTU(name string, n uint32) error {
 	// open datagram socket
 	fd, err := unix.Socket(
