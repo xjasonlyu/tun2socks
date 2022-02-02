@@ -18,8 +18,12 @@ var (
 	GitCommit string
 )
 
+func versionize(s string) string {
+	return strings.TrimPrefix(s, "v")
+}
+
 func String() string {
-	return fmt.Sprintf("%s-%s", Name, strings.TrimPrefix(Version, "v"))
+	return fmt.Sprintf("%s-%s", Name, versionize(Version))
 }
 
 func BuildString() string {
