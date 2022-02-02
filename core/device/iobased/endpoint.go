@@ -3,29 +3,36 @@
 package iobased
 
 import (
+	"context"
 	"errors"
 	"io"
+	"sync"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
+	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-var (
-	_ stack.LinkEndpoint = (*Endpoint)(nil)
-	_ stack.GSOEndpoint  = (*Endpoint)(nil)
+const (
+	// Queue length for outbound packet, arriving for read. Overflow
+	// causes packet drops.
+	defaultOutQueueLen = 1 << 10
 )
 
 // Endpoint implements the interface of stack.LinkEndpoint from io.ReadWriter.
 type Endpoint struct {
+	*channel.Endpoint
+
 	// rw is the io.ReadWriter for reading and writing packets.
 	rw io.ReadWriter
 
 	// mtu (maximum transmission unit) is the maximum size of a packet.
 	mtu uint32
 
-	dispatcher stack.NetworkDispatcher
+	// once is used to perform the init action once when attaching.
+	once sync.Once
 }
 
 // New returns stack.LinkEndpoint(.*Endpoint) and error.
@@ -39,50 +46,65 @@ func New(rw io.ReadWriter, mtu uint32) (*Endpoint, error) {
 	}
 
 	return &Endpoint{
-		rw:  rw,
-		mtu: mtu,
+		Endpoint: channel.New(defaultOutQueueLen, mtu, ""),
+		rw:       rw,
+		mtu:      mtu,
 	}, nil
 }
 
-// Attach launches the goroutine that reads packets from io.ReadWriter and
+// Attach launches the goroutine that reads packets from io.Reader and
 // dispatches them via the provided dispatcher.
 func (e *Endpoint) Attach(dispatcher stack.NetworkDispatcher) {
-	go e.dispatchLoop()
-	e.dispatcher = dispatcher
-}
-
-// IsAttached implements stack.LinkEndpoint.IsAttached.
-func (e *Endpoint) IsAttached() bool {
-	return e.dispatcher != nil
+	e.once.Do(func() {
+		go e.dispatchLoop()
+		go e.outboundLoop()
+	})
+	e.Endpoint.Attach(dispatcher)
 }
 
 // dispatchLoop dispatches packets to upper layer.
 func (e *Endpoint) dispatchLoop() {
 	for {
-		packet := make([]byte, e.MTU())
+		data := make([]byte, e.MTU())
 
-		n, err := e.rw.Read(packet)
+		n, err := e.rw.Read(data)
 		if err != nil {
 			break
 		}
 
 		if !e.IsAttached() {
-			continue
+			continue /* unattached, drop packet */
 		}
 
-		pkb := stack.NewPacketBuffer(stack.PacketBufferOptions{
-			Data: buffer.NewVectorisedView(n, []buffer.View{buffer.NewViewFromBytes(packet)}),
+		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
+			Data: buffer.View(data[:n]).ToVectorisedView(),
 		})
 
-		switch header.IPVersion(packet) {
+		switch header.IPVersion(data) {
 		case header.IPv4Version:
-			e.dispatcher.DeliverNetworkPacket(header.IPv4ProtocolNumber, pkb)
+			e.InjectInbound(header.IPv4ProtocolNumber, pkt)
 		case header.IPv6Version:
-			e.dispatcher.DeliverNetworkPacket(header.IPv6ProtocolNumber, pkb)
+			e.InjectInbound(header.IPv6ProtocolNumber, pkt)
 		}
 	}
 }
 
+// outboundLoop reads outbound packets from channel, and then it calls
+// writePacket to send those packets back to lower layer.
+func (e *Endpoint) outboundLoop() {
+	// TODO: support cancel() in the future.
+	ctx := context.Background()
+
+	for {
+		pkt := e.ReadContext(ctx)
+		if pkt == nil {
+			break
+		}
+		e.writePacket(pkt)
+	}
+}
+
+// writePacket writes outbound packets to the io.Writer.
 func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
 	vView := buffer.NewVectorisedView(
 		pkt.Size(),
@@ -92,58 +114,4 @@ func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
 		return &tcpip.ErrInvalidEndpointState{}
 	}
 	return nil
-}
-
-// WritePackets writes packets back into io.ReadWriter.
-func (e *Endpoint) WritePackets(pkts stack.PacketBufferList) (int, tcpip.Error) {
-	n := 0
-	for pkt := pkts.Front(); pkt != nil; pkt = pkt.Next() {
-		if err := e.writePacket(pkt); err != nil {
-			break
-		}
-		n++
-	}
-	return n, nil
-}
-
-// MTU implements stack.LinkEndpoint.MTU.
-func (e *Endpoint) MTU() uint32 {
-	return e.mtu
-}
-
-// Capabilities implements stack.LinkEndpoint.Capabilities.
-func (e *Endpoint) Capabilities() stack.LinkEndpointCapabilities {
-	return stack.CapabilityNone
-}
-
-// MaxHeaderLength returns the maximum size of the link layer header. Given it
-// doesn't have a header, it just returns 0.
-func (*Endpoint) MaxHeaderLength() uint16 {
-	return 0
-}
-
-// LinkAddress returns the link address of this endpoint.
-func (*Endpoint) LinkAddress() tcpip.LinkAddress {
-	return ""
-}
-
-// ARPHardwareType implements stack.LinkEndpoint.ARPHardwareType.
-func (*Endpoint) ARPHardwareType() header.ARPHardwareType {
-	return header.ARPHardwareNone
-}
-
-// AddHeader implements stack.LinkEndpoint.AddHeader.
-func (e *Endpoint) AddHeader(*stack.PacketBuffer) {}
-
-// Wait implements stack.LinkEndpoint.Wait.
-func (e *Endpoint) Wait() {}
-
-// GSOMaxSize implements stack.GSOEndpoint.
-func (e *Endpoint) GSOMaxSize() uint32 {
-	return 0
-}
-
-// SupportedGSO implements stack.GSOEndpoint.
-func (e *Endpoint) SupportedGSO() stack.SupportedGSO {
-	return stack.GSONotSupported
 }
