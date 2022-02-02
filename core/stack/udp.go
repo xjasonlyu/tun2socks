@@ -12,14 +12,14 @@ import (
 )
 
 const (
-	// udpNoChecksum disables UDP checksum.
+	// udpNoChecksum disables UDP checksum if set to true.
 	udpNoChecksum = true
 )
 
 func withUDPHandler() Option {
 	return func(s *Stack) error {
 		udpHandlePacket := func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
-			// Ref: gVisor pkg/tcpip/transport/udp/endpoint.go HandlePacket
+			// Ref: gVisor pkg/tcpip/transport/udp/endpoint.go HandlePacket.
 			udpHdr := header.UDP(pkt.TransportHeader().View())
 			if int(udpHdr.Length()) > pkt.Data().Size()+header.UDPMinimumSize {
 				// Malformed packet.
@@ -122,6 +122,7 @@ func sendUDP(r *stack.Route, data buffer.VectorisedView, localPort, remotePort u
 		ReserveHeaderBytes: header.UDPMinimumSize + int(r.MaxHeaderLength()),
 		Data:               data,
 	})
+	defer pkt.DecRef()
 
 	// Initialize the UDP header.
 	udpHdr := header.UDP(pkt.TransportHeader().Push(header.UDPMinimumSize))
@@ -163,19 +164,29 @@ func sendUDP(r *stack.Route, data buffer.VectorisedView, localPort, remotePort u
 	return nil
 }
 
+// Ref: gVisor pkg/tcpip/transport/udp/endpoint.go verifyChecksum.
 // verifyChecksum verifies the checksum unless RX checksum offload is enabled.
-// On IPv4, UDP checksum is optional, and a zero value means the transmitter
-// omitted the checksum generation (RFC768).
-// On IPv6, UDP checksum is not optional (RFC2460 Section 8.1).
 func verifyChecksum(hdr header.UDP, pkt *stack.PacketBuffer) bool {
-	if !pkt.RXTransportChecksumValidated &&
-		(hdr.Checksum() != 0 || pkt.NetworkProtocolNumber == header.IPv6ProtocolNumber) {
-		netHdr := pkt.Network()
-		xsum := header.PseudoHeaderChecksum(udp.ProtocolNumber, netHdr.DestinationAddress(), netHdr.SourceAddress(), hdr.Length())
-		for _, v := range pkt.Data().Views() {
-			xsum = header.Checksum(v, xsum)
-		}
-		return hdr.CalculateChecksum(xsum) == 0xffff
+	if pkt.RXTransportChecksumValidated {
+		return true
 	}
-	return true
+
+	// On IPv4, UDP checksum is optional, and a zero value means the transmitter
+	// omitted the checksum generation, as per RFC 768:
+	//
+	//   An all zero transmitted checksum value means that the transmitter
+	//   generated  no checksum  (for debugging or for higher level protocols that
+	//   don't care).
+	//
+	// On IPv6, UDP checksum is not optional, as per RFC 2460 Section 8.1:
+	//
+	//   Unlike IPv4, when UDP packets are originated by an IPv6 node, the UDP
+	//   checksum is not optional.
+	if pkt.NetworkProtocolNumber == header.IPv4ProtocolNumber && hdr.Checksum() == 0 {
+		return true
+	}
+
+	netHdr := pkt.Network()
+	payloadChecksum := pkt.Data().AsRange().Checksum()
+	return hdr.IsChecksumValid(netHdr.SourceAddress(), netHdr.DestinationAddress(), payloadChecksum)
 }
