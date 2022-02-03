@@ -48,14 +48,13 @@ WINDOWS_ARCH_LIST = \
 	windows-arm64 \
 	windows-arm32v7
 
-all: linux-amd64 darwin-amd64 windows-amd64
+all: linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64
+
+debug: BUILD_TAGS += debug
+debug: all
 
 tun2socks:
 	$(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)
-
-debug: BUILD_TAGS += debug
-debug:
-	$(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
