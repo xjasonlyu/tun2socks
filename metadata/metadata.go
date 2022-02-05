@@ -35,6 +35,16 @@ func (m *Metadata) Addr() net.Addr {
 	return &Addr{metadata: m}
 }
 
+func (m *Metadata) TCPAddr() *net.TCPAddr {
+	if m.Network != TCP || m.DstIP == nil {
+		return nil
+	}
+	return &net.TCPAddr{
+		IP:   m.DstIP,
+		Port: int(m.DstPort),
+	}
+}
+
 func (m *Metadata) UDPAddr() *net.UDPAddr {
 	if m.Network != UDP || m.DstIP == nil {
 		return nil
