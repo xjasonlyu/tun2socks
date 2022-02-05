@@ -68,6 +68,7 @@ func handleUDPToRemote(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
 		if _, err := pc.WriteTo(buf[:n], remote); err != nil {
 			log.Warnf("[UDP] write to %s error: %v", remote, err)
 		}
+		pc.SetReadDeadline(time.Now().Add(_udpSessionTimeout)) /* reset timeout */
 
 		log.Infof("[UDP] %s --> %s", uc.RemoteAddr(), remote)
 	}
@@ -81,7 +82,7 @@ func handleUDPToLocal(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
 		pc.SetReadDeadline(time.Now().Add(_udpSessionTimeout))
 		n, from, err := pc.ReadFrom(buf)
 		if err != nil {
-			if !errors.Is(err, os.ErrDeadlineExceeded) /* ignore i/o timeout */ {
+			if !errors.Is(err, os.ErrDeadlineExceeded) /* ignore I/O timeout */ {
 				log.Warnf("[UDP] read error: %v", err)
 			}
 			return
@@ -96,5 +97,7 @@ func handleUDPToLocal(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
 			log.Warnf("[UDP] write back from %s error: %v", from, err)
 			return
 		}
+
+		log.Infof("[UDP] %s <-- %s", uc.RemoteAddr(), from)
 	}
 }
