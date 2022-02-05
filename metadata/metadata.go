@@ -3,38 +3,15 @@ package metadata
 import (
 	"bytes"
 	"encoding/binary"
-	"fmt"
 	"net"
 	"strconv"
 
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 )
 
-const (
-	TCP Network = iota
-	UDP
-)
-
-type Network uint8
-
-func (n Network) String() string {
-	switch n {
-	case TCP:
-		return "tcp"
-	case UDP:
-		return "udp"
-	default:
-		return fmt.Sprintf("network(%d)", n)
-	}
-}
-
-func (n Network) MarshalText() ([]byte, error) {
-	return []byte(n.String()), nil
-}
-
-// Metadata implements the net.Addr interface.
+// Metadata contains metadata of transport protocol sessions.
 type Metadata struct {
-	Net     Network `json:"network"`
+	Network Network `json:"network"`
 	SrcIP   net.IP  `json:"sourceIP"`
 	MidIP   net.IP  `json:"dialerIP"`
 	DstIP   net.IP  `json:"destinationIP"`
@@ -51,8 +28,15 @@ func (m *Metadata) SourceAddress() string {
 	return net.JoinHostPort(m.SrcIP.String(), strconv.FormatUint(uint64(m.SrcPort), 10))
 }
 
+func (m *Metadata) Addr() net.Addr {
+	if udpAddr := m.UDPAddr(); udpAddr != nil {
+		return udpAddr
+	}
+	return &Addr{metadata: m}
+}
+
 func (m *Metadata) UDPAddr() *net.UDPAddr {
-	if m.Net != UDP || m.DstIP == nil {
+	if m.Network != UDP || m.DstIP == nil {
 		return nil
 	}
 	return &net.UDPAddr{
@@ -78,12 +62,19 @@ func (m *Metadata) SerializeSocksAddr() socks5.Addr {
 	return bytes.Join(buf, nil)
 }
 
-func (m *Metadata) Network() string {
-	return m.Net.String()
+// Addr implements the net.Addr interface.
+type Addr struct {
+	metadata *Metadata
 }
 
-// String returns destination address of this metadata.
-// Also, it implements net.Addr interface.
-func (m *Metadata) String() string {
-	return m.DestinationAddress()
+func (a *Addr) Metadata() *Metadata {
+	return a.metadata
+}
+
+func (a *Addr) Network() string {
+	return a.metadata.Network.String()
+}
+
+func (a *Addr) String() string {
+	return a.metadata.DestinationAddress()
 }

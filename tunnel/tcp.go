@@ -30,7 +30,7 @@ func handleTCPConn(localConn core.TCPConn) {
 		dstIP, dstPort = parseAddr(localConn.LocalAddr())
 	)
 	metadata := &M.Metadata{
-		Net:     M.TCP,
+		Network: M.TCP,
 		SrcIP:   srcIP,
 		SrcPort: srcPort,
 		DstIP:   dstIP,

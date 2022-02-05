@@ -33,7 +33,7 @@ func handleUDPConn(uc core.UDPConn) {
 		dstIP, dstPort = parseAddr(uc.LocalAddr())
 	)
 	metadata := &M.Metadata{
-		Net:     M.UDP,
+		Network: M.UDP,
 		SrcIP:   srcIP,
 		SrcPort: srcPort,
 		DstIP:   dstIP,
@@ -50,8 +50,9 @@ func handleUDPConn(uc core.UDPConn) {
 	pc = newUDPTracker(pc, metadata)
 	defer pc.Close()
 
-	go handleUDPToRemote(uc, pc, metadata)
-	handleUDPToLocal(uc, pc, metadata)
+	remote := metadata.Addr()
+	go handleUDPToRemote(uc, pc, remote)
+	handleUDPToLocal(uc, pc, remote)
 }
 
 func handleUDPToRemote(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {

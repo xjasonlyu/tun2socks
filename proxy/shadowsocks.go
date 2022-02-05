@@ -88,8 +88,8 @@ type ssPacketConn struct {
 
 func (pc *ssPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	var packet []byte
-	if m, ok := addr.(*M.Metadata); ok {
-		packet, err = socks5.EncodeUDPPacket(m.SerializeSocksAddr(), b)
+	if ma, ok := addr.(*M.Addr); ok {
+		packet, err = socks5.EncodeUDPPacket(ma.Metadata().SerializeSocksAddr(), b)
 	} else {
 		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddrToSocksAddr(addr), b)
 	}
