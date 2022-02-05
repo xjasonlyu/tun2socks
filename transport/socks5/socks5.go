@@ -361,6 +361,21 @@ func DecodeUDPPacket(packet []byte) (addr Addr, payload []byte, err error) {
 		return
 	}
 
+	// The FRAG field indicates whether or not this datagram is one of a
+	// number of fragments.  If implemented, the high-order bit indicates
+	// end-of-fragment sequence, while a value of X'00' indicates that this
+	// datagram is standalone.  Values between 1 and 127 indicate the
+	// fragment position within a fragment sequence.  Each receiver will
+	// have a REASSEMBLY QUEUE and a REASSEMBLY TIMER associated with these
+	// fragments.  The reassembly queue must be reinitialized and the
+	// associated fragments abandoned whenever the REASSEMBLY TIMER expires,
+	// or a new datagram arrives carrying a FRAG field whose value is less
+	// than the highest FRAG value processed for this fragment sequence.
+	// The reassembly timer MUST be no less than 5 seconds.  It is
+	// recommended that fragmentation be avoided by applications wherever
+	// possible.
+	//
+	// Ref: https://datatracker.ietf.org/doc/html/rfc1928#section-7
 	if packet[2] != 0x00 /* fragments */ {
 		err = errors.New("discarding fragmented payload")
 		return
