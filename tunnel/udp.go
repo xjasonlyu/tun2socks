@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
-	"github.com/xjasonlyu/tun2socks/v2/component/nat"
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
@@ -15,15 +14,8 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-var (
-	// _natTable uses source udp packet information
-	// as key to store destination udp packetConn.
-	_natTable = nat.NewTable()
-
-	// _udpSessionTimeout is the default timeout for
-	// each UDP session.
-	_udpSessionTimeout = 60 * time.Second
-)
+// _udpSessionTimeout is the default timeout for each UDP session.
+var _udpSessionTimeout = 60 * time.Second
 
 func SetUDPTimeout(v int) {
 	_udpSessionTimeout = time.Duration(v) * time.Second
@@ -33,98 +25,58 @@ func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
 	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
 }
 
-func handleUDP(packet core.UDPPacket) {
-	id := packet.ID()
+func handleUDPConn(uc core.UDPConn) {
+	defer uc.Close()
+
+	var (
+		srcIP, srcPort = parseAddr(uc.RemoteAddr())
+		dstIP, dstPort = parseAddr(uc.LocalAddr())
+	)
 	metadata := &M.Metadata{
 		Net:     M.UDP,
-		SrcIP:   net.IP(id.RemoteAddress),
-		SrcPort: id.RemotePort,
-		DstIP:   net.IP(id.LocalAddress),
-		DstPort: id.LocalPort,
+		SrcIP:   srcIP,
+		SrcPort: srcPort,
+		DstIP:   dstIP,
+		DstPort: dstPort,
 	}
 
-	generateNATKey := func(m *M.Metadata) string {
-		return m.SourceAddress() /* as Full Cone NAT Key */
-	}
-	key := generateNATKey(metadata)
-
-	handle := func(drop bool) bool {
-		pc := _natTable.Get(key)
-		if pc != nil {
-			handleUDPToRemote(packet, pc, metadata /* as net.Addr */, drop)
-			return true
-		}
-		return false
-	}
-
-	if handle(true /* drop */) {
+	pc, err := proxy.DialUDP(metadata)
+	if err != nil {
+		log.Warnf("[UDP] dial %s error: %v", metadata.DestinationAddress(), err)
 		return
 	}
+	metadata.MidIP, metadata.MidPort = parseAddr(pc.LocalAddr())
 
-	lockKey := key + "-lock"
-	cond, loaded := _natTable.GetOrCreateLock(lockKey)
-	go func() {
-		if loaded {
-			cond.L.Lock()
-			cond.Wait()
-			handle(true) /* drop after sending data to remote */
-			cond.L.Unlock()
-			return
-		}
+	pc = newUDPTracker(pc, metadata)
+	defer pc.Close()
 
-		defer func() {
-			_natTable.Delete(lockKey)
-			cond.Broadcast()
-		}()
-
-		pc, err := proxy.DialUDP(metadata)
-		if err != nil {
-			log.Warnf("[UDP] dial %s error: %v", metadata.DestinationAddress(), err)
-			return
-		}
-
-		if dialerAddr, ok := pc.LocalAddr().(*net.UDPAddr); ok {
-			metadata.MidIP = dialerAddr.IP
-			metadata.MidPort = uint16(dialerAddr.Port)
-		} else { /* fallback */
-			metadata.MidIP, metadata.MidPort = parseAddr(pc.LocalAddr().String())
-		}
-
-		pc = newUDPTracker(pc, metadata)
-
-		go func() {
-			defer pc.Close()
-			defer packet.Drop()
-			defer _natTable.Delete(key)
-
-			handleUDPToLocal(packet, pc)
-		}()
-
-		_natTable.Set(key, pc)
-		handle(false /* drop */)
-	}()
+	go handleUDPToRemote(uc, pc, metadata)
+	handleUDPToLocal(uc, pc, metadata)
 }
 
-func handleUDPToRemote(packet core.UDPPacket, pc net.PacketConn, remote net.Addr, drop bool) {
-	defer func() {
-		if drop {
-			packet.Drop()
-		}
-	}()
-
-	if _, err := pc.WriteTo(packet.Data() /* data */, remote); err != nil {
-		log.Warnf("[UDP] write to %s error: %v", remote, err)
-	}
-	pc.SetReadDeadline(time.Now().Add(_udpSessionTimeout)) /* reset timeout */
-
-	log.Infof("[UDP] %s --> %s", packet.RemoteAddr(), remote)
-}
-
-func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn) {
+func handleUDPToRemote(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 
-	for /* just loop */ {
+	for {
+		n, err := uc.Read(buf)
+		if err != nil {
+			return
+		}
+
+		if _, err := pc.WriteTo(buf[:n], remote); err != nil {
+			log.Warnf("[UDP] write to %s error: %v", remote, err)
+		}
+
+		log.Infof("[UDP] %s --> %s", uc.RemoteAddr(), remote)
+	}
+}
+
+func handleUDPToLocal(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
+	buf := pool.Get(pool.MaxSegmentSize)
+	defer pool.Put(buf)
+
+	for {
 		pc.SetReadDeadline(time.Now().Add(_udpSessionTimeout))
 		n, from, err := pc.ReadFrom(buf)
 		if err != nil {
@@ -134,11 +86,14 @@ func handleUDPToLocal(packet core.UDPPacket, pc net.PacketConn) {
 			return
 		}
 
-		if _, err := packet.WriteBack(buf[:n], from); err != nil {
-			log.Warnf("[UDP] write back from %s error: %v", from, err)
+		if from.Network() != remote.Network() || from.String() != remote.String() {
+			log.Warnf("[UDP] drop unknown packet from %s", from)
 			return
 		}
 
-		log.Infof("[UDP] %s <-- %s", packet.RemoteAddr(), from)
+		if _, err := uc.Write(buf[:n]); err != nil {
+			log.Warnf("[UDP] write back from %s error: %v", from, err)
+			return
+		}
 	}
 }

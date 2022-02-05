@@ -22,16 +22,19 @@ func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
 	return statistic.NewTCPTracker(conn, metadata, statistic.DefaultManager)
 }
 
-func handleTCP(localConn core.TCPConn) {
+func handleTCPConn(localConn core.TCPConn) {
 	defer localConn.Close()
 
-	id := localConn.ID()
+	var (
+		srcIP, srcPort = parseAddr(localConn.RemoteAddr())
+		dstIP, dstPort = parseAddr(localConn.LocalAddr())
+	)
 	metadata := &M.Metadata{
 		Net:     M.TCP,
-		SrcIP:   net.IP(id.RemoteAddress),
-		SrcPort: id.RemotePort,
-		DstIP:   net.IP(id.LocalAddress),
-		DstPort: id.LocalPort,
+		SrcIP:   srcIP,
+		SrcPort: srcPort,
+		DstIP:   dstIP,
+		DstPort: dstPort,
 	}
 
 	targetConn, err := proxy.Dial(metadata)
@@ -39,13 +42,7 @@ func handleTCP(localConn core.TCPConn) {
 		log.Warnf("[TCP] dial %s error: %v", metadata.DestinationAddress(), err)
 		return
 	}
-
-	if dialerAddr, ok := targetConn.LocalAddr().(*net.TCPAddr); ok {
-		metadata.MidIP = dialerAddr.IP
-		metadata.MidPort = uint16(dialerAddr.Port)
-	} else { /* fallback */
-		metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr().String())
-	}
+	metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr())
 
 	targetConn = newTCPTracker(targetConn, metadata)
 	defer targetConn.Close()

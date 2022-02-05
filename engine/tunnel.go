@@ -9,10 +9,10 @@ var _ core.Handler = (*fakeTunnel)(nil)
 
 type fakeTunnel struct{}
 
-func (*fakeTunnel) Add(conn core.TCPConn) {
-	tunnel.Add(conn)
+func (*fakeTunnel) HandleTCPConn(conn core.TCPConn) {
+	tunnel.TCPIn() <- conn
 }
 
-func (*fakeTunnel) AddPacket(packet core.UDPPacket) {
-	tunnel.AddPacket(packet)
+func (*fakeTunnel) HandleUDPConn(conn core.UDPConn) {
+	tunnel.UDPIn() <- conn
 }
