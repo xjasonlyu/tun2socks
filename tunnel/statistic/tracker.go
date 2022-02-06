@@ -6,7 +6,7 @@ import (
 
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 
-	"github.com/gofrs/uuid"
+	"github.com/google/uuid"
 	"go.uber.org/atomic"
 )
 
@@ -31,7 +31,7 @@ type tcpTracker struct {
 }
 
 func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) *tcpTracker {
-	id, _ := uuid.NewV4()
+	id, _ := uuid.NewRandom()
 
 	tt := &tcpTracker{
 		Conn:    conn,
@@ -82,7 +82,7 @@ type udpTracker struct {
 }
 
 func NewUDPTracker(conn net.PacketConn, metadata *M.Metadata, manager *Manager) *udpTracker {
-	id, _ := uuid.NewV4()
+	id, _ := uuid.NewRandom()
 
 	ut := &udpTracker{
 		PacketConn: conn,
