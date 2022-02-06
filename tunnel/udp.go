@@ -25,6 +25,7 @@ func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
 	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
 }
 
+// TODO: Port Restricted NAT support.
 func handleUDPConn(uc adapter.UDPConn) {
 	defer uc.Close()
 
