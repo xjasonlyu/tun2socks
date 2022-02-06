@@ -59,7 +59,7 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 		}
 	}
 
-	_, err = socks5.ClientHandshake(c, metadata.SerializeSocksAddr(), socks5.CmdConnect, user)
+	_, err = socks5.ClientHandshake(c, serializeSocksAddr(metadata), socks5.CmdConnect, user)
 	return
 }
 
@@ -142,9 +142,9 @@ type socksPacketConn struct {
 func (pc *socksPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	var packet []byte
 	if ma, ok := addr.(*M.Addr); ok {
-		packet, err = socks5.EncodeUDPPacket(ma.Metadata().SerializeSocksAddr(), b)
+		packet, err = socks5.EncodeUDPPacket(serializeSocksAddr(ma.Metadata()), b)
 	} else {
-		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddrToSocksAddr(addr), b)
+		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddr(addr), b)
 	}
 
 	if err != nil {
@@ -177,4 +177,8 @@ func (pc *socksPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
 func (pc *socksPacketConn) Close() error {
 	pc.tcpConn.Close()
 	return pc.PacketConn.Close()
+}
+
+func serializeSocksAddr(m *M.Metadata) socks5.Addr {
+	return socks5.SerializeAddr("", m.DstIP, m.DstPort)
 }

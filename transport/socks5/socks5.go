@@ -278,74 +278,55 @@ func SplitAddr(b []byte) Addr {
 	return b[:addrLen]
 }
 
-// ParseAddr parses the address in string s. Returns nil if failed.
-func ParseAddr(s string) Addr {
+// SerializeAddr serializes destination address and port to Addr.
+// If a domain name is provided, AtypDomainName would be used first.
+func SerializeAddr(domainName string, dstIP net.IP, dstPort uint16) Addr {
+	var (
+		buf  [][]byte
+		port [2]byte
+	)
+	binary.BigEndian.PutUint16(port[:], dstPort)
+
+	if domainName != "" /* Domain Name */ {
+		length := len(domainName)
+		buf = [][]byte{{AtypDomainName, uint8(length)}, []byte(domainName), port[:]}
+	} else if dstIP.To4() != nil /* IPv4 */ {
+		buf = [][]byte{{AtypIPv4}, dstIP.To4(), port[:]}
+	} else /* IPv6 */ {
+		buf = [][]byte{{AtypIPv6}, dstIP.To16(), port[:]}
+	}
+	return bytes.Join(buf, nil)
+}
+
+// ParseAddr parses a socks addr from net.Addr.
+// This is a fast path of ParseAddrString(addr.String())
+func ParseAddr(addr net.Addr) Addr {
+	switch v := addr.(type) {
+	case *net.TCPAddr:
+		return SerializeAddr("", v.IP, uint16(v.Port))
+	case *net.UDPAddr:
+		return SerializeAddr("", v.IP, uint16(v.Port))
+	default:
+		return ParseAddrString(addr.String())
+	}
+}
+
+// ParseAddrString parses the address in string s to Addr. Returns nil if failed.
+func ParseAddrString(s string) Addr {
 	host, port, err := net.SplitHostPort(s)
 	if err != nil {
 		return nil
 	}
 
-	var addr Addr
-	if ip := net.ParseIP(host); ip != nil {
-		if ip4 := ip.To4(); ip4 != nil {
-			addr = make([]byte, 1+net.IPv4len+2)
-			addr[0] = AtypIPv4
-			copy(addr[1:], ip4)
-		} else {
-			addr = make([]byte, 1+net.IPv6len+2)
-			addr[0] = AtypIPv6
-			copy(addr[1:], ip)
-		}
-	} else {
-		if len(host) > 255 {
-			return nil
-		}
-		addr = make([]byte, 1+1+len(host)+2)
-		addr[0] = AtypDomainName
-		addr[1] = byte(len(host))
-		copy(addr[2:], host)
-	}
-
-	p, err := strconv.ParseUint(port, 10, 16)
+	dstPort, err := strconv.ParseUint(port, 10, 16)
 	if err != nil {
 		return nil
 	}
-	binary.BigEndian.PutUint16(addr[len(addr)-2:], uint16(p))
 
-	return addr
-}
-
-// ParseAddrToSocksAddr parse a socks addr from net.addr
-// This is a fast path of ParseAddr(addr.String())
-func ParseAddrToSocksAddr(addr net.Addr) Addr {
-	var ip net.IP
-	var port int
-	if udpAddr, ok := addr.(*net.UDPAddr); ok {
-		ip = udpAddr.IP
-		port = udpAddr.Port
-	} else if tcpAddr, ok := addr.(*net.TCPAddr); ok {
-		ip = tcpAddr.IP
-		port = tcpAddr.Port
+	if ip := net.ParseIP(host); ip != nil {
+		return SerializeAddr("", ip, uint16(dstPort))
 	}
-
-	// fallback parse
-	if ip == nil {
-		return ParseAddr(addr.String())
-	}
-
-	var parsed Addr
-	if ip4 := ip.To4(); ip4 != nil {
-		parsed = make([]byte, 1+net.IPv4len+2)
-		parsed[0] = AtypIPv4
-		copy(parsed[1:], ip4)
-		binary.BigEndian.PutUint16(parsed[1+net.IPv4len:], uint16(port))
-	} else {
-		parsed = make([]byte, 1+net.IPv6len+2)
-		parsed[0] = AtypIPv6
-		copy(parsed[1:], ip)
-		binary.BigEndian.PutUint16(parsed[1+net.IPv6len:], uint16(port))
-	}
-	return parsed
+	return SerializeAddr(host, nil, uint16(dstPort))
 }
 
 // DecodeUDPPacket split `packet` to addr payload, and this function is mutable with `packet`

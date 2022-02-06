@@ -1,12 +1,8 @@
 package metadata
 
 import (
-	"bytes"
-	"encoding/binary"
 	"net"
 	"strconv"
-
-	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 )
 
 // Metadata contains metadata of transport protocol sessions.
@@ -53,23 +49,6 @@ func (m *Metadata) UDPAddr() *net.UDPAddr {
 		IP:   m.DstIP,
 		Port: int(m.DstPort),
 	}
-}
-
-func (m *Metadata) SerializeSocksAddr() socks5.Addr {
-	var (
-		buf  [][]byte
-		port [2]byte
-	)
-	binary.BigEndian.PutUint16(port[:], m.DstPort)
-
-	if m.DstIP.To4() != nil /* IPv4 */ {
-		aType := socks5.AtypIPv4
-		buf = [][]byte{{aType}, m.DstIP.To4(), port[:]}
-	} else /* IPv6 */ {
-		aType := socks5.AtypIPv6
-		buf = [][]byte{{aType}, m.DstIP.To16(), port[:]}
-	}
-	return bytes.Join(buf, nil)
 }
 
 // Addr implements the net.Addr interface.
