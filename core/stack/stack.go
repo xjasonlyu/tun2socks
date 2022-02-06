@@ -2,7 +2,7 @@
 package stack
 
 import (
-	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
@@ -16,12 +16,12 @@ import (
 type Stack struct {
 	*stack.Stack
 
-	handler core.Handler
+	handler adapter.Handler
 	nicID   tcpip.NICID
 }
 
 // New allocates a new *Stack with given options.
-func New(ep stack.LinkEndpoint, handler core.Handler, opts ...Option) (*Stack, error) {
+func New(ep stack.LinkEndpoint, handler adapter.Handler, opts ...Option) (*Stack, error) {
 	s := &Stack{
 		Stack: stack.New(stack.Options{
 			NetworkProtocols: []stack.NetworkProtocolFactory{

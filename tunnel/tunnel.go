@@ -1,13 +1,13 @@
 package tunnel
 
 import (
-	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 )
 
 // Unbuffered TCP/UDP queues.
 var (
-	_tcpQueue = make(chan core.TCPConn)
-	_udpQueue = make(chan core.UDPConn)
+	_tcpQueue = make(chan adapter.TCPConn)
+	_udpQueue = make(chan adapter.UDPConn)
 )
 
 func init() {
@@ -15,12 +15,12 @@ func init() {
 }
 
 // TCPIn return fan-in TCP queue.
-func TCPIn() chan<- core.TCPConn {
+func TCPIn() chan<- adapter.TCPConn {
 	return _tcpQueue
 }
 
 // UDPIn return fan-in UDP queue.
-func UDPIn() chan<- core.UDPConn {
+func UDPIn() chan<- adapter.UDPConn {
 	return _udpQueue
 }
 

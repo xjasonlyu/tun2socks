@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
-	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
@@ -25,7 +25,7 @@ func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
 	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
 }
 
-func handleUDPConn(uc core.UDPConn) {
+func handleUDPConn(uc adapter.UDPConn) {
 	defer uc.Close()
 
 	var (
@@ -55,7 +55,7 @@ func handleUDPConn(uc core.UDPConn) {
 	handleUDPToLocal(uc, pc, remote)
 }
 
-func handleUDPToRemote(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
+func handleUDPToRemote(uc adapter.UDPConn, pc net.PacketConn, remote net.Addr) {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 
@@ -74,7 +74,7 @@ func handleUDPToRemote(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
 	}
 }
 
-func handleUDPToLocal(uc core.UDPConn, pc net.PacketConn, remote net.Addr) {
+func handleUDPToLocal(uc adapter.UDPConn, pc net.PacketConn, remote net.Addr) {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 

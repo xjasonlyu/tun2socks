@@ -1,18 +1,18 @@
 package engine
 
 import (
-	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 )
 
-var _ core.Handler = (*fakeTunnel)(nil)
+var _ adapter.Handler = (*fakeTunnel)(nil)
 
 type fakeTunnel struct{}
 
-func (*fakeTunnel) HandleTCPConn(conn core.TCPConn) {
+func (*fakeTunnel) HandleTCPConn(conn adapter.TCPConn) {
 	tunnel.TCPIn() <- conn
 }
 
-func (*fakeTunnel) HandleUDPConn(conn core.UDPConn) {
+func (*fakeTunnel) HandleUDPConn(conn adapter.UDPConn) {
 	tunnel.UDPIn() <- conn
 }

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
-	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
@@ -22,7 +22,7 @@ func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
 	return statistic.NewTCPTracker(conn, metadata, statistic.DefaultManager)
 }
 
-func handleTCPConn(localConn core.TCPConn) {
+func handleTCPConn(localConn adapter.TCPConn) {
 	defer localConn.Close()
 
 	var (
