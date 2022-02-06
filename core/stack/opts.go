@@ -42,6 +42,9 @@ const (
 	// tcp selective ACK.
 	tcpSACKEnabled = true
 
+	// tcpRecovery is the loss detection algorithm used by TCP.
+	tcpRecovery = tcpip.TCPRACKLossDetection
+
 	// tcpMinBufferSize is the smallest size of a send/recv buffer.
 	tcpMinBufferSize = tcp.MinBufferSize // 4 KiB
 
@@ -82,6 +85,17 @@ func WithDefault() Option {
 			// TCP selective ACK Option, see:
 			// https://tools.ietf.org/html/rfc2018
 			WithTCPSACKEnabled(tcpSACKEnabled),
+
+			// TCPRACKLossDetection: indicates RACK is used for loss detection and
+			// recovery.
+			//
+			// TCPRACKStaticReoWnd: indicates the reordering window should not be
+			// adjusted when DSACK is received.
+			//
+			// TCPRACKNoDupTh: indicates RACK should not consider the classic three
+			// duplicate acknowledgements rule to mark the segments as lost. This
+			// is used when reordering is not detected.
+			WithTCPRecovery(tcpRecovery),
 		}
 
 		for _, opt := range opts {
@@ -193,6 +207,16 @@ func WithTCPSACKEnabled(v bool) Option {
 		opt := tcpip.TCPSACKEnabled(v)
 		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &opt); err != nil {
 			return fmt.Errorf("set TCP SACK: %s", err)
+		}
+		return nil
+	}
+}
+
+// WithTCPRecovery sets the recovery option for TCP.
+func WithTCPRecovery(v tcpip.TCPRecovery) Option {
+	return func(s *Stack) error {
+		if err := s.SetTransportProtocolOption(tcp.ProtocolNumber, &v); err != nil {
+			return fmt.Errorf("set TCP Recovery: %s", err)
 		}
 		return nil
 	}
