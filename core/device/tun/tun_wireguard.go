@@ -21,7 +21,13 @@ type TUN struct {
 	offset int
 }
 
-func Open(name string, mtu uint32) (device.Device, error) {
+func Open(name string, mtu uint32) (_ device.Device, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("open tun: %v", r)
+		}
+	}()
+
 	var (
 		offset     = 4 /* 4 bytes TUN_PI */
 		defaultMTU = 1500
@@ -44,11 +50,11 @@ func Open(name string, mtu uint32) (device.Device, error) {
 	}
 	t.nt = nt.(*tun.NativeTun)
 
-	_mtu, err := nt.MTU()
+	tunMTU, err := nt.MTU()
 	if err != nil {
 		return nil, fmt.Errorf("get mtu: %w", err)
 	}
-	t.mtu = uint32(_mtu)
+	t.mtu = uint32(tunMTU)
 
 	ep, err := iobased.New(t, t.mtu, offset)
 	if err != nil {
