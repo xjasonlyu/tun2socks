@@ -17,7 +17,7 @@ import (
 const Version = 0x05
 
 // Command is request commands as defined in RFC 1928 section 4.
-type Command = uint8
+type Command uint8
 
 // SOCKS request commands as defined in RFC 1928 section 4.
 const (
@@ -25,6 +25,19 @@ const (
 	CmdBind         Command = 0x02
 	CmdUDPAssociate Command = 0x03
 )
+
+func (c Command) String() string {
+	switch c {
+	case CmdConnect:
+		return "CONNECT"
+	case CmdBind:
+		return "BIND"
+	case CmdUDPAssociate:
+		return "UDP ASSOCIATE"
+	default:
+		return "UNDEFINED"
+	}
+}
 
 type Atyp = uint8
 
@@ -59,7 +72,7 @@ func (r Reply) String() string {
 	case 0x08:
 		return "address type not supported"
 	default:
-		return "unassigned"
+		return fmt.Sprintf("unassigned <%#02x>", r)
 	}
 }
 
@@ -204,7 +217,7 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 	}
 
 	// VER, CMD, RSV, ADDR
-	if _, err := rw.Write(bytes.Join([][]byte{{Version, command, 0x00 /* RSV */}, addr}, nil)); err != nil {
+	if _, err := rw.Write(bytes.Join([][]byte{{Version, byte(command), 0x00 /* RSV */}, addr}, nil)); err != nil {
 		return nil, err
 	}
 
@@ -214,7 +227,7 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 	}
 
 	if rep := Reply(buf[1]); rep != 0x00 /* SUCCEEDED */ {
-		return nil, fmt.Errorf("%#02x: %s", uint8(rep), rep)
+		return nil, fmt.Errorf("%s: %s", command, rep)
 	}
 
 	return ReadAddr(rw, buf)
