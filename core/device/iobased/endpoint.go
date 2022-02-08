@@ -60,18 +60,27 @@ func New(rw io.ReadWriter, mtu uint32, offset int) (*Endpoint, error) {
 	}, nil
 }
 
+func (e *Endpoint) Close() {
+	e.Endpoint.Close()
+}
+
 // Attach launches the goroutine that reads packets from io.Reader and
 // dispatches them via the provided dispatcher.
 func (e *Endpoint) Attach(dispatcher stack.NetworkDispatcher) {
 	e.once.Do(func() {
-		go e.dispatchLoop()
-		go e.outboundLoop()
+		ctx, cancel := context.WithCancel(context.Background())
+		go e.dispatchLoop(cancel)
+		go e.outboundLoop(ctx)
 	})
 	e.Endpoint.Attach(dispatcher)
 }
 
 // dispatchLoop dispatches packets to upper layer.
-func (e *Endpoint) dispatchLoop() {
+func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
+	// Call cancel() to ensure (*Endpoint).outboundLoop(context.Context) exits
+	// gracefully after (*Endpoint).dispatchLoop(context.CancelFunc) returns.
+	defer cancel()
+
 	for {
 		data := make([]byte, e.offset+int(e.mtu))
 
@@ -100,10 +109,7 @@ func (e *Endpoint) dispatchLoop() {
 
 // outboundLoop reads outbound packets from channel, and then it calls
 // writePacket to send those packets back to lower layer.
-func (e *Endpoint) outboundLoop() {
-	// TODO: support cancel() in the future.
-	ctx := context.Background()
-
+func (e *Endpoint) outboundLoop(ctx context.Context) {
 	for {
 		pkt := e.ReadContext(ctx)
 		if pkt == nil {
