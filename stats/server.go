@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/xjasonlyu/tun2socks/v2/internal/debug"
+	"github.com/xjasonlyu/tun2socks/v2/internal/module"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 	V "github.com/xjasonlyu/tun2socks/v2/version"
@@ -212,5 +214,10 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 }
 
 func version(w http.ResponseWriter, r *http.Request) {
-	render.JSON(w, r, render.M{"version": V.Version, "commit": V.GitCommit})
+	render.JSON(w, r, render.M{
+		"version": V.Version,
+		"commit":  V.GitCommit,
+		"debug":   debug.Debug(),
+		"modules": module.Info(),
+	})
 }
