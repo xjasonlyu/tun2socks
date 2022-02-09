@@ -10,9 +10,9 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/v2/internal/debug"
 	"github.com/xjasonlyu/tun2socks/v2/internal/module"
+	V "github.com/xjasonlyu/tun2socks/v2/internal/version"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
-	V "github.com/xjasonlyu/tun2socks/v2/version"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"

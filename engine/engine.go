@@ -9,12 +9,11 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/stack"
+	"github.com/xjasonlyu/tun2socks/v2/internal/version"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/stats"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
-	"github.com/xjasonlyu/tun2socks/v2/version"
-
 	"gopkg.in/yaml.v3"
 )
 
