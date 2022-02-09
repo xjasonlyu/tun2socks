@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"net"
 	"os"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
@@ -130,17 +131,24 @@ func (e *engine) setInterface() error {
 		if err := dialer.BindToInterface(e.Interface); err != nil {
 			return err
 		}
-		log.Infof("[DIALER] use interface: %s", e.Interface)
+		log.Infof("[DIALER] bind to interface: %s", e.Interface)
 	}
 	return nil
 }
 
 func (e *engine) setStats() error {
 	if e.Stats != "" {
+		addr, err := net.ResolveTCPAddr("tcp", e.Stats)
+		if err != nil {
+			return err
+		}
+
 		go func() {
-			_ = stats.Start(e.Stats, e.Token)
+			if err := stats.Start(addr.String(), e.Token); err != nil {
+				log.Warnf("[STATS] stats start error: %v", err)
+			}
 		}()
-		log.Infof("[STATS] serve at: http://%s", e.Stats)
+		log.Infof("[STATS] serve at: http://%s", addr)
 	}
 	return nil
 }
