@@ -25,16 +25,13 @@ func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
 func handleTCPConn(localConn adapter.TCPConn) {
 	defer localConn.Close()
 
-	var (
-		srcIP, srcPort = parseAddr(localConn.RemoteAddr())
-		dstIP, dstPort = parseAddr(localConn.LocalAddr())
-	)
+	id := localConn.ID()
 	metadata := &M.Metadata{
 		Network: M.TCP,
-		SrcIP:   srcIP,
-		SrcPort: srcPort,
-		DstIP:   dstIP,
-		DstPort: dstPort,
+		SrcIP:   net.IP(id.RemoteAddress),
+		SrcPort: id.RemotePort,
+		DstIP:   net.IP(id.LocalAddress),
+		DstPort: id.LocalPort,
 	}
 
 	targetConn, err := proxy.Dial(metadata)

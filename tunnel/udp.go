@@ -29,16 +29,13 @@ func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
 func handleUDPConn(uc adapter.UDPConn) {
 	defer uc.Close()
 
-	var (
-		srcIP, srcPort = parseAddr(uc.RemoteAddr())
-		dstIP, dstPort = parseAddr(uc.LocalAddr())
-	)
+	id := uc.ID()
 	metadata := &M.Metadata{
 		Network: M.UDP,
-		SrcIP:   srcIP,
-		SrcPort: srcPort,
-		DstIP:   dstIP,
-		DstPort: dstPort,
+		SrcIP:   net.IP(id.RemoteAddress),
+		SrcPort: id.RemotePort,
+		DstIP:   net.IP(id.LocalAddress),
+		DstPort: id.LocalPort,
 	}
 
 	pc, err := proxy.DialUDP(metadata)

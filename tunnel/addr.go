@@ -12,6 +12,8 @@ func parseAddr(addr net.Addr) (net.IP, uint16) {
 		return v.IP, uint16(v.Port)
 	case *net.UDPAddr:
 		return v.IP, uint16(v.Port)
+	case nil:
+		return nil, 0
 	default:
 		return parseAddrString(addr.String())
 	}

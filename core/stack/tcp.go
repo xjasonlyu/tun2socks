@@ -6,6 +6,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
@@ -40,11 +41,15 @@ func withTCPHandler() Option {
 				r.Complete(true)
 				return
 			}
-			r.Complete(false)
+			defer r.Complete(false)
 
 			setKeepalive(ep)
 
-			s.handler.HandleTCPConn(gonet.NewTCPConn(&wq, ep))
+			conn := &tcpConn{
+				TCPConn: gonet.NewTCPConn(&wq, ep),
+				id:      r.ID(),
+			}
+			s.handler.HandleTCPConn(conn)
 		})
 		s.SetTransportProtocolHandler(tcp.ProtocolNumber, tcpForwarder.HandlePacket)
 		return nil
@@ -64,4 +69,13 @@ func setKeepalive(ep tcpip.Endpoint) error {
 		return fmt.Errorf("set keepalive interval: %s", err)
 	}
 	return nil
+}
+
+type tcpConn struct {
+	*gonet.TCPConn
+	id stack.TransportEndpointID
+}
+
+func (c *tcpConn) ID() *stack.TransportEndpointID {
+	return &c.id
 }

@@ -2,6 +2,7 @@ package stack
 
 import (
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
@@ -16,9 +17,22 @@ func withUDPHandler() Option {
 				return
 			}
 
-			s.handler.HandleUDPConn(gonet.NewUDPConn(s.Stack, &wq, ep))
+			conn := &udpConn{
+				UDPConn: gonet.NewUDPConn(s.Stack, &wq, ep),
+				id:      r.ID(),
+			}
+			s.handler.HandleUDPConn(conn)
 		})
 		s.SetTransportProtocolHandler(udp.ProtocolNumber, udpForwarder.HandlePacket)
 		return nil
 	}
+}
+
+type udpConn struct {
+	*gonet.UDPConn
+	id stack.TransportEndpointID
+}
+
+func (c *udpConn) ID() *stack.TransportEndpointID {
+	return &c.id
 }
