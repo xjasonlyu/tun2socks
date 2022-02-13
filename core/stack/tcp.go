@@ -20,6 +20,12 @@ const (
 	// of in-flight tcp connection attempts.
 	maxConnAttempts = 2 << 10
 
+	// tcpKeepaliveCount is the maximum number of
+	// TCP keep-alive probes to send before giving up
+	// and killing the connection if no response is
+	// obtained from the other end.
+	tcpKeepaliveCount = 9
+
 	// tcpKeepaliveIdle specifies the time a connection
 	// must remain idle before the first TCP keepalive
 	// packet is sent. Once this time is reached,
@@ -67,6 +73,10 @@ func setKeepalive(ep tcpip.Endpoint) error {
 	interval := tcpip.KeepaliveIntervalOption(tcpKeepaliveInterval)
 	if err := ep.SetSockOpt(&interval); err != nil {
 		return fmt.Errorf("set keepalive interval: %s", err)
+	}
+
+	if err := ep.SetSockOptInt(tcpip.KeepaliveCountOption, tcpKeepaliveCount); err != nil {
+		return fmt.Errorf("set keepalive count: %s", err)
 	}
 	return nil
 }
