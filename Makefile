@@ -59,7 +59,7 @@ debug: BUILD_TAGS += debug
 debug: all
 
 tun2socks:
-	GOAMD64=v3 $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)
+	$(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
