@@ -1,10 +1,14 @@
-package dialer
+package dns
 
-import "net"
+import (
+	"net"
+
+	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
+)
 
 func init() {
 	// We must use this DialContext to query DNS
 	// when using net default resolver.
 	net.DefaultResolver.PreferGo = true
-	net.DefaultResolver.Dial = DialContext
+	net.DefaultResolver.Dial = dialer.DialContext
 }
