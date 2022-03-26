@@ -1,6 +1,6 @@
 //go:build debug
 
-package debug
+package version
 
 func init() {
 	_debug = true

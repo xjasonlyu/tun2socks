@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"runtime"
 	"strings"
-
-	"github.com/xjasonlyu/tun2socks/v2/internal/debug"
 )
 
 const Name = "tun2socks"
@@ -25,7 +23,7 @@ func versionize(s string) string {
 }
 
 func String() string {
-	if !debug.Debug() {
+	if !Debug() {
 		return fmt.Sprintf("%s-%s", Name, versionize(Version))
 	}
 	return fmt.Sprintf("%s-%s (debug)", Name, versionize(Version))
