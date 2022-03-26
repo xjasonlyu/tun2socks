@@ -1,7 +1,7 @@
+//go:build debug
+
 package version
 
-var _debug = false
-
-func Debug() bool {
-	return _debug
+func init() {
+	_debug = true
 }

@@ -9,6 +9,8 @@ import (
 const Name = "tun2socks"
 
 var (
+	_debug = false
+
 	// Version can be set at link time by executing
 	// the command: `git describe --abbrev=0 --tags HEAD`
 	Version string
@@ -20,6 +22,10 @@ var (
 
 func versionize(s string) string {
 	return strings.TrimPrefix(s, "v")
+}
+
+func Debug() bool {
+	return _debug
 }
 
 func String() string {
