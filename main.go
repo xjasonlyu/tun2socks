@@ -6,9 +6,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	_ "github.com/xjasonlyu/tun2socks/v2/common/automaxprocs"
 	"github.com/xjasonlyu/tun2socks/v2/engine"
 	"github.com/xjasonlyu/tun2socks/v2/log"
+
+	"go.uber.org/automaxprocs/maxprocs"
 )
 
 var key = new(engine.Key)
@@ -29,6 +30,8 @@ func init() {
 }
 
 func main() {
+	maxprocs.Set(maxprocs.Logger(func(string, ...any) {}))
+
 	engine.Insert(key)
 
 	checkErr := func(msg string, f func() error) {
