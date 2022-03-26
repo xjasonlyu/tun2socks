@@ -15,7 +15,7 @@ jobs:
     steps:
 
       - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
@@ -53,7 +53,7 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
           tags: |
             xjasonlyu/tun2socks:dev
             ghcr.io/xjasonlyu/tun2socks:dev
@@ -64,7 +64,7 @@ jobs:
         with:
           context: .
           push: true
-          platforms: linux/amd64,linux/arm/v7,linux/arm64
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64
           tags: |
             xjasonlyu/tun2socks:latest
             xjasonlyu/tun2socks:${{ steps.shell.outputs.version }}
