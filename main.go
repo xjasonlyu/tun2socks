@@ -58,14 +58,14 @@ func main() {
 
 	engine.Insert(key)
 
-	assert := func(msg string, err error) {
-		if err != nil {
+	assert := func(msg string, f func() error) {
+		if err := f(); err != nil {
 			log.Fatalf("Failed to %s: %v", msg, err)
 		}
 	}
 
-	assert("start engine", engine.Start())
-	defer assert("stop engine", engine.Stop())
+	assert("start engine", engine.Start)
+	defer assert("stop engine", engine.Stop)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
