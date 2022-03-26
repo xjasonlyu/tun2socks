@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	_logCh  = make(chan interface{})
+	_logCh  = make(chan any)
 	_source = observable.NewObservable(_logCh)
 )
 
@@ -18,7 +18,7 @@ type Event struct {
 	Time    time.Time `json:"time"`
 }
 
-func newEvent(level Level, format string, args ...interface{}) *Event {
+func newEvent(level Level, format string, args ...any) *Event {
 	event := &Event{
 		Level:   level,
 		Time:    time.Now(),

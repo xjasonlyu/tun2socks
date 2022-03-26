@@ -19,27 +19,27 @@ func SetLevel(level Level) {
 	_defaultLevel.Store(uint32(level))
 }
 
-func Debugf(format string, args ...interface{}) {
+func Debugf(format string, args ...any) {
 	logf(DebugLevel, format, args...)
 }
 
-func Infof(format string, args ...interface{}) {
+func Infof(format string, args ...any) {
 	logf(InfoLevel, format, args...)
 }
 
-func Warnf(format string, args ...interface{}) {
+func Warnf(format string, args ...any) {
 	logf(WarnLevel, format, args...)
 }
 
-func Errorf(format string, args ...interface{}) {
+func Errorf(format string, args ...any) {
 	logf(ErrorLevel, format, args...)
 }
 
-func Fatalf(format string, args ...interface{}) {
+func Fatalf(format string, args ...any) {
 	logrus.Fatalf(format, args...)
 }
 
-func logf(level Level, format string, args ...interface{}) {
+func logf(level Level, format string, args ...any) {
 	event := newEvent(level, format, args...)
 	if uint32(event.Level) > _defaultLevel.Load() {
 		return

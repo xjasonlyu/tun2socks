@@ -7,5 +7,5 @@ import (
 )
 
 func init() {
-	maxprocs.Set(maxprocs.Logger(func(string, ...interface{}) {}))
+	maxprocs.Set(maxprocs.Logger(func(string, ...any) {}))
 }

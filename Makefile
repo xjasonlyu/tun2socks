@@ -19,12 +19,15 @@ GO_BUILD = GO111MODULE=$(GO111MODULE) CGO_ENABLED=$(CGO_ENABLED) \
 
 UNIX_ARCH_LIST = \
 	darwin-amd64 \
+	darwin-amd64-v3 \
 	darwin-arm64 \
 	freebsd-386 \
 	freebsd-amd64 \
+	freebsd-amd64-v3 \
 	freebsd-arm64 \
 	linux-386 \
 	linux-amd64 \
+	linux-amd64-v3 \
 	linux-arm64 \
 	linux-armv5 \
 	linux-armv6 \
@@ -40,11 +43,13 @@ UNIX_ARCH_LIST = \
 	linux-s390x \
 	openbsd-386 \
 	openbsd-amd64 \
+	openbsd-amd64-v3 \
 	openbsd-arm64
 
 WINDOWS_ARCH_LIST = \
 	windows-386 \
 	windows-amd64 \
+	windows-amd64-v3 \
 	windows-arm64 \
 	windows-arm32v7
 
@@ -54,10 +59,13 @@ debug: BUILD_TAGS += debug
 debug: all
 
 tun2socks:
-	$(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)
+	GOAMD64=v3 $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)
 
 darwin-amd64:
 	GOARCH=amd64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
+darwin-amd64-v3:
+	GOARCH=amd64 GOOS=darwin GOAMD64=v3 $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
 darwin-arm64:
 	GOARCH=arm64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
@@ -68,6 +76,9 @@ freebsd-386:
 freebsd-amd64:
 	GOARCH=amd64 GOOS=freebsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
+freebsd-amd64-v3:
+	GOARCH=amd64 GOOS=freebsd GOAMD64=v3 $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
 freebsd-arm64:
 	GOARCH=arm64 GOOS=freebsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
@@ -76,6 +87,9 @@ linux-386:
 
 linux-amd64:
 	GOARCH=amd64 GOOS=linux $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
+linux-amd64-v3:
+	GOARCH=amd64 GOOS=linux GOAMD64=v3 $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
 linux-arm64:
 	GOARCH=arm64 GOOS=linux $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
@@ -122,6 +136,9 @@ openbsd-386:
 openbsd-amd64:
 	GOARCH=amd64 GOOS=openbsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
+openbsd-amd64-v3:
+	GOARCH=amd64 GOOS=openbsd GOAMD64=v3 $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
 openbsd-arm64:
 	GOARCH=arm64 GOOS=openbsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
@@ -130,6 +147,9 @@ windows-386:
 
 windows-amd64:
 	GOARCH=amd64 GOOS=windows $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe
+
+windows-amd64-v3:
+	GOARCH=amd64 GOOS=windows GOAMD64=v3 $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe
 
 windows-arm64:
 	GOARCH=arm64 GOOS=windows $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe

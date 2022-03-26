@@ -14,7 +14,7 @@ func addControl(f controlFunc) {
 	_controlPool = append(_controlPool, f)
 }
 
-func setControl(i interface{}) {
+func setControl(i any) {
 	control := func(address, network string, c syscall.RawConn) error {
 		for _, f := range _controlPool {
 			if err := f(address, network, c); err != nil {
