@@ -5,13 +5,16 @@ import (
 	"net"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
+	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
-	"github.com/xjasonlyu/tun2socks/v2/core/stack"
+	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	_ "github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/stats"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
+
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 var _engine = &engine{}
@@ -171,6 +174,6 @@ func (e *engine) applyStack() (err error) {
 		}
 	}()
 
-	e.stack, err = stack.New(e.device, &fakeTunnel{}, stack.WithDefault())
+	e.stack, err = core.CreateStackWithOptions(e.device, &fakeTunnel{}, option.WithDefault())
 	return
 }

@@ -9,10 +9,10 @@ var _ adapter.Handler = (*fakeTunnel)(nil)
 
 type fakeTunnel struct{}
 
-func (*fakeTunnel) HandleTCPConn(conn adapter.TCPConn) {
+func (*fakeTunnel) HandleTCP(conn adapter.TCPConn) {
 	tunnel.TCPIn() <- conn
 }
 
-func (*fakeTunnel) HandleUDPConn(conn adapter.UDPConn) {
+func (*fakeTunnel) HandleUDP(conn adapter.UDPConn) {
 	tunnel.UDPIn() <- conn
 }
