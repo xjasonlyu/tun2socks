@@ -49,23 +49,17 @@ func main() {
 	if configFile != "" {
 		data, err := os.ReadFile(configFile)
 		if err != nil {
-			log.Fatalf("Failed to read config %s: %v", configFile, err)
+			log.Fatalf("Failed to read config file '%s': %v", configFile, err)
 		}
 		if err = yaml.Unmarshal(data, key); err != nil {
-			log.Fatalf("Failed to unmarshal config %s: %v", configFile, err)
+			log.Fatalf("Failed to unmarshal config file '%s': %v", configFile, err)
 		}
 	}
 
 	engine.Insert(key)
 
-	assert := func(msg string, f func() error) {
-		if err := f(); err != nil {
-			log.Fatalf("Failed to %s: %v", msg, err)
-		}
-	}
-
-	assert("start engine", engine.Start)
-	defer assert("stop engine", engine.Stop)
+	engine.Start()
+	defer engine.Stop()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)

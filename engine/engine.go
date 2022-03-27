@@ -17,13 +17,17 @@ import (
 var _engine = &engine{}
 
 // Start starts the default engine up.
-func Start() error {
-	return _engine.start()
+func Start() {
+	if err := _engine.start(); err != nil {
+		log.Fatalf("[ENGINE] failed to start: %v", err)
+	}
 }
 
 // Stop shuts the default engine down.
-func Stop() error {
-	return _engine.stop()
+func Stop() {
+	if err := _engine.stop(); err != nil {
+		log.Fatalf("[ENGINE] failed to stop: %v", err)
+	}
 }
 
 // Insert loads *Key to the default engine.
@@ -120,7 +124,7 @@ func (e *engine) applyStats() error {
 
 		go func() {
 			if err := stats.Start(addr.String(), e.Token); err != nil {
-				log.Warnf("[STATS] stats start error: %v", err)
+				log.Warnf("[STATS] failed to start: %v", err)
 			}
 		}()
 		log.Infof("[STATS] serve at: http://%s", addr)
