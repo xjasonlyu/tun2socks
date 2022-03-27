@@ -81,6 +81,8 @@ func (e *engine) stop() error {
 	if e.device != nil {
 		return e.device.Close()
 	}
+	e.stack.Close()
+	e.stack.Wait()
 	return nil
 }
 
