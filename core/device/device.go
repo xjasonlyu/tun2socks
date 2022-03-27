@@ -17,4 +17,7 @@ type Device interface {
 
 	// Type returns the driver type of the device.
 	Type() string
+
+	// Wait waits for the device to close.
+	Wait()
 }

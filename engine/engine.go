@@ -80,13 +80,16 @@ func (e *engine) start() error {
 	return nil
 }
 
-func (e *engine) stop() error {
+func (e *engine) stop() (err error) {
 	if e.device != nil {
-		return e.device.Close()
+		err = e.device.Close()
+		e.device.Wait()
 	}
-	e.stack.Close()
-	e.stack.Wait()
-	return nil
+	if e.stack != nil {
+		e.stack.Close()
+		e.stack.Wait()
+	}
+	return err
 }
 
 func (e *engine) insert(k *Key) {
