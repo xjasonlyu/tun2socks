@@ -103,7 +103,7 @@ func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
 		case header.IPv6Version:
 			e.InjectInbound(header.IPv6ProtocolNumber, pkt)
 		}
-		pkt.DecRef() /* release */
+		pkt.DecRef()
 	}
 }
 
@@ -121,6 +121,8 @@ func (e *Endpoint) outboundLoop(ctx context.Context) {
 
 // writePacket writes outbound packets to the io.Writer.
 func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
+	defer pkt.DecRef()
+
 	size := pkt.Size()
 	views := pkt.Views()
 	if e.offset != 0 {
