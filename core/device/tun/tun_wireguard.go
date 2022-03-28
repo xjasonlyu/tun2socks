@@ -69,6 +69,6 @@ func (t *TUN) Name() string {
 }
 
 func (t *TUN) Close() error {
-	t.Endpoint.Close()
+	defer t.Endpoint.Close()
 	return t.nt.Close()
 }
