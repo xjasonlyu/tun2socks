@@ -65,8 +65,7 @@ func (e *engine) start() error {
 
 	for _, f := range []func() error{
 		e.applyLogLevel,
-		e.applyMark,
-		e.applyInterface,
+		e.applyDialer,
 		e.applyStats,
 		e.applyUDPTimeout,
 		e.applyProxy,
@@ -104,20 +103,14 @@ func (e *engine) applyLogLevel() error {
 	return nil
 }
 
-func (e *engine) applyMark() error {
-	if e.Mark != 0 {
-		dialer.SetMark(e.Mark)
-		log.Infof("[DIALER] set fwmark: %#x", e.Mark)
-	}
-	return nil
-}
-
-func (e *engine) applyInterface() error {
+func (e *engine) applyDialer() error {
 	if e.Interface != "" {
-		if err := dialer.BindToInterface(e.Interface); err != nil {
-			return err
-		}
+		dialer.DefaultInterfaceName.Store(e.Interface)
 		log.Infof("[DIALER] bind to interface: %s", e.Interface)
+	}
+	if e.Mark != 0 {
+		dialer.DefaultRoutingMark.Store(int32(e.Mark))
+		log.Infof("[DIALER] set fwmark: %#x", e.Mark)
 	}
 	return nil
 }
