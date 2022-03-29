@@ -39,11 +39,22 @@ const (
 	tcpKeepaliveInterval = 30 * time.Second
 )
 
-func withTCPHandler(handle adapter.TCPHandleFunc) option.Option {
+func withTCPHandler(handle func(adapter.TCPConn), callback func(tcpip.Error)) option.Option {
 	return func(s *stack.Stack) error {
 		tcpForwarder := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
-			var wq waiter.Queue
-			ep, err := r.CreateEndpoint(&wq)
+			var (
+				wq  waiter.Queue
+				ep  tcpip.Endpoint
+				err tcpip.Error
+			)
+
+			defer func() {
+				if err != nil {
+					callback(err)
+				}
+			}()
+
+			ep, err = r.CreateEndpoint(&wq)
 			if err != nil {
 				// RST: prevent potential half-open TCP connection leak.
 				r.Complete(true)
@@ -51,7 +62,8 @@ func withTCPHandler(handle adapter.TCPHandleFunc) option.Option {
 			}
 			defer r.Complete(false)
 
-			setKeepalive(ep)
+			// TCP Keepalive
+			err = setKeepalive(ep)
 
 			conn := &tcpConn{
 				TCPConn: gonet.NewTCPConn(&wq, ep),

@@ -13,8 +13,36 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
 )
 
-// CreateStackWithOptions creates *stack.Stack with given options.
-func CreateStackWithOptions(linkEP stack.LinkEndpoint, handler adapter.TransportHandler, opts ...option.Option) (*stack.Stack, error) {
+// Config is the configuration to create *stack.Stack.
+type Config struct {
+	// LinkEndpoints is the interface implemented by
+	// data link layer protocols.
+	LinkEndpoint stack.LinkEndpoint
+
+	// TransportHandler is the handler used by internal
+	// stack to set transport handlers.
+	TransportHandler adapter.TransportHandler
+
+	// ErrorFunc is the function that will be called
+	// when internal stack encounters errors.
+	ErrorFunc func(tcpip.Error)
+
+	// Options are supplement options to apply settings
+	// for the internal stack.
+	Options []option.Option
+}
+
+// CreateStack creates *stack.Stack with given config.
+func CreateStack(cfg *Config) (*stack.Stack, error) {
+	if cfg.ErrorFunc == nil {
+		cfg.ErrorFunc = func(tcpip.Error) {}
+	}
+
+	opts := cfg.Options
+	if len(opts) == 0 {
+		opts = []option.Option{option.WithDefault()}
+	}
+
 	s := stack.New(stack.Options{
 		NetworkProtocols: []stack.NetworkProtocolFactory{
 			ipv4.NewProtocol,
@@ -33,7 +61,7 @@ func CreateStackWithOptions(linkEP stack.LinkEndpoint, handler adapter.Transport
 
 	opts = append(opts,
 		// Create stack NIC and then bind link endpoint to it.
-		withCreatingNIC(nicID, linkEP),
+		withCreatingNIC(nicID, cfg.LinkEndpoint),
 
 		// In the past we did s.AddAddressRange to assign 0.0.0.0/0
 		// onto the interface. We need that to be able to terminate
@@ -63,7 +91,8 @@ func CreateStackWithOptions(linkEP stack.LinkEndpoint, handler adapter.Transport
 		withRouteTable(nicID),
 
 		// Initiate transport protocol (TCP/UDP) with given handler.
-		withTCPHandler(handler.HandleTCP), withUDPHandler(handler.HandleUDP),
+		withTCPHandler(cfg.TransportHandler.HandleTCP, cfg.ErrorFunc),
+		withUDPHandler(cfg.TransportHandler.HandleUDP, cfg.ErrorFunc),
 	)
 
 	for _, opt := range opts {

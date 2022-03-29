@@ -4,19 +4,20 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 
+	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
 	"gvisor.dev/gvisor/pkg/waiter"
 )
 
-func withUDPHandler(handle adapter.UDPHandleFunc) option.Option {
+func withUDPHandler(handle func(adapter.UDPConn), callback func(tcpip.Error)) option.Option {
 	return func(s *stack.Stack) error {
 		udpForwarder := udp.NewForwarder(s, func(r *udp.ForwarderRequest) {
 			var wq waiter.Queue
 			ep, err := r.CreateEndpoint(&wq)
 			if err != nil {
-				// TODO: handler errors in the future.
+				callback(err)
 				return
 			}
 
