@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
@@ -65,21 +64,21 @@ func withTCPHandler(handle adapter.TCPHandleFunc) option.Option {
 	}
 }
 
-func setKeepalive(ep tcpip.Endpoint) error {
+func setKeepalive(ep tcpip.Endpoint) tcpip.Error {
 	ep.SocketOptions().SetKeepAlive(true)
 
 	idle := tcpip.KeepaliveIdleOption(tcpKeepaliveIdle)
 	if err := ep.SetSockOpt(&idle); err != nil {
-		return fmt.Errorf("set keepalive idle: %s", err)
+		return err
 	}
 
 	interval := tcpip.KeepaliveIntervalOption(tcpKeepaliveInterval)
 	if err := ep.SetSockOpt(&interval); err != nil {
-		return fmt.Errorf("set keepalive interval: %s", err)
+		return err
 	}
 
 	if err := ep.SetSockOptInt(tcpip.KeepaliveCountOption, tcpKeepaliveCount); err != nil {
-		return fmt.Errorf("set keepalive count: %s", err)
+		return err
 	}
 	return nil
 }
