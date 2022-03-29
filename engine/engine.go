@@ -62,13 +62,11 @@ func (e *engine) start() error {
 	}
 
 	for _, f := range []func() error{
-		e.applyLogLevel,
-		e.applyDialer,
-		e.applyRestAPI,
-		e.applyUDPTimeout,
-		e.applyProxy,
-		e.applyDevice,
-		e.applyStack,
+		e.withGeneral,
+		e.withRestAPI,
+		e.withProxy,
+		e.withDevice,
+		e.withStack,
 	} {
 		if err := f(); err != nil {
 			return err
@@ -92,28 +90,30 @@ func (e *engine) insert(k *Key) {
 	e.Key = k
 }
 
-func (e *engine) applyLogLevel() error {
+func (e *engine) withGeneral() error {
 	level, err := log.ParseLevel(e.LogLevel)
 	if err != nil {
 		return err
 	}
 	log.SetLevel(level)
-	return nil
-}
 
-func (e *engine) applyDialer() error {
 	if e.Interface != "" {
 		dialer.DefaultInterfaceName.Store(e.Interface)
 		log.Infof("[DIALER] bind to interface: %s", e.Interface)
 	}
+
 	if e.Mark != 0 {
 		dialer.DefaultRoutingMark.Store(int32(e.Mark))
 		log.Infof("[DIALER] set fwmark: %#x", e.Mark)
 	}
+
+	if e.UDPTimeout > 0 {
+		tunnel.SetUDPTimeout(e.UDPTimeout)
+	}
 	return nil
 }
 
-func (e *engine) applyRestAPI() error {
+func (e *engine) withRestAPI() error {
 	if e.RestAPI != "" {
 		u, err := parseRestAPI(e.RestAPI)
 		if err != nil {
@@ -131,14 +131,7 @@ func (e *engine) applyRestAPI() error {
 	return nil
 }
 
-func (e *engine) applyUDPTimeout() error {
-	if e.UDPTimeout > 0 {
-		tunnel.SetUDPTimeout(e.UDPTimeout)
-	}
-	return nil
-}
-
-func (e *engine) applyProxy() (err error) {
+func (e *engine) withProxy() (err error) {
 	if e.Proxy == "" {
 		return errors.New("empty proxy")
 	}
@@ -148,7 +141,7 @@ func (e *engine) applyProxy() (err error) {
 	return
 }
 
-func (e *engine) applyDevice() (err error) {
+func (e *engine) withDevice() (err error) {
 	if e.Device == "" {
 		return errors.New("empty device")
 	}
@@ -157,7 +150,7 @@ func (e *engine) applyDevice() (err error) {
 	return
 }
 
-func (e *engine) applyStack() (err error) {
+func (e *engine) withStack() (err error) {
 	defer func() {
 		if err == nil {
 			log.Infof(
