@@ -28,7 +28,7 @@ var (
 	_mountPoints = make(map[string]http.Handler)
 )
 
-func addMountPoint(pattern string, handler http.Handler) {
+func registerMountPoint(pattern string, handler http.Handler) {
 	_mountPoints[pattern] = handler
 }
 
