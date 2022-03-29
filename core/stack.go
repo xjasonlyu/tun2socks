@@ -14,7 +14,7 @@ import (
 )
 
 // CreateStackWithOptions creates *stack.Stack with given options.
-func CreateStackWithOptions(linkEP stack.LinkEndpoint, handler adapter.Handler, opts ...option.Option) (*stack.Stack, error) {
+func CreateStackWithOptions(linkEP stack.LinkEndpoint, handler adapter.TransportHandler, opts ...option.Option) (*stack.Stack, error) {
 	s := stack.New(stack.Options{
 		NetworkProtocols: []stack.NetworkProtocolFactory{
 			ipv4.NewProtocol,

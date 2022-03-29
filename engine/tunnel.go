@@ -5,7 +5,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 )
 
-var _ adapter.Handler = (*fakeTunnel)(nil)
+var _ adapter.TransportHandler = (*fakeTunnel)(nil)
 
 type fakeTunnel struct{}
 
