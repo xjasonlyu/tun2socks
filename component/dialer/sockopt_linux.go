@@ -8,7 +8,7 @@ import (
 )
 
 func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
-	if !isTCPSocket(network) && !isUDPSocket(network) {
+	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) {
 		return
 	}
 
