@@ -32,8 +32,7 @@ func init() {
 	flag.StringVar(&key.Interface, "interface", "", "Use network INTERFACE (Linux/MacOS only)")
 	flag.StringVar(&key.LogLevel, "loglevel", "info", "Log level [debug|info|warning|error|silent]")
 	flag.StringVar(&key.Proxy, "proxy", "", "Use this proxy [protocol://]host[:port]")
-	flag.StringVar(&key.Stats, "stats", "", "HTTP statistic server listen address")
-	flag.StringVar(&key.Token, "token", "", "HTTP statistic server auth token")
+	flag.StringVar(&key.RestAPI, "restapi", "", "HTTP statistic server listen address")
 	flag.Parse()
 }
 

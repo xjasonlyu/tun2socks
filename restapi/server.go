@@ -1,4 +1,6 @@
-package stats
+package restapi
+
+// Ref: github.com/Dreamacro/clash/hub/route
 
 import (
 	"bytes"
@@ -55,12 +57,7 @@ func Start(addr, token string) error {
 		}
 	})
 
-	tcpAddr, err := net.ResolveTCPAddr("tcp", addr)
-	if err != nil {
-		return err
-	}
-
-	listener, err := net.ListenTCP("tcp", tcpAddr)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
 		return err
 	}

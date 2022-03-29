@@ -1,6 +1,6 @@
 //go:build debug
 
-package stats
+package restapi
 
 import (
 	"net/http"

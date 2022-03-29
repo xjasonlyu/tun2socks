@@ -1,4 +1,4 @@
-package stats
+package restapi
 
 var (
 	ErrUnauthorized = newError("Unauthorized")

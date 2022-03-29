@@ -2,7 +2,6 @@ package engine
 
 import (
 	"errors"
-	"net"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
 	"github.com/xjasonlyu/tun2socks/v2/core"
@@ -10,7 +9,7 @@ import (
 	_ "github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/stats"
+	"github.com/xjasonlyu/tun2socks/v2/restapi"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -43,8 +42,7 @@ type Key struct {
 	Mark       int    `yaml:"fwmark"`
 	UDPTimeout int    `yaml:"udp-timeout"`
 	Proxy      string `yaml:"proxy"`
-	Stats      string `yaml:"stats"`
-	Token      string `yaml:"token"`
+	RestAPI    string `yaml:"restapi"`
 	Device     string `yaml:"device"`
 	LogLevel   string `yaml:"loglevel"`
 	Interface  string `yaml:"interface"`
@@ -66,7 +64,7 @@ func (e *engine) start() error {
 	for _, f := range []func() error{
 		e.applyLogLevel,
 		e.applyDialer,
-		e.applyStats,
+		e.applyRestAPI,
 		e.applyUDPTimeout,
 		e.applyProxy,
 		e.applyDevice,
@@ -115,19 +113,20 @@ func (e *engine) applyDialer() error {
 	return nil
 }
 
-func (e *engine) applyStats() error {
-	if e.Stats != "" {
-		addr, err := net.ResolveTCPAddr("tcp", e.Stats)
+func (e *engine) applyRestAPI() error {
+	if e.RestAPI != "" {
+		u, err := parseRestAPI(e.RestAPI)
 		if err != nil {
 			return err
 		}
+		host, token := u.Host, u.User.String()
 
 		go func() {
-			if err := stats.Start(addr.String(), e.Token); err != nil {
-				log.Warnf("[STATS] failed to start: %v", err)
+			if err := restapi.Start(host, token); err != nil {
+				log.Warnf("[RESTAPI] failed to start: %v", err)
 			}
 		}()
-		log.Infof("[STATS] serve at: http://%s", addr)
+		log.Infof("[RESTAPI] serve at: %s", u)
 	}
 	return nil
 }

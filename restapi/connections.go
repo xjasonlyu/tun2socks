@@ -1,4 +1,4 @@
-package stats
+package restapi
 
 import (
 	"bytes"

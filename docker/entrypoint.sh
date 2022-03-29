@@ -61,12 +61,8 @@ run() {
     ARGS="--mtu $MTU"
   fi
 
-  if [ -n "$STATS" ]; then
-    ARGS="$ARGS --stats $STATS"
-  fi
-
-  if [ -n "$TOKEN" ]; then
-    ARGS="$ARGS --token $TOKEN"
+  if [ -n "$RESTAPI" ]; then
+    ARGS="$ARGS --restapi $RESTAPI"
   fi
 
   if [ -n "$UDP_TIMEOUT" ]; then
