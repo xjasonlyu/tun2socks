@@ -6,7 +6,6 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
-	_ "github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
@@ -16,106 +15,93 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-var _engine = &engine{}
+var (
+	// _defaultKey holds the default key for the engine.
+	_defaultKey *Key
+
+	// _defaultProxy holds the default proxy for the engine.
+	_defaultProxy proxy.Proxy
+
+	// _defaultDevice holds the default device for the engine.
+	_defaultDevice device.Device
+
+	// _defaultStack holds the default stack for the engine.
+	_defaultStack *stack.Stack
+)
 
 // Start starts the default engine up.
 func Start() {
-	if err := _engine.start(); err != nil {
+	if err := start(); err != nil {
 		log.Fatalf("[ENGINE] failed to start: %v", err)
 	}
 }
 
 // Stop shuts the default engine down.
 func Stop() {
-	if err := _engine.stop(); err != nil {
+	if err := stop(); err != nil {
 		log.Fatalf("[ENGINE] failed to stop: %v", err)
 	}
 }
 
 // Insert loads *Key to the default engine.
 func Insert(k *Key) {
-	_engine.insert(k)
+	_defaultKey = k
 }
 
-type Key struct {
-	MTU        int    `yaml:"mtu"`
-	Mark       int    `yaml:"fwmark"`
-	UDPTimeout int    `yaml:"udp-timeout"`
-	Proxy      string `yaml:"proxy"`
-	RestAPI    string `yaml:"restapi"`
-	Device     string `yaml:"device"`
-	LogLevel   string `yaml:"loglevel"`
-	Interface  string `yaml:"interface"`
-}
-
-type engine struct {
-	*Key
-
-	stack  *stack.Stack
-	proxy  proxy.Proxy
-	device device.Device
-}
-
-func (e *engine) start() error {
-	if e.Key == nil {
+func start() error {
+	if _defaultKey == nil {
 		return errors.New("empty key")
 	}
 
-	for _, f := range []func() error{
-		e.withGeneral,
-		e.withRestAPI,
-		e.withProxy,
-		e.withDevice,
-		e.withStack,
+	for _, f := range []func(*Key) error{
+		general,
+		restAPI,
+		netstack,
 	} {
-		if err := f(); err != nil {
+		if err := f(_defaultKey); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (e *engine) stop() (err error) {
-	if e.device != nil {
-		err = e.device.Close()
+func stop() (err error) {
+	if _defaultDevice != nil {
+		err = _defaultDevice.Close()
 	}
-	if e.stack != nil {
-		e.stack.Close()
-		e.stack.Wait()
+	if _defaultStack != nil {
+		_defaultStack.Close()
+		_defaultStack.Wait()
 	}
 	return err
 }
 
-func (e *engine) insert(k *Key) {
-	e.Key = k
-}
-
-func (e *engine) withGeneral() error {
-	level, err := log.ParseLevel(e.LogLevel)
+func general(k *Key) error {
+	level, err := log.ParseLevel(k.LogLevel)
 	if err != nil {
 		return err
 	}
 	log.SetLevel(level)
 
-	if e.Interface != "" {
-		dialer.DefaultInterfaceName.Store(e.Interface)
-		log.Infof("[DIALER] bind to interface: %s", e.Interface)
+	if k.Interface != "" {
+		dialer.DefaultInterfaceName.Store(k.Interface)
+		log.Infof("[DIALER] bind to interface: %s", k.Interface)
 	}
 
-	if e.Mark != 0 {
-		dialer.DefaultRoutingMark.Store(int32(e.Mark))
-		log.Infof("[DIALER] set fwmark: %#x", e.Mark)
+	if k.Mark != 0 {
+		dialer.DefaultRoutingMark.Store(int32(k.Mark))
+		log.Infof("[DIALER] set fwmark: %#x", k.Mark)
 	}
 
-	if e.UDPTimeout > 0 {
-		tunnel.SetUDPTimeout(e.UDPTimeout)
+	if k.UDPTimeout > 0 {
+		tunnel.SetUDPTimeout(k.UDPTimeout)
 	}
 	return nil
 }
 
-func (e *engine) withRestAPI() error {
-	if e.RestAPI != "" {
-		u, err := parseRestAPI(e.RestAPI)
+func restAPI(k *Key) error {
+	if k.RestAPI != "" {
+		u, err := parseRestAPI(k.RestAPI)
 		if err != nil {
 			return err
 		}
@@ -131,42 +117,37 @@ func (e *engine) withRestAPI() error {
 	return nil
 }
 
-func (e *engine) withProxy() (err error) {
-	if e.Proxy == "" {
+func netstack(k *Key) (err error) {
+	if k.Proxy == "" {
 		return errors.New("empty proxy")
 	}
-
-	e.proxy, err = parseProxy(e.Proxy)
-	proxy.SetDialer(e.proxy)
-	return
-}
-
-func (e *engine) withDevice() (err error) {
-	if e.Device == "" {
+	if k.Device == "" {
 		return errors.New("empty device")
 	}
 
-	e.device, err = parseDevice(e.Device, uint32(e.MTU))
-	return
-}
+	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
+		return
+	}
+	proxy.SetDialer(_defaultProxy)
 
-func (e *engine) withStack() (err error) {
-	defer func() {
-		if err == nil {
-			log.Infof(
-				"[STACK] %s://%s <-> %s://%s",
-				e.device.Type(), e.device.Name(),
-				e.proxy.Proto(), e.proxy.Addr(),
-			)
-		}
-	}()
+	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
+		return
+	}
 
-	e.stack, err = core.CreateStack(&core.Config{
-		LinkEndpoint:     e.device,
+	if _defaultStack, err = core.CreateStack(&core.Config{
+		LinkEndpoint:     _defaultDevice,
 		TransportHandler: &fakeTunnel{},
 		ErrorFunc: func(err tcpip.Error) {
 			log.Warnf("[STACK] %s", err)
 		},
-	})
-	return
+	}); err != nil {
+		return
+	}
+
+	log.Infof(
+		"[STACK] %s://%s <-> %s://%s",
+		_defaultDevice.Type(), _defaultDevice.Name(),
+		_defaultProxy.Proto(), _defaultProxy.Addr(),
+	)
+	return nil
 }
