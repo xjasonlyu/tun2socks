@@ -20,18 +20,10 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var (
-	_upgrader = websocket.Upgrader{
-		CheckOrigin: func(r *http.Request) bool {
-			return true
-		},
-	}
-
-	_mountPoints = make(map[string]http.Handler)
-)
-
-func registerMountPoint(pattern string, handler http.Handler) {
-	_mountPoints[pattern] = handler
+var _upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 func Start(addr, token string) error {
@@ -51,10 +43,7 @@ func Start(addr, token string) error {
 		r.Get("/logs", getLogs)
 		r.Get("/traffic", traffic)
 		r.Get("/version", version)
-
-		for pattern, handler := range _mountPoints {
-			r.Mount(pattern, handler)
-		}
+		r.Mount("/connections", connectionRouter())
 	})
 
 	listener, err := net.Listen("tcp", addr)
@@ -143,7 +132,7 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		if err := json.NewEncoder(buf).Encode(e); err != nil {
+		if err = json.NewEncoder(buf).Encode(e); err != nil {
 			break
 		}
 
@@ -160,15 +149,12 @@ func getLogs(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type Traffic struct {
-	Up   int64 `json:"up"`
-	Down int64 `json:"down"`
-}
-
 func traffic(w http.ResponseWriter, r *http.Request) {
-	var wsConn *websocket.Conn
+	var (
+		err    error
+		wsConn *websocket.Conn
+	)
 	if websocket.IsWebSocketUpgrade(r) {
-		var err error
 		wsConn, err = _upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			return
@@ -182,13 +168,16 @@ func traffic(w http.ResponseWriter, r *http.Request) {
 
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
-	t := statistic.DefaultManager
+
 	buf := &bytes.Buffer{}
-	var err error
 	for range tick.C {
 		buf.Reset()
-		up, down := t.Now()
-		if err := json.NewEncoder(buf).Encode(Traffic{
+
+		up, down := statistic.DefaultManager.Now()
+		if err = json.NewEncoder(buf).Encode(struct {
+			Up   int64 `json:"up"`
+			Down int64 `json:"down"`
+		}{
 			Up:   up,
 			Down: down,
 		}); err != nil {

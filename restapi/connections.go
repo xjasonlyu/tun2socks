@@ -16,10 +16,6 @@ import (
 
 const defaultInterval = 1000
 
-func init() {
-	registerMountPoint("/connections", connectionRouter())
-}
-
 func connectionRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Get("/", getConnections)
@@ -30,8 +26,7 @@ func connectionRouter() http.Handler {
 
 func getConnections(w http.ResponseWriter, r *http.Request) {
 	if !websocket.IsWebSocketUpgrade(r) {
-		snapshot := statistic.DefaultManager.Snapshot()
-		render.JSON(w, r, snapshot)
+		render.JSON(w, r, statistic.DefaultManager.Snapshot())
 		return
 	}
 
@@ -56,8 +51,7 @@ func getConnections(w http.ResponseWriter, r *http.Request) {
 	buf := &bytes.Buffer{}
 	sendSnapshot := func() error {
 		buf.Reset()
-		snapshot := statistic.DefaultManager.Snapshot()
-		if err := json.NewEncoder(buf).Encode(snapshot); err != nil {
+		if err := json.NewEncoder(buf).Encode(statistic.DefaultManager.Snapshot()); err != nil {
 			return err
 		}
 
