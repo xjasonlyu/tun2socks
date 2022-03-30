@@ -43,6 +43,7 @@ func Start(addr, token string) error {
 		r.Get("/logs", getLogs)
 		r.Get("/traffic", traffic)
 		r.Get("/version", version)
+		r.Get("/netstats", getNetStats)
 		r.Mount("/connections", connectionRouter())
 	})
 

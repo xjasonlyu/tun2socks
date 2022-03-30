@@ -1,8 +1,9 @@
 package restapi
 
 var (
-	ErrUnauthorized = newError("Unauthorized")
-	ErrBadRequest   = newError("Body invalid")
+	ErrBadRequest    = newError("Body invalid")
+	ErrUnauthorized  = newError("Unauthorized")
+	ErrUninitialized = newError("Uninitialized")
 )
 
 var _ error = (*HTTPError)(nil)

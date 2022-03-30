@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
 	"github.com/xjasonlyu/tun2socks/v2/core"
@@ -16,6 +17,8 @@ import (
 )
 
 var (
+	_engineMu sync.Mutex
+
 	// _defaultKey holds the default key for the engine.
 	_defaultKey *Key
 
@@ -45,10 +48,13 @@ func Stop() {
 
 // Insert loads *Key to the default engine.
 func Insert(k *Key) {
+	_engineMu.Lock()
 	_defaultKey = k
+	_engineMu.Unlock()
 }
 
 func start() error {
+	_engineMu.Lock()
 	if _defaultKey == nil {
 		return errors.New("empty key")
 	}
@@ -62,10 +68,12 @@ func start() error {
 			return err
 		}
 	}
+	_engineMu.Unlock()
 	return nil
 }
 
 func stop() (err error) {
+	_engineMu.Lock()
 	if _defaultDevice != nil {
 		err = _defaultDevice.Close()
 	}
@@ -73,6 +81,7 @@ func stop() (err error) {
 		_defaultStack.Close()
 		_defaultStack.Wait()
 	}
+	_engineMu.Unlock()
 	return err
 }
 
@@ -106,6 +115,17 @@ func restAPI(k *Key) error {
 			return err
 		}
 		host, token := u.Host, u.User.String()
+
+		restapi.SetStatsFunc(func() tcpip.Stats {
+			_engineMu.Lock()
+			defer _engineMu.Unlock()
+
+			// default stack is not initialized.
+			if _defaultStack == nil {
+				return tcpip.Stats{}
+			}
+			return _defaultStack.Stats()
+		})
 
 		go func() {
 			if err := restapi.Start(host, token); err != nil {
