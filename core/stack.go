@@ -60,6 +60,13 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 	nicID := tcpip.NICID(s.UniqueID())
 
 	opts = append(opts,
+		// Important: We must initiate transport protocol handlers
+		// before creating NIC, otherwise NIC would dispatch packets
+		// to stack and cause race condition.
+		// Initiate transport protocol (TCP/UDP) with given handler.
+		withTCPHandler(cfg.TransportHandler.HandleTCP, cfg.ErrorFunc),
+		withUDPHandler(cfg.TransportHandler.HandleUDP, cfg.ErrorFunc),
+
 		// Create stack NIC and then bind link endpoint to it.
 		withCreatingNIC(nicID, cfg.LinkEndpoint),
 
@@ -89,10 +96,6 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// Add default route table for IPv4 and IPv6. This will handle
 		// all incoming ICMP packets.
 		withRouteTable(nicID),
-
-		// Initiate transport protocol (TCP/UDP) with given handler.
-		withTCPHandler(cfg.TransportHandler.HandleTCP, cfg.ErrorFunc),
-		withUDPHandler(cfg.TransportHandler.HandleUDP, cfg.ErrorFunc),
 	)
 
 	for _, opt := range opts {
