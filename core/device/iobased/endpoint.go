@@ -92,11 +92,16 @@ func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
 	defer cancel()
 
 	for {
-		data := make([]byte, e.offset+int(e.mtu))
+		offset, mtu := e.offset, int(e.mtu)
+		data := make([]byte, offset+mtu)
 
 		n, err := e.rw.Read(data)
 		if err != nil {
 			break
+		}
+
+		if n == 0 || n > mtu {
+			continue
 		}
 
 		if !e.IsAttached() {
@@ -104,10 +109,10 @@ func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
 		}
 
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
-			Data: buffer.View(data[e.offset : e.offset+n]).ToVectorisedView(),
+			Data: buffer.View(data[offset : offset+n]).ToVectorisedView(),
 		})
 
-		switch header.IPVersion(data[e.offset:]) {
+		switch header.IPVersion(data[offset:]) {
 		case header.IPv4Version:
 			e.InjectInbound(header.IPv4ProtocolNumber, pkt)
 		case header.IPv6Version:
