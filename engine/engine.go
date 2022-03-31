@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"sync"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
@@ -158,8 +159,8 @@ func netstack(k *Key) (err error) {
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: &mirror.Tunnel{},
-		ErrorFunc: func(err tcpip.Error) {
-			log.Warnf("[STACK] %s", err)
+		PrintFunc: func(format string, v ...any) {
+			log.Warnf("[STACK] %s", fmt.Sprintf(format, v...))
 		},
 	}); err != nil {
 		return

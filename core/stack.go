@@ -23,9 +23,9 @@ type Config struct {
 	// stack to set transport handlers.
 	TransportHandler adapter.TransportHandler
 
-	// ErrorFunc is the function that will be called
-	// when internal stack encounters errors.
-	ErrorFunc func(tcpip.Error)
+	// PrintFunc is the function that will be called
+	// to print internal stack events.
+	PrintFunc func(string, ...any)
 
 	// Options are supplement options to apply settings
 	// for the internal stack.
@@ -34,8 +34,8 @@ type Config struct {
 
 // CreateStack creates *stack.Stack with given config.
 func CreateStack(cfg *Config) (*stack.Stack, error) {
-	if cfg.ErrorFunc == nil {
-		cfg.ErrorFunc = func(tcpip.Error) {}
+	if cfg.PrintFunc == nil {
+		cfg.PrintFunc = func(string, ...any) {}
 	}
 
 	opts := cfg.Options
@@ -64,8 +64,8 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// before creating NIC, otherwise NIC would dispatch packets
 		// to stack and cause race condition.
 		// Initiate transport protocol (TCP/UDP) with given handler.
-		withTCPHandler(cfg.TransportHandler.HandleTCP, cfg.ErrorFunc),
-		withUDPHandler(cfg.TransportHandler.HandleUDP, cfg.ErrorFunc),
+		withTCPHandler(cfg.TransportHandler.HandleTCP, cfg.PrintFunc),
+		withUDPHandler(cfg.TransportHandler.HandleUDP, cfg.PrintFunc),
 
 		// Create stack NIC and then bind link endpoint to it.
 		withCreatingNIC(nicID, cfg.LinkEndpoint),

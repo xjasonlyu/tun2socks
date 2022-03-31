@@ -39,7 +39,7 @@ const (
 	tcpKeepaliveInterval = 30 * time.Second
 )
 
-func withTCPHandler(handle func(adapter.TCPConn), callback func(tcpip.Error)) option.Option {
+func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) option.Option {
 	return func(s *stack.Stack) error {
 		tcpForwarder := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
 			var (
@@ -50,7 +50,7 @@ func withTCPHandler(handle func(adapter.TCPConn), callback func(tcpip.Error)) op
 
 			defer func() {
 				if err != nil {
-					callback(err)
+					printf("forward tcp request: %s", err)
 				}
 			}()
 
