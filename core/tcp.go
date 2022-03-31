@@ -50,7 +50,7 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 
 			defer func() {
 				if err != nil {
-					printf("forward tcp request: %s", err)
+					printf("tcp forwarder request: %s", err)
 				}
 			}()
 
