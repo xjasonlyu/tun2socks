@@ -91,8 +91,9 @@ func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
 	// gracefully after (*Endpoint).dispatchLoop(context.CancelFunc) returns.
 	defer cancel()
 
+	offset, mtu := e.offset, int(e.mtu)
+
 	for {
-		offset, mtu := e.offset, int(e.mtu)
 		data := make([]byte, offset+mtu)
 
 		n, err := e.rw.Read(data)
