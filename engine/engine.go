@@ -7,6 +7,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
+	"github.com/xjasonlyu/tun2socks/v2/engine/mirror"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
@@ -156,7 +157,7 @@ func netstack(k *Key) (err error) {
 
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
-		TransportHandler: &fakeTunnel{},
+		TransportHandler: &mirror.Tunnel{},
 		ErrorFunc: func(err tcpip.Error) {
 			log.Warnf("[STACK] %s", err)
 		},
