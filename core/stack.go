@@ -38,9 +38,9 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		cfg.PrintFunc = func(string, ...any) {}
 	}
 
-	opts := cfg.Options
-	if len(opts) == 0 {
-		opts = []option.Option{option.WithDefault()}
+	opts := []option.Option{option.WithDefault()}
+	if len(opts) > 0 {
+		opts = append(opts, cfg.Options...)
 	}
 
 	s := stack.New(stack.Options{
