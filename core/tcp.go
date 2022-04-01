@@ -8,6 +8,7 @@ import (
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
+	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
 	"gvisor.dev/gvisor/pkg/waiter"
@@ -62,8 +63,7 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 			}
 			defer r.Complete(false)
 
-			// TCP Keepalive
-			err = setKeepalive(ep)
+			err = setSocketOptions(s, ep)
 
 			conn := &tcpConn{
 				TCPConn: gonet.NewTCPConn(&wq, ep),
@@ -76,21 +76,34 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 	}
 }
 
-func setKeepalive(ep tcpip.Endpoint) tcpip.Error {
-	ep.SocketOptions().SetKeepAlive(true)
+func setSocketOptions(s *stack.Stack, ep tcpip.Endpoint) tcpip.Error {
+	{ /* TCP keepalive options */
+		ep.SocketOptions().SetKeepAlive(true)
 
-	idle := tcpip.KeepaliveIdleOption(tcpKeepaliveIdle)
-	if err := ep.SetSockOpt(&idle); err != nil {
-		return err
+		idle := tcpip.KeepaliveIdleOption(tcpKeepaliveIdle)
+		if err := ep.SetSockOpt(&idle); err != nil {
+			return err
+		}
+
+		interval := tcpip.KeepaliveIntervalOption(tcpKeepaliveInterval)
+		if err := ep.SetSockOpt(&interval); err != nil {
+			return err
+		}
+
+		if err := ep.SetSockOptInt(tcpip.KeepaliveCountOption, tcpKeepaliveCount); err != nil {
+			return err
+		}
 	}
+	{ /* TCP recv/send buffer size */
+		var ss tcpip.TCPSendBufferSizeRangeOption
+		if err := s.TransportProtocolOption(header.TCPProtocolNumber, &ss); err == nil {
+			ep.SocketOptions().SetReceiveBufferSize(int64(ss.Default), false)
+		}
 
-	interval := tcpip.KeepaliveIntervalOption(tcpKeepaliveInterval)
-	if err := ep.SetSockOpt(&interval); err != nil {
-		return err
-	}
-
-	if err := ep.SetSockOptInt(tcpip.KeepaliveCountOption, tcpKeepaliveCount); err != nil {
-		return err
+		var rs tcpip.TCPReceiveBufferSizeRangeOption
+		if err := s.TransportProtocolOption(header.TCPProtocolNumber, &rs); err == nil {
+			ep.SocketOptions().SetReceiveBufferSize(int64(rs.Default), false)
+		}
 	}
 	return nil
 }
