@@ -24,7 +24,6 @@ var (
 )
 
 func init() {
-	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
 	flag.IntVar(&key.Mark, "fwmark", 0, "Set firewall MARK (Linux only)")
 	flag.IntVar(&key.MTU, "mtu", 0, "Set device maximum transmission unit (MTU)")
 	flag.IntVar(&key.UDPTimeout, "udp-timeout", 0, "Set timeout for each UDP session")
@@ -34,6 +33,10 @@ func init() {
 	flag.StringVar(&key.LogLevel, "loglevel", "info", "Log level [debug|info|warning|error|silent]")
 	flag.StringVar(&key.Proxy, "proxy", "", "Use this proxy [protocol://]host[:port]")
 	flag.StringVar(&key.RestAPI, "restapi", "", "HTTP statistic server listen address")
+	flag.StringVar(&key.TCPSendBufferSize, "tcp-sndbuf", "", "Set TCP send buffer size for stack")
+	flag.StringVar(&key.TCPReceiveBufferSize, "tcp-rcvbuf", "", "Set TCP receive buffer size for stack")
+	flag.BoolVar(&key.TCPModerateReceiveBuffer, "tcp-auto-tuning", false, "Enable TCP receive buffer auto-tuning")
+	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
 	flag.Parse()
 }
 

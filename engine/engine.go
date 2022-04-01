@@ -8,12 +8,14 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
+	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	"github.com/xjasonlyu/tun2socks/v2/engine/mirror"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 
+	units "github.com/docker/go-units"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
@@ -156,12 +158,34 @@ func netstack(k *Key) (err error) {
 		return
 	}
 
+	var opts []option.Option
+	if k.TCPModerateReceiveBuffer {
+		opts = append(opts, option.WithTCPModerateReceiveBuffer(true))
+	}
+
+	if k.TCPSendBufferSize != "" {
+		size, err := units.RAMInBytes(k.TCPSendBufferSize)
+		if err != nil {
+			return err
+		}
+		opts = append(opts, option.WithTCPSendBufferSize(int(size)))
+	}
+
+	if k.TCPReceiveBufferSize != "" {
+		size, err := units.RAMInBytes(k.TCPReceiveBufferSize)
+		if err != nil {
+			return err
+		}
+		opts = append(opts, option.WithTCPReceiveBufferSize(int(size)))
+	}
+
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: &mirror.Tunnel{},
 		PrintFunc: func(format string, v ...any) {
 			log.Warnf("[STACK] %s", fmt.Sprintf(format, v...))
 		},
+		Options: opts,
 	}); err != nil {
 		return
 	}
