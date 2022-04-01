@@ -37,7 +37,7 @@ const (
 
 	// tcpModerateReceiveBufferEnabled is the value used by stack to
 	// enable or disable tcp receive buffer auto-tuning option.
-	tcpModerateReceiveBufferEnabled = true
+	tcpModerateReceiveBufferEnabled = false
 
 	// tcpSACKEnabled is the value used by stack to enable or disable
 	// tcp selective ACK.
