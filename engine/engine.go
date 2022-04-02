@@ -15,7 +15,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 
-	units "github.com/docker/go-units"
+	"github.com/docker/go-units"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
