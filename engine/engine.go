@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"fmt"
+	"net"
 	"sync"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
@@ -97,7 +98,12 @@ func general(k *Key) error {
 	log.SetLevel(level)
 
 	if k.Interface != "" {
-		dialer.DefaultInterfaceName.Store(k.Interface)
+		iface, err := net.InterfaceByName(k.Interface)
+		if err != nil {
+			return err
+		}
+		dialer.DefaultInterfaceName.Store(iface.Name)
+		dialer.DefaultInterfaceIndex.Store(int32(iface.Index))
 		log.Infof("[DIALER] bind to interface: %s", k.Interface)
 	}
 

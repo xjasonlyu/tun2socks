@@ -14,10 +14,15 @@ func setSocketOptions(network, address string, c syscall.RawConn, opts *Options)
 
 	var innerErr error
 	err = c.Control(func(fd uintptr) {
-		// must be GlobalUnicast.
 		host, _, _ := net.SplitHostPort(address)
 		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
 			return
+		}
+
+		if opts.InterfaceName == "" && opts.InterfaceIndex != 0 {
+			if iface, err := net.InterfaceByIndex(opts.InterfaceIndex); err == nil {
+				opts.InterfaceName = iface.Name
+			}
 		}
 
 		if opts.InterfaceName != "" {
