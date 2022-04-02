@@ -69,6 +69,18 @@ run() {
     ARGS="$ARGS --udp-timeout $UDP_TIMEOUT"
   fi
 
+  if [ -n "$TCP_SNDBUF" ]; then
+    ARGS="$ARGS --tcp-sndbuf $TCP_SNDBUF"
+  fi
+
+  if [ -n "$TCP_RCVBUF" ]; then
+    ARGS="$ARGS --tcp-rcvbuf $TCP_RCVBUF"
+  fi
+
+  if [ "$TCP_AUTO_TUNING" -eq 1 ]; then
+    ARGS="$ARGS --tcp-auto-tuning"
+  fi
+
   exec tun2socks \
     --loglevel "$LOGLEVEL" \
     --fwmark "$FWMARK" \
