@@ -26,7 +26,7 @@ var (
 func init() {
 	flag.IntVar(&key.Mark, "fwmark", 0, "Set firewall MARK (Linux only)")
 	flag.IntVar(&key.MTU, "mtu", 0, "Set device maximum transmission unit (MTU)")
-	flag.IntVar(&key.UDPTimeout, "udp-timeout", 0, "Set timeout for each UDP session")
+	flag.DurationVar(&key.UDPTimeout, "udp-timeout", 0, "Set timeout for each UDP session")
 	flag.StringVar(&configFile, "config", "", "YAML format configuration file")
 	flag.StringVar(&key.Device, "device", "", "Use this device [driver://]name")
 	flag.StringVar(&key.Interface, "interface", "", "Use network INTERFACE (Linux/MacOS only)")

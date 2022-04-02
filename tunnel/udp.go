@@ -17,8 +17,8 @@ import (
 // _udpSessionTimeout is the default timeout for each UDP session.
 var _udpSessionTimeout = 60 * time.Second
 
-func SetUDPTimeout(v int) {
-	_udpSessionTimeout = time.Duration(v) * time.Second
+func SetUDPTimeout(t time.Duration) {
+	_udpSessionTimeout = t
 }
 
 func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
