@@ -40,7 +40,7 @@ func handleUDPConn(uc adapter.UDPConn) {
 
 	pc, err := proxy.DialUDP(metadata)
 	if err != nil {
-		log.Warnf("[UDP] dial %s error: %v", metadata.DestinationAddress(), err)
+		log.Warnf("[UDP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
 	metadata.MidIP, metadata.MidPort = parseAddr(pc.LocalAddr())
@@ -64,7 +64,7 @@ func handleUDPToRemote(uc adapter.UDPConn, pc net.PacketConn, remote net.Addr) {
 		}
 
 		if _, err := pc.WriteTo(buf[:n], remote); err != nil {
-			log.Warnf("[UDP] write to %s error: %v", remote, err)
+			log.Warnf("[UDP] write to %s: %v", remote, err)
 		}
 		pc.SetReadDeadline(time.Now().Add(_udpSessionTimeout)) /* reset timeout */
 
@@ -81,18 +81,18 @@ func handleUDPToLocal(uc adapter.UDPConn, pc net.PacketConn, remote net.Addr) {
 		n, from, err := pc.ReadFrom(buf)
 		if err != nil {
 			if !errors.Is(err, os.ErrDeadlineExceeded) /* ignore I/O timeout */ {
-				log.Warnf("[UDP] read error: %v", err)
+				log.Warnf("[UDP] read from %s: %v", pc.LocalAddr(), err)
 			}
 			return
 		}
 
-		if from.Network() != remote.Network() || from.String() != remote.String() {
-			log.Warnf("[UDP] drop unknown packet from %s", from)
+		if from == nil || from.Network() != remote.Network() || from.String() != remote.String() {
+			log.Warnf("[UDP] drop unknown packet from %v", from)
 			return
 		}
 
 		if _, err := uc.Write(buf[:n]); err != nil {
-			log.Warnf("[UDP] write back from %s error: %v", from, err)
+			log.Warnf("[UDP] write back from %s: %v", from, err)
 			return
 		}
 

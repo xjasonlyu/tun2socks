@@ -36,7 +36,7 @@ func handleTCPConn(localConn adapter.TCPConn) {
 
 	targetConn, err := proxy.Dial(metadata)
 	if err != nil {
-		log.Warnf("[TCP] dial %s error: %v", metadata.DestinationAddress(), err)
+		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
 	metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr())
