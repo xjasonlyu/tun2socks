@@ -45,8 +45,8 @@ type directPacketConn struct {
 }
 
 func (pc *directPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
-	if ma, ok := addr.(*M.Addr); ok && ma.Metadata().DstIP != nil {
-		return pc.PacketConn.WriteTo(b, ma.Metadata().UDPAddr())
+	if udpAddr, ok := addr.(*net.UDPAddr); ok {
+		return pc.PacketConn.WriteTo(b, udpAddr)
 	}
 
 	udpAddr, err := net.ResolveUDPAddr("udp", addr.String())

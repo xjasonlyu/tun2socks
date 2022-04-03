@@ -25,9 +25,6 @@ func (m *Metadata) SourceAddress() string {
 }
 
 func (m *Metadata) Addr() net.Addr {
-	if udpAddr := m.UDPAddr(); udpAddr != nil {
-		return udpAddr
-	}
 	return &Addr{metadata: m}
 }
 

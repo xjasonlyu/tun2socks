@@ -48,7 +48,13 @@ func handleUDPConn(uc adapter.UDPConn) {
 	pc = newUDPTracker(pc, metadata)
 	defer pc.Close()
 
-	remote := metadata.Addr()
+	var remote net.Addr
+	if udpAddr := metadata.UDPAddr(); udpAddr != nil {
+		remote = udpAddr
+	} else {
+		remote = metadata.Addr()
+	}
+
 	go handleUDPToRemote(uc, pc, remote)
 	handleUDPToLocal(uc, pc, remote)
 }
