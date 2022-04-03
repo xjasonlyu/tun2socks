@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/component/dialer"
 	"github.com/xjasonlyu/tun2socks/v2/core"
@@ -113,6 +114,9 @@ func general(k *Key) error {
 	}
 
 	if k.UDPTimeout > 0 {
+		if k.UDPTimeout < time.Second {
+			return errors.New("invalid udp timeout value")
+		}
 		tunnel.SetUDPTimeout(k.UDPTimeout)
 	}
 	return nil
