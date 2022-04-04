@@ -77,7 +77,7 @@ run() {
     ARGS="$ARGS --tcp-rcvbuf $TCP_RCVBUF"
   fi
 
-  if [ "$TCP_AUTO_TUNING" -eq 1 ]; then
+  if [ "$TCP_AUTO_TUNING" = 1 ]; then
     ARGS="$ARGS --tcp-auto-tuning"
   fi
 
