@@ -20,10 +20,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var _upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+var (
+	_upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
+
+	_mountPoints = make(map[string]http.Handler)
+)
+
+func registerMountPoint(pattern string, handler http.Handler) {
+	_mountPoints[pattern] = handler
 }
 
 func Start(addr, token string) error {
@@ -43,8 +51,10 @@ func Start(addr, token string) error {
 		r.Get("/logs", getLogs)
 		r.Get("/traffic", traffic)
 		r.Get("/version", version)
-		r.Get("/netstats", getNetStats)
-		r.Mount("/connections", connectionRouter())
+		// attach HTTP handlers
+		for pattern, handler := range _mountPoints {
+			r.Mount(pattern, handler)
+		}
 	})
 
 	listener, err := net.Listen("tcp", addr)

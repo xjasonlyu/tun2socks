@@ -18,6 +18,10 @@ func SetStatsFunc(s func() tcpip.Stats) {
 	_statsFunc = s
 }
 
+func init() {
+	registerMountPoint("/netstats", http.HandlerFunc(getNetStats))
+}
+
 func getNetStats(w http.ResponseWriter, r *http.Request) {
 	if _statsFunc == nil {
 		render.Status(r, http.StatusInternalServerError)
