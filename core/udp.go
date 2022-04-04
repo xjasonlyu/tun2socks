@@ -16,7 +16,7 @@ func withUDPHandler(handle func(adapter.UDPConn), printf func(string, ...any)) o
 			var wq waiter.Queue
 			ep, err := r.CreateEndpoint(&wq)
 			if err != nil {
-				printf("udp forwarder request: %s", err)
+				printf("udp forwarder request %v: %s", r.ID(), err)
 				return
 			}
 
