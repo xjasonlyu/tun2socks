@@ -55,6 +55,7 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 				}
 			}()
 
+			// Perform a TCP three-way handshake.
 			ep, err = r.CreateEndpoint(&wq)
 			if err != nil {
 				// RST: prevent potential half-open TCP connection leak.
