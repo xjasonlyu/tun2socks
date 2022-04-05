@@ -55,23 +55,34 @@ func relay(left, right net.Conn) {
 
 	go func() {
 		defer wg.Done()
-		_ = copyBuffer(right, left) /* ignore error */
+		if err := copyBuffer(right, left); err != nil {
+			log.Warnf("[TCP] copy buffer: %v", err)
+		}
 		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
 	go func() {
 		defer wg.Done()
-		_ = copyBuffer(left, right) /* ignore error */
+		if err := copyBuffer(left, right); err != nil {
+			log.Warnf("[TCP] copy buffer: %v", err)
+		}
 		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
 	wg.Wait()
 }
 
-func copyBuffer(dst io.Writer, src io.Reader) error {
+func copyBuffer(dst io.Writer, src io.Reader) (err error) {
 	buf := pool.Get(pool.RelayBufferSize)
 	defer pool.Put(buf)
 
-	_, err := io.CopyBuffer(dst, src, buf)
+	defer func() {
+		if err != nil {
+			if ne, ok := err.(net.Error); ok && ne.Timeout() {
+				err = nil /* ignore I/O timeout */
+			}
+		}
+	}()
+	_, err = io.CopyBuffer(dst, src, buf)
 	return err
 }
