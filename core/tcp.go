@@ -47,11 +47,13 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 				wq  waiter.Queue
 				ep  tcpip.Endpoint
 				err tcpip.Error
+				id  = r.ID()
 			)
 
 			defer func() {
 				if err != nil {
-					printf("tcp forwarder request %v: %s", r.ID(), err)
+					printf("forward tcp request %s:%d->%s:%d: %s",
+						id.RemoteAddress, id.RemotePort, id.LocalAddress, id.LocalPort, err)
 				}
 			}()
 
@@ -68,7 +70,7 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 
 			conn := &tcpConn{
 				TCPConn: gonet.NewTCPConn(&wq, ep),
-				id:      r.ID(),
+				id:      id,
 			}
 			handle(conn)
 		})
