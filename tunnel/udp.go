@@ -53,6 +53,7 @@ func handleUDPConn(uc adapter.UDPConn) {
 	} else {
 		remote = metadata.Addr()
 	}
+	pc = newSymmetricNATPacketConn(pc, metadata)
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	relayPacket(uc, pc, remote)
@@ -96,5 +97,32 @@ func copyPacketBuffer(dst net.PacketConn, src net.PacketConn, to net.Addr, timeo
 			return err
 		}
 		dst.SetReadDeadline(time.Now().Add(timeout))
+	}
+}
+
+type symmetricNATPacketConn struct {
+	net.PacketConn
+	src string
+	dst string
+}
+
+func newSymmetricNATPacketConn(pc net.PacketConn, metadata *M.Metadata) *symmetricNATPacketConn {
+	return &symmetricNATPacketConn{
+		PacketConn: pc,
+		src:        metadata.SourceAddress(),
+		dst:        metadata.DestinationAddress(),
+	}
+}
+
+func (pc *symmetricNATPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
+	for {
+		n, from, err := pc.PacketConn.ReadFrom(p)
+
+		if from != nil && from.String() != pc.dst {
+			log.Warnf("[UDP] symmetric NAT %s->%s: drop packet from %s", pc.src, pc.dst, from)
+			continue
+		}
+
+		return n, from, err
 	}
 }
