@@ -72,17 +72,13 @@ func relay(left, right net.Conn) {
 	wg.Wait()
 }
 
-func copyBuffer(dst io.Writer, src io.Reader) (err error) {
+func copyBuffer(dst io.Writer, src io.Reader) error {
 	buf := pool.Get(pool.RelayBufferSize)
 	defer pool.Put(buf)
 
-	defer func() {
-		if err != nil {
-			if ne, ok := err.(net.Error); ok && ne.Timeout() {
-				err = nil /* ignore I/O timeout */
-			}
-		}
-	}()
-	_, err = io.CopyBuffer(dst, src, buf)
+	_, err := io.CopyBuffer(dst, src, buf)
+	if ne, ok := err.(net.Error); ok && ne.Timeout() {
+		return nil /* ignore I/O timeout */
+	}
 	return err
 }

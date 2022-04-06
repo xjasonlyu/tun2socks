@@ -86,10 +86,9 @@ func copyPacketBuffer(dst net.PacketConn, src net.PacketConn, to net.Addr, timeo
 	for {
 		src.SetReadDeadline(time.Now().Add(timeout))
 		n, _, err := src.ReadFrom(buf)
-		if err != nil {
-			if ne, ok := err.(net.Error); ok && ne.Timeout() {
-				return nil /* ignore I/O timeout */
-			}
+		if ne, ok := err.(net.Error); ok && ne.Timeout() {
+			return nil /* ignore I/O timeout */
+		} else if err != nil {
 			return err
 		}
 
