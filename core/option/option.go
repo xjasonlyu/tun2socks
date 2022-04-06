@@ -54,11 +54,11 @@ const (
 
 	// tcpDefaultBufferSize is the default size of the send buffer for
 	// a transport endpoint.
-	tcpDefaultSendBufferSize = stack.DefaultBufferSize
+	tcpDefaultSendBufferSize = tcp.DefaultSendBufferSize
 
 	// tcpDefaultReceiveBufferSize is the default size of the receive buffer
 	// for a transport endpoint.
-	tcpDefaultReceiveBufferSize = stack.DefaultBufferSize
+	tcpDefaultReceiveBufferSize = tcp.DefaultReceiveBufferSize
 )
 
 type Option func(*stack.Stack) error
