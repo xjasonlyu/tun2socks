@@ -2,9 +2,9 @@ package restapi
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/go-chi/render"
@@ -12,10 +12,10 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
-var _statsFunc func() tcpip.Stats
+var _stackStatsFunc func() tcpip.Stats
 
 func SetStatsFunc(s func() tcpip.Stats) {
-	_statsFunc = s
+	_stackStatsFunc = s
 }
 
 func init() {
@@ -23,19 +23,26 @@ func init() {
 }
 
 func getNetStats(w http.ResponseWriter, r *http.Request) {
-	if _statsFunc == nil {
+	if _stackStatsFunc == nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, ErrUninitialized)
 		return
 	}
 
-	snapshot := func() any {
-		s := _statsFunc()
-		return dump(reflect.ValueOf(&s).Elem())
+	b := &bytes.Buffer{}
+	snapshot := func() []byte {
+		s := _stackStatsFunc()
+		b.Reset() /* reset buffer */
+		encodeToJSON(reflect.ValueOf(&s).Elem(), b)
+		return b.Bytes()
 	}
 
 	if !websocket.IsWebSocketUpgrade(r) {
-		render.JSON(w, r, snapshot())
+		w.Header().Set("Content-Type", "application/json")
+		render.Status(r, http.StatusOK)
+		// write and flush.
+		w.Write(snapshot())
+		w.(http.Flusher).Flush()
 		return
 	}
 
@@ -47,42 +54,44 @@ func getNetStats(w http.ResponseWriter, r *http.Request) {
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
 
-	buf := &bytes.Buffer{}
 	for range tick.C {
-		buf.Reset()
-
-		if err = json.NewEncoder(buf).Encode(snapshot()); err != nil {
-			break
-		}
-
-		if err = conn.WriteMessage(websocket.TextMessage, buf.Bytes()); err != nil {
+		if err = conn.WriteMessage(websocket.TextMessage, snapshot()); err != nil {
 			break
 		}
 	}
 }
 
-func dump(value reflect.Value) map[string]any {
-	numField := value.NumField()
-	structure := make(map[string]any, numField)
+func encodeToJSON(value reflect.Value, b *bytes.Buffer) {
+	b.WriteByte('{')
+	defer b.WriteByte('}')
 
-	for i := 0; i < numField; i++ {
+	for i, numField := 0, value.NumField(); i < numField; i++ {
 		field := value.Type().Field(i)
 		value := value.Field(i)
 
+		b.WriteString("\"" + field.Name + "\":")
+
 		switch v := value.Addr().Interface().(type) {
 		case **tcpip.StatCounter:
-			structure[field.Name] = (*v).Value()
+			b.WriteString(strconv.FormatUint((*v).Value(), 10))
 		case **tcpip.IntegralStatCounterMap:
-			counterMap := make(map[uint64]uint64)
-			for _, k := range (*v).Keys() {
-				if counter, ok := (*v).Get(k); ok {
-					counterMap[k] = counter.Value()
+			b.WriteByte('{')
+			for j, keys := 0, (*v).Keys(); j < len(keys); j++ {
+				if counter, ok := (*v).Get(keys[j]); ok {
+					k := strconv.FormatUint(keys[j], 10)
+					v := strconv.FormatUint(counter.Value(), 10)
+					b.WriteString("\"" + k + "\":" + v)
+					if j < len(keys)-1 {
+						b.WriteByte(',')
+					}
 				}
 			}
-			structure[field.Name] = counterMap
+			b.WriteByte('}')
 		default:
-			structure[field.Name] = dump(value)
+			encodeToJSON(value, b)
+		}
+		if i < numField-1 {
+			b.WriteByte(',')
 		}
 	}
-	return structure
 }
