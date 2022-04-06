@@ -65,14 +65,14 @@ func relayPacket(left net.PacketConn, right net.PacketConn, to net.Addr) {
 	go func() {
 		defer wg.Done()
 		if err := copyPacketBuffer(right, left, to, _udpSessionTimeout); err != nil {
-			log.Warnf("[UDP] copy packet buffer: %v", err)
+			log.Warnf("[UDP] %v", err)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := copyPacketBuffer(left, right, nil, _udpSessionTimeout); err != nil {
-			log.Warnf("[UDP] copy packet buffer: %v", err)
+			log.Warnf("[UDP] %v", err)
 		}
 	}()
 

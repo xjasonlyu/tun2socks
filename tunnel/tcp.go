@@ -56,7 +56,7 @@ func relay(left, right net.Conn) {
 	go func() {
 		defer wg.Done()
 		if err := copyBuffer(right, left); err != nil {
-			log.Warnf("[TCP] copy buffer: %v", err)
+			log.Warnf("[TCP] %v", err)
 		}
 		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
@@ -64,7 +64,7 @@ func relay(left, right net.Conn) {
 	go func() {
 		defer wg.Done()
 		if err := copyBuffer(left, right); err != nil {
-			log.Warnf("[TCP] copy buffer: %v", err)
+			log.Warnf("[TCP] %v", err)
 		}
 		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
