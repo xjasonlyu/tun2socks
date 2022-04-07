@@ -12,7 +12,7 @@ LABEL org.opencontainers.image.source="https://github.com/xjasonlyu/tun2socks"
 COPY docker/entrypoint.sh /entrypoint.sh
 COPY --from=builder /src/build/tun2socks /usr/bin/tun2socks
 
-RUN apk add --update --no-cache iptables iproute2 \
+RUN apk add --update --no-cache iptables iproute2 tzdata \
     && chmod +x /entrypoint.sh
 
 ENV TUN=tun0
