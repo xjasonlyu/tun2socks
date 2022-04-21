@@ -38,11 +38,7 @@ func getNetStats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !websocket.IsWebSocketUpgrade(r) {
-		w.Header().Set("Content-Type", "application/json")
-		render.Status(r, http.StatusOK)
-		// write and flush.
-		w.Write(snapshot())
-		w.(http.Flusher).Flush()
+		render.JSON(w, r, snapshot())
 		return
 	}
 
