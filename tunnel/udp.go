@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -89,6 +90,8 @@ func copyPacketBuffer(dst net.PacketConn, src net.PacketConn, to net.Addr, timeo
 		n, _, err := src.ReadFrom(buf)
 		if ne, ok := err.(net.Error); ok && ne.Timeout() {
 			return nil /* ignore I/O timeout */
+		} else if err == io.EOF {
+			return nil /* ignore EOF */
 		} else if err != nil {
 			return err
 		}
