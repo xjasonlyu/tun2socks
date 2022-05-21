@@ -119,6 +119,9 @@ func general(k *Key) error {
 		}
 		tunnel.SetUDPTimeout(k.UDPTimeout)
 	}
+
+	tunnel.SetDropMulticast(k.DropMulticast)
+
 	return nil
 }
 
