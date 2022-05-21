@@ -40,7 +40,7 @@ jobs:
         with:
           registry: ghcr.io
           username: xjasonlyu
-          password: ${{ secrets.CR_PAT }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Get Version
         id: shell
