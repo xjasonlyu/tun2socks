@@ -14,7 +14,7 @@
 [4]: https://api.codeclimate.com/v1/badges/b5b30239174fc6603aca/maintainability
 [5]: https://img.shields.io/github/license/xjasonlyu/tun2socks
 [6]: https://img.shields.io/docker/pulls/xjasonlyu/tun2socks?logo=docker
-[7]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks
+[7]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?logo=smartthings
 
 [English](README.md) | 简体中文
 
