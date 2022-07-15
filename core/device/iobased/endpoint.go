@@ -8,8 +8,8 @@ import (
 	"io"
 	"sync"
 
+	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
-	"gvisor.dev/gvisor/pkg/tcpip/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
@@ -110,7 +110,7 @@ func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
 		}
 
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
-			Data: buffer.View(data[offset : offset+n]).ToVectorisedView(),
+			Payload: buffer.NewWithData(data[offset : offset+n]),
 		})
 
 		switch header.IPVersion(data[offset:]) {
@@ -139,16 +139,12 @@ func (e *Endpoint) outboundLoop(ctx context.Context) {
 func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
 	defer pkt.DecRef()
 
-	size := pkt.Size()
-	views := pkt.Views()
+	buf := pkt.Buffer()
 	if e.offset != 0 {
-		views = append([]buffer.View{
-			make(buffer.View, e.offset),
-		}, views...)
+		buf.PrependOwned(make([]byte, e.offset))
 	}
 
-	vView := buffer.NewVectorisedView(size, views)
-	if _, err := e.rw.Write(vView.ToView()); err != nil {
+	if _, err := e.rw.Write(buf.Flatten()); err != nil {
 		return &tcpip.ErrInvalidEndpointState{}
 	}
 	return nil
