@@ -1,9 +1,11 @@
 package tunnel
 
 import (
+	"errors"
 	"io"
 	"net"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
@@ -79,6 +81,10 @@ func copyBuffer(dst io.Writer, src io.Reader) error {
 	_, err := io.CopyBuffer(dst, src, buf)
 	if ne, ok := err.(net.Error); ok && ne.Timeout() {
 		return nil /* ignore I/O timeout */
+	} else if errors.Is(err, syscall.EPIPE) {
+		return nil /* ignore broken pipe */
+	} else if errors.Is(err, syscall.ECONNRESET) {
+		return nil /* ignore connection reset by peer */
 	}
 	return err
 }
