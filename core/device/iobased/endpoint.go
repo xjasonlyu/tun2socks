@@ -8,7 +8,7 @@ import (
 	"io"
 	"sync"
 
-	"gvisor.dev/gvisor/pkg/buffer"
+	"gvisor.dev/gvisor/pkg/bufferv2"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
@@ -110,7 +110,7 @@ func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
 		}
 
 		pkt := stack.NewPacketBuffer(stack.PacketBufferOptions{
-			Payload: buffer.NewWithData(data[offset : offset+n]),
+			Payload: bufferv2.MakeWithData(data[offset : offset+n]),
 		})
 
 		switch header.IPVersion(data[offset:]) {
@@ -139,9 +139,11 @@ func (e *Endpoint) outboundLoop(ctx context.Context) {
 func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
 	defer pkt.DecRef()
 
-	buf := pkt.Buffer()
+	buf := pkt.ToBuffer()
+	defer buf.Release()
 	if e.offset != 0 {
-		buf.PrependOwned(make([]byte, e.offset))
+		v := bufferv2.NewViewWithData(make([]byte, e.offset))
+		_ = buf.Prepend(v)
 	}
 
 	if _, err := e.rw.Write(buf.Flatten()); err != nil {
