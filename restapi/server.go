@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
-	V "github.com/xjasonlyu/tun2socks/v2/internal/version"
-	"github.com/xjasonlyu/tun2socks/v2/log"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/gorilla/websocket"
+
+	V "github.com/xjasonlyu/tun2socks/v2/internal/version"
+	"github.com/xjasonlyu/tun2socks/v2/log"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
 var (

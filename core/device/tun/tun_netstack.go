@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/xjasonlyu/tun2socks/v2/core/device"
-
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
 	"gvisor.dev/gvisor/pkg/tcpip/link/rawfile"
 	"gvisor.dev/gvisor/pkg/tcpip/link/tun"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
+	"github.com/xjasonlyu/tun2socks/v2/core/device"
 )
 
 type TUN struct {

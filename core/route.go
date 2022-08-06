@@ -1,11 +1,11 @@
 package core
 
 import (
-	"github.com/xjasonlyu/tun2socks/v2/core/option"
-
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
+	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
 func withRouteTable(nicID tcpip.NICID) option.Option {

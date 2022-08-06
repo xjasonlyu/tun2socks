@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
-
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/gorilla/websocket"
+
+	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
 const defaultInterval = 1000

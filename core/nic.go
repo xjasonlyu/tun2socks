@@ -3,10 +3,10 @@ package core
 import (
 	"fmt"
 
-	"github.com/xjasonlyu/tun2socks/v2/core/option"
-
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
+	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
 const (

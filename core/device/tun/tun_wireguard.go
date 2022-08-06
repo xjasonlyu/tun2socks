@@ -5,10 +5,10 @@ package tun
 import (
 	"fmt"
 
+	"golang.zx2c4.com/wireguard/tun"
+
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/iobased"
-
-	"golang.zx2c4.com/wireguard/tun"
 )
 
 type TUN struct {
