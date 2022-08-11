@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"net"
-	"sync"
 	"syscall"
 	"time"
 
@@ -52,26 +51,20 @@ func handleTCPConn(localConn adapter.TCPConn) {
 
 // relay copies between left and right bidirectionally.
 func relay(left, right net.Conn) {
-	wg := sync.WaitGroup{}
-	wg.Add(2)
-
+	errchan := make(chan error, 2)
 	go func() {
-		defer wg.Done()
-		if err := copyBuffer(right, left); err != nil {
-			log.Warnf("[TCP] %v", err)
-		}
-		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		err := copyBuffer(right, left)
+		errchan <- err
 	}()
 
 	go func() {
-		defer wg.Done()
-		if err := copyBuffer(left, right); err != nil {
-			log.Warnf("[TCP] %v", err)
-		}
-		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		err := copyBuffer(left, right)
+		errchan <- err
 	}()
-
-	wg.Wait()
+	err := <-errchan
+	if err != nil {
+		log.Warnf("[TCP] %v", err)
+	}
 }
 
 func copyBuffer(dst io.Writer, src io.Reader) error {
