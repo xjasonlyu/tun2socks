@@ -17,8 +17,14 @@ import (
 // _udpSessionTimeout is the default timeout for each UDP session.
 var _udpSessionTimeout = 60 * time.Second
 
+var _dropMulticast = false
+
 func SetUDPTimeout(t time.Duration) {
 	_udpSessionTimeout = t
+}
+
+func SetDropMulticast(b bool) {
+	_dropMulticast = b
 }
 
 func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
@@ -36,6 +42,21 @@ func handleUDPConn(uc adapter.UDPConn) {
 		SrcPort: id.RemotePort,
 		DstIP:   net.IP(id.LocalAddress),
 		DstPort: id.LocalPort,
+	}
+
+	if _dropMulticast && (!metadata.SrcIP.IsGlobalUnicast() || !metadata.DstIP.IsGlobalUnicast()) {
+		log.Debugf("[UDP] blackhole multicast %s->%s", metadata.SourceAddress(), metadata.DestinationAddress())
+
+		buf := pool.Get(pool.MaxSegmentSize)
+		defer pool.Put(buf)
+
+		for {
+			uc.SetReadDeadline(time.Now().Add(_udpSessionTimeout))
+			_, _, err := uc.ReadFrom(buf)
+			if err != nil {
+				return
+			}
+		}
 	}
 
 	pc, err := proxy.DialUDP(metadata)

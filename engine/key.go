@@ -14,4 +14,5 @@ type Key struct {
 	TCPSendBufferSize        string        `yaml:"tcp-send-buffer-size"`
 	TCPReceiveBufferSize     string        `yaml:"tcp-receive-buffer-size"`
 	UDPTimeout               time.Duration `yaml:"udp-timeout"`
+	DropMulticast            bool          `yaml:"drop-multicast"`
 }
