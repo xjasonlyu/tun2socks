@@ -41,7 +41,6 @@ UNIX_ARCH_LIST = \
 	linux-ppc64 \
 	linux-ppc64le \
 	linux-s390x \
-	openbsd-386 \
 	openbsd-amd64 \
 	openbsd-amd64-v3 \
 	openbsd-arm64
@@ -129,9 +128,6 @@ linux-ppc64le:
 
 linux-s390x:
 	GOARCH=s390x GOOS=linux $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
-
-openbsd-386:
-	GOARCH=386 GOOS=openbsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
 
 openbsd-amd64:
 	GOARCH=amd64 GOOS=openbsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
