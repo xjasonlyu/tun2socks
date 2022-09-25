@@ -1,4 +1,4 @@
-//go:build !linux && !windows
+//go:build !(linux && amd64) && !(linux && arm64) && !windows
 
 package fdbased
 
