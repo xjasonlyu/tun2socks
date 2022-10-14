@@ -128,7 +128,7 @@ func (e *Endpoint) dispatchLoop(cancel context.CancelFunc) {
 func (e *Endpoint) outboundLoop(ctx context.Context) {
 	for {
 		pkt := e.ReadContext(ctx)
-		if pkt == nil {
+		if pkt.IsNil() {
 			break
 		}
 		e.writePacket(pkt)
@@ -136,7 +136,7 @@ func (e *Endpoint) outboundLoop(ctx context.Context) {
 }
 
 // writePacket writes outbound packets to the io.Writer.
-func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
+func (e *Endpoint) writePacket(pkt stack.PacketBufferPtr) tcpip.Error {
 	defer pkt.DecRef()
 
 	buf := pkt.ToBuffer()
