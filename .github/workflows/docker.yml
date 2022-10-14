@@ -57,6 +57,8 @@ jobs:
           tags: |
             xjasonlyu/tun2socks:dev
             ghcr.io/xjasonlyu/tun2socks:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build and Push (latest)
         if: startsWith(github.ref, 'refs/tags/')
@@ -70,3 +72,5 @@ jobs:
             xjasonlyu/tun2socks:${{ steps.shell.outputs.version }}
             ghcr.io/xjasonlyu/tun2socks:latest
             ghcr.io/xjasonlyu/tun2socks:${{ steps.shell.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
