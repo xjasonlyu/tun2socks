@@ -45,7 +45,7 @@ jobs:
       - name: Get Version
         id: shell
         run: |
-          echo ::set-output name=version::$(git describe --tags --abbrev=0)
+          echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
 
       - name: Build and Push (dev)
         if: github.ref == 'refs/heads/main'
