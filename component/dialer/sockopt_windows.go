@@ -17,16 +17,22 @@ func setSocketOptions(network, address string, c syscall.RawConn, opts *Options)
 	var innerErr error
 	err = c.Control(func(fd uintptr) {
 		host, _, _ := net.SplitHostPort(address)
-		ip := net.ParseIP(host)
-		if ip != nil && !ip.IsGlobalUnicast() {
+		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
 			return
 		}
 
-		if opts.InterfaceName != "" {
-			if len(ip) == net.IPv6len {
-				innerErr = bindSocketToInterface6(windows.Handle(fd), uint32(opts.InterfaceIndex))
-			} else {
+		if opts.InterfaceIndex == 0 && opts.InterfaceName != "" {
+			if iface, err := net.InterfaceByName(opts.InterfaceName); err == nil {
+				opts.InterfaceIndex = iface.Index
+			}
+		}
+
+		if opts.InterfaceIndex != 0 {
+			switch network {
+			case "tcp4", "udp4":
 				innerErr = bindSocketToInterface4(windows.Handle(fd), uint32(opts.InterfaceIndex))
+			case "tcp6", "udp6":
+				innerErr = bindSocketToInterface6(windows.Handle(fd), uint32(opts.InterfaceIndex))
 			}
 		}
 	})
