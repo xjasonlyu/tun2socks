@@ -34,7 +34,7 @@ func setSocketOptions(network, address string, c syscall.RawConn, opts *Options)
 				innerErr = bindSocketToInterface4(windows.Handle(fd), uint32(opts.InterfaceIndex))
 			case "tcp6", "udp6":
 				innerErr = bindSocketToInterface6(windows.Handle(fd), uint32(opts.InterfaceIndex))
-				if network == "udp6" && ip.To16() == nil {
+				if network == "udp6" && ip == nil {
 					// the underlying IP net maybe IPv4 even if the 'network' param is 'udp6',
 					// so we should bind socket to interface4 at the same time
 					innerErr = bindSocketToInterface4(windows.Handle(fd), uint32(opts.InterfaceIndex))
