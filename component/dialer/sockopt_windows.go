@@ -17,7 +17,8 @@ func setSocketOptions(network, address string, c syscall.RawConn, opts *Options)
 	var innerErr error
 	err = c.Control(func(fd uintptr) {
 		host, _, _ := net.SplitHostPort(address)
-		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
+		ip := net.ParseIP(host)
+		if ip != nil && !ip.IsGlobalUnicast() {
 			return
 		}
 
@@ -33,7 +34,7 @@ func setSocketOptions(network, address string, c syscall.RawConn, opts *Options)
 				innerErr = bindSocketToInterface4(windows.Handle(fd), uint32(opts.InterfaceIndex))
 			case "tcp6", "udp6":
 				innerErr = bindSocketToInterface6(windows.Handle(fd), uint32(opts.InterfaceIndex))
-				if network == "udp6" {
+				if network == "udp6" && ip.To16() == nil {
 					// the underlying IP net maybe IPv4 even if the 'network' param is 'udp6',
 					// so we should bind socket to interface4 at the same time
 					innerErr = bindSocketToInterface4(windows.Handle(fd), uint32(opts.InterfaceIndex))
