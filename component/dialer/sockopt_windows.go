@@ -9,7 +9,10 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-const IP_UNICAST_IF = 31
+const (
+	IP_UNICAST_IF   = 31
+	IPV6_UNICAST_IF = 31
+)
 
 func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
 	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) {
@@ -62,5 +65,5 @@ func bindSocketToInterface4(handle windows.Handle, interfaceIndex uint32) error 
 }
 
 func bindSocketToInterface6(handle windows.Handle, interfaceIndex uint32) error {
-	return windows.SetsockoptInt(handle, windows.IPPROTO_IPV6, IP_UNICAST_IF, int(interfaceIndex))
+	return windows.SetsockoptInt(handle, windows.IPPROTO_IPV6, IPV6_UNICAST_IF, int(interfaceIndex))
 }
