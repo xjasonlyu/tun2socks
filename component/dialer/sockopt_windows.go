@@ -9,6 +9,8 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+const IP_UNICAST_IF = 31
+
 func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
 	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) {
 		return
@@ -50,8 +52,9 @@ func setSocketOptions(network, address string, c syscall.RawConn, opts *Options)
 }
 
 func bindSocketToInterface4(handle windows.Handle, interfaceIndex uint32) error {
-	const IP_UNICAST_IF = 31
-	/* MSDN says for IPv4 this needs to be in net byte order, so that it's like an IP address with leading zeros. */
+	// For IPv4, this parameter must be an interface index in network byte order.
+	//
+	// Ref: https://learn.microsoft.com/en-us/windows/win32/winsock/ipproto-ip-socket-options
 	var bytes [4]byte
 	binary.BigEndian.PutUint32(bytes[:], interfaceIndex)
 	interfaceIndex = *(*uint32)(unsafe.Pointer(&bytes[0]))
@@ -59,6 +62,5 @@ func bindSocketToInterface4(handle windows.Handle, interfaceIndex uint32) error 
 }
 
 func bindSocketToInterface6(handle windows.Handle, interfaceIndex uint32) error {
-	const IPV6_UNICAST_IF = 31
-	return windows.SetsockoptInt(handle, windows.IPPROTO_IPV6, IPV6_UNICAST_IF, int(interfaceIndex))
+	return windows.SetsockoptInt(handle, windows.IPPROTO_IPV6, IP_UNICAST_IF, int(interfaceIndex))
 }
