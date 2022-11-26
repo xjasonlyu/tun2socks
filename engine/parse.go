@@ -9,6 +9,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/sockbased"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
@@ -42,23 +43,21 @@ func parseRestAPI(s string) (*url.URL, error) {
 }
 
 func parseDevice(s string, mtu uint32) (device.Device, error) {
-	if !strings.Contains(s, "://") {
+	i := strings.Index(s, "://")
+	if i < 0 {
 		s = fmt.Sprintf("%s://%s", tun.Driver /* default driver */, s)
+		i = len(tun.Driver)
 	}
-
-	u, err := url.Parse(s)
-	if err != nil {
-		return nil, err
-	}
-
-	name := u.Host
-	driver := strings.ToLower(u.Scheme)
+	driver := s[:i]
+	name := s[i+3:]
 
 	switch driver {
 	case fdbased.Driver:
 		return fdbased.Open(name, mtu)
 	case tun.Driver:
 		return tun.Open(name, mtu)
+	case sockbased.Driver:
+		return sockbased.Open(name, mtu)
 	default:
 		return nil, fmt.Errorf("unsupported driver: %s", driver)
 	}
