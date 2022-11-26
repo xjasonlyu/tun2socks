@@ -55,11 +55,7 @@ func bindSocketToInterface4(handle windows.Handle, interfaceIndex uint32) error 
 	var bytes [4]byte
 	binary.BigEndian.PutUint32(bytes[:], interfaceIndex)
 	interfaceIndex = *(*uint32)(unsafe.Pointer(&bytes[0]))
-	err := windows.SetsockoptInt(handle, windows.IPPROTO_IP, IP_UNICAST_IF, int(interfaceIndex))
-	if err != nil {
-		return err
-	}
-	return nil
+	return windows.SetsockoptInt(handle, windows.IPPROTO_IP, IP_UNICAST_IF, int(interfaceIndex))
 }
 
 func bindSocketToInterface6(handle windows.Handle, interfaceIndex uint32) error {
