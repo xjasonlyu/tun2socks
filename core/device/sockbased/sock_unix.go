@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
-
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
@@ -23,7 +22,6 @@ type FD struct {
 }
 
 func Open(sockpath string, mtu uint32) (device.Device, error) {
-	// unlink删除已存在的unixSock文件
 	syscall.Unlink(sockpath)
 	laddr, err := net.ResolveUnixAddr("unix", sockpath)
 	if err != nil {
@@ -37,7 +35,6 @@ func Open(sockpath string, mtu uint32) (device.Device, error) {
 	if err != nil {
 		return nil, err
 	}
-	// msg分为两部分数据
 	buf := make([]byte, 32)
 	oob := make([]byte, 32)
 	_, oobn, _, _, err := conn.ReadMsgUnix(buf, oob)
@@ -45,7 +42,6 @@ func Open(sockpath string, mtu uint32) (device.Device, error) {
 		return nil, err
 	}
 	conn.Close()
-	// 解出SocketControlMessage数组
 	scms, err := syscall.ParseSocketControlMessage(oob[:oobn])
 	if err != nil {
 		return nil, err
@@ -53,7 +49,6 @@ func Open(sockpath string, mtu uint32) (device.Device, error) {
 	if len(scms) == 0 {
 		return nil, errors.New("syscall.ParseSocketControlMessage() length == 0")
 	}
-	// 从SocketControlMessage中得到UnixRights
 	fds, err := syscall.ParseUnixRights(&(scms[0]))
 	if err != nil {
 		return nil, err
