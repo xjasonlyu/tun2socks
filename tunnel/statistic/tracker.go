@@ -74,6 +74,14 @@ func (tt *tcpTracker) Close() error {
 	return tt.Conn.Close()
 }
 
+func (tt *tcpTracker) CloseRead() error {
+	return tt.Conn.(*net.TCPConn).CloseRead()
+}
+
+func (tt *tcpTracker) CloseWrite() error {
+	return tt.Conn.(*net.TCPConn).CloseWrite()
+}
+
 type udpTracker struct {
 	net.PacketConn `json:"-"`
 

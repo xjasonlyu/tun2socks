@@ -6,7 +6,6 @@ import (
 	"net"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
@@ -14,10 +13,6 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
-)
-
-const (
-	tcpWaitTimeout = 5 * time.Second
 )
 
 func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
@@ -64,7 +59,12 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(right, left); err != nil {
 			leftErr = errors.Join(leftErr, err)
 		}
-		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		if err := left.(interface{ CloseRead() error }).CloseRead(); err != nil {
+			log.Warnf("[TCP] close read for left %v", err)
+		}
+		if err := right.(interface{ CloseWrite() error }).CloseWrite(); err != nil {
+			log.Warnf("[TCP] close write for right %v", err)
+		}
 	}()
 
 	go func() {
@@ -72,7 +72,12 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(left, right); err != nil {
 			rightErr = errors.Join(rightErr, err)
 		}
-		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		if err := right.(interface{ CloseRead() error }).CloseRead(); err != nil {
+			log.Warnf("[TCP] close read for right %v", err)
+		}
+		if err := left.(interface{ CloseWrite() error }).CloseWrite(); err != nil {
+			log.Warnf("[TCP] close write for left %v", err)
+		}
 	}()
 
 	wg.Wait()
