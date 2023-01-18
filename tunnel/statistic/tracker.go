@@ -10,6 +10,10 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 )
 
+type CloseWriter interface {
+	CloseWrite() error
+}
+
 type tracker interface {
 	ID() string
 	Close() error
@@ -74,12 +78,11 @@ func (tt *tcpTracker) Close() error {
 	return tt.Conn.Close()
 }
 
-func (tt *tcpTracker) CloseRead() error {
-	return tt.Conn.(*net.TCPConn).CloseRead()
-}
-
 func (tt *tcpTracker) CloseWrite() error {
-	return tt.Conn.(*net.TCPConn).CloseWrite()
+	if cw, ok := tt.Conn.(CloseWriter); ok {
+		return cw.CloseWrite()
+	}
+	return nil
 }
 
 type udpTracker struct {
