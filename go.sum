@@ -54,5 +54,5 @@ gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33
 gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=
 gopkg.in/yaml.v3 v3.0.1/go.mod h1:K4uyk7z7BCEPqu6E+C64Yfv1cQ7kz7rIZviUmN+EgEM=
-gvisor.dev/gvisor v0.0.0-20230112225103-b180458e2046 h1:sQCPXWesPQJRdriyctdikFpJjP04pmq9bfU3998M/Nw=
-gvisor.dev/gvisor v0.0.0-20230112225103-b180458e2046/go.mod h1:94x/o/BlxPAbw4phqHRac0/IzpcQRUP7ZQldDWV3TKU=
+gvisor.dev/gvisor v0.0.0-20230121035754-f9368e81ec27 h1:GxlXd1CGp3SiNvi/vac/dIyG47enkPlSfG2NM3SezWg=
+gvisor.dev/gvisor v0.0.0-20230121035754-f9368e81ec27/go.mod h1:94x/o/BlxPAbw4phqHRac0/IzpcQRUP7ZQldDWV3TKU=
