@@ -2,18 +2,14 @@ package obfs
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"io"
-	"math/rand"
 	"net"
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix())
-}
 
 const (
 	chunkSize = 1 << 14 // 2 ** 14 == 16 * 1024
