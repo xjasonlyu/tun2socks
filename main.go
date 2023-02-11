@@ -36,6 +36,8 @@ func init() {
 	flag.StringVar(&key.TCPSendBufferSize, "tcp-sndbuf", "", "Set TCP send buffer size for netstack")
 	flag.StringVar(&key.TCPReceiveBufferSize, "tcp-rcvbuf", "", "Set TCP receive buffer size for netstack")
 	flag.BoolVar(&key.TCPModerateReceiveBuffer, "tcp-auto-tuning", false, "Enable TCP receive buffer auto-tuning")
+	flag.StringVar(&key.TunPreUp, "preup", "", "Tun device pre-setup script")
+	flag.StringVar(&key.TunPostUp, "postup", "", "Tun device post-setup script")
 	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
 	flag.Parse()
 }

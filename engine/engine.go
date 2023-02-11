@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -91,6 +93,32 @@ func stop() (err error) {
 	return err
 }
 
+func doCommand(cmd string) error {
+	parts := strings.Fields(cmd)
+	_, err := exec.Command(parts[0], parts[1:]...).Output()
+	return err
+}
+
+func preUp(script string) {
+	if script == "" {
+		return
+	}
+
+	if err := doCommand(script); err != nil {
+		log.Warnf("[PREUP] Run: '%s' failed: %v", script, err)
+	}
+}
+
+func postUp(script string) {
+	if script == "" {
+		return
+	}
+
+	if err := doCommand(script); err != nil {
+		log.Warnf("[POSTUP] Run: '%s' failed: %v", script, err)
+	}
+}
+
 func general(k *Key) error {
 	level, err := log.ParseLevel(k.LogLevel)
 	if err != nil {
@@ -159,6 +187,8 @@ func netstack(k *Key) (err error) {
 		return errors.New("empty device")
 	}
 
+	preUp(k.TunPreUp)
+
 	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
 		return
 	}
@@ -167,6 +197,8 @@ func netstack(k *Key) (err error) {
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
 		return
 	}
+
+	postUp(k.TunPostUp)
 
 	var opts []option.Option
 	if k.TCPModerateReceiveBuffer {
