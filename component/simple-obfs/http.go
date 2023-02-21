@@ -2,10 +2,11 @@ package obfs
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"io"
-	"math/rand"
+	mRand "math/rand"
 	"net"
 	"net/http"
 
@@ -65,7 +66,7 @@ func (ho *HTTPObfs) Write(b []byte) (int, error) {
 		randBytes := make([]byte, 16)
 		rand.Read(randBytes)
 		req, _ := http.NewRequest("GET", fmt.Sprintf("http://%s/", ho.host), bytes.NewBuffer(b[:]))
-		req.Header.Set("User-Agent", fmt.Sprintf("curl/7.%d.%d", rand.Int()%54, rand.Int()%2))
+		req.Header.Set("User-Agent", fmt.Sprintf("curl/7.%d.%d", mRand.Int()%54, mRand.Int()%2))
 		req.Header.Set("Upgrade", "websocket")
 		req.Header.Set("Connection", "Upgrade")
 		req.Host = ho.host

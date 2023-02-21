@@ -2,9 +2,9 @@ package obfs
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/binary"
 	"io"
-	"math/rand"
 	"net"
 	"time"
 
