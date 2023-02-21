@@ -14,9 +14,9 @@ require (
 	github.com/stretchr/testify v1.7.1
 	go.uber.org/atomic v1.10.0
 	go.uber.org/automaxprocs v1.5.1
-	golang.org/x/sys v0.4.0
+	golang.org/x/sys v0.5.0
 	golang.org/x/time v0.3.0
-	golang.zx2c4.com/wireguard v0.0.0-20220920152132-bb719d3a6e2c
+	golang.zx2c4.com/wireguard v0.0.0-20230216153314-c7b76d3d9ecd
 	gopkg.in/yaml.v3 v3.0.1
 	gvisor.dev/gvisor v0.0.0-20230219185229-4f1045309c43
 )
@@ -27,7 +27,7 @@ require (
 	github.com/google/btree v1.1.2 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	golang.org/x/crypto v0.5.0 // indirect
-	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/crypto v0.6.0 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 )
