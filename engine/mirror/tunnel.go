@@ -9,7 +9,7 @@ var _ adapter.TransportHandler = (*Tunnel)(nil)
 
 type Tunnel struct{}
 
-func (*Tunnel) HandleTCP(conn adapter.TCPConn) {
+func (*Tunnel) HandleTCP(conn adapter.TCPConnSYN) {
 	tunnel.TCPIn() <- conn
 }
 

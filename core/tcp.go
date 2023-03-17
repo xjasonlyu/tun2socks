@@ -1,6 +1,8 @@
 package core
 
 import (
+	"errors"
+	"net"
 	"time"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -40,12 +42,10 @@ const (
 	tcpKeepaliveInterval = 30 * time.Second
 )
 
-func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) option.Option {
+func withTCPHandler(handle func(adapter.TCPConnSYN), printf func(string, ...any)) option.Option {
 	return func(s *stack.Stack) error {
 		tcpForwarder := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
 			var (
-				wq  waiter.Queue
-				ep  tcpip.Endpoint
 				err tcpip.Error
 				id  = r.ID()
 			)
@@ -57,20 +57,10 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 				}
 			}()
 
-			// Perform a TCP three-way handshake.
-			ep, err = r.CreateEndpoint(&wq)
-			if err != nil {
-				// RST: prevent potential half-open TCP connection leak.
-				r.Complete(true)
-				return
-			}
-			defer r.Complete(false)
-
-			err = setSocketOptions(s, ep)
-
-			conn := &tcpConn{
-				TCPConn: gonet.NewTCPConn(&wq, ep),
-				id:      id,
+			conn := &tcpConnSYN{
+				id: id,
+				r:  r,
+				s:  s,
 			}
 			handle(conn)
 		})
@@ -111,11 +101,35 @@ func setSocketOptions(s *stack.Stack, ep tcpip.Endpoint) tcpip.Error {
 	return nil
 }
 
-type tcpConn struct {
-	*gonet.TCPConn
+type tcpConnSYN struct {
 	id stack.TransportEndpointID
+	r  *tcp.ForwarderRequest
+	s  *stack.Stack
 }
 
-func (c *tcpConn) ID() *stack.TransportEndpointID {
+func (c *tcpConnSYN) ID() *stack.TransportEndpointID {
 	return &c.id
+}
+
+func (c *tcpConnSYN) CompleteHandshake() (net.Conn, error) {
+	// Perform a TCP three-way handshake.
+	r := c.r
+	s := c.s
+	var wq waiter.Queue
+	var ep tcpip.Endpoint
+	ep, err := r.CreateEndpoint(&wq)
+	if err != nil {
+		// RST: prevent potential half-open TCP connection leak.
+		r.Complete(true)
+		return nil, errors.New(err.String())
+	}
+	defer r.Complete(false)
+
+	err = setSocketOptions(s, ep)
+	tcpConn := gonet.NewTCPConn(&wq, ep)
+	return tcpConn, nil
+}
+
+func (c *tcpConnSYN) StopHandshake() {
+	c.r.Complete(true)
 }

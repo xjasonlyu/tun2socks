@@ -6,7 +6,7 @@ import (
 
 // Unbuffered TCP/UDP queues.
 var (
-	_tcpQueue = make(chan adapter.TCPConn)
+	_tcpQueue = make(chan adapter.TCPConnSYN)
 	_udpQueue = make(chan adapter.UDPConn)
 )
 
@@ -15,7 +15,7 @@ func init() {
 }
 
 // TCPIn return fan-in TCP queue.
-func TCPIn() chan<- adapter.TCPConn {
+func TCPIn() chan<- adapter.TCPConnSYN {
 	return _tcpQueue
 }
 

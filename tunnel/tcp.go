@@ -24,10 +24,8 @@ func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
 	return statistic.NewTCPTracker(conn, metadata, statistic.DefaultManager)
 }
 
-func handleTCPConn(localConn adapter.TCPConn) {
-	defer localConn.Close()
-
-	id := localConn.ID()
+func handleTCPConn(localConnSYN adapter.TCPConnSYN) {
+	id := localConnSYN.ID()
 	metadata := &M.Metadata{
 		Network: M.TCP,
 		SrcIP:   net.IP(id.RemoteAddress),
@@ -38,6 +36,7 @@ func handleTCPConn(localConn adapter.TCPConn) {
 
 	targetConn, err := proxy.Dial(metadata)
 	if err != nil {
+		localConnSYN.StopHandshake()
 		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
@@ -46,8 +45,15 @@ func handleTCPConn(localConn adapter.TCPConn) {
 	targetConn = newTCPTracker(targetConn, metadata)
 	defer targetConn.Close()
 
+	conn, err := localConnSYN.CompleteHandshake()
+	if err != nil {
+		log.Warnf("[TCP] localConnSYN CompleteHandshake %s: %v", metadata.DestinationAddress(), err)
+		return
+	}
+	defer conn.Close()
+
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	relay(localConn, targetConn) /* relay connections */
+	relay(conn, targetConn) /* relay connections */
 }
 
 // relay copies between left and right bidirectionally.

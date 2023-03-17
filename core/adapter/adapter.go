@@ -6,12 +6,13 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
-// TCPConn implements the net.Conn interface.
-type TCPConn interface {
-	net.Conn
-
+// TCPConnSYN
+type TCPConnSYN interface {
 	// ID returns the transport endpoint id of TCPConn.
 	ID() *stack.TransportEndpointID
+
+	CompleteHandshake() (net.Conn, error)
+	StopHandshake()
 }
 
 // UDPConn implements net.Conn and net.PacketConn.
