@@ -60,6 +60,19 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 	}
 
 	_, err = socks5.ClientHandshake(c, serializeSocksAddr(metadata), socks5.CmdConnect, user)
+
+	if e, ok := err.(*socks5.ReplyRepError); ok {
+		switch e.Rep {
+		case socks5.RepNetworkUnreachable, socks5.RepHostUnreachable, socks5.RepTTLExpired:
+			err = &UnreachableError{
+				proto:   "socks5",
+				code:    int(e.Rep),
+				message: e.Rep.String(),
+			}
+		default:
+
+		}
+	}
 	return
 }
 

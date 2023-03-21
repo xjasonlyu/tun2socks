@@ -39,6 +39,46 @@ func (c Command) String() string {
 	}
 }
 
+// Reply field as defined in RFC 1928 section 6.
+type ReplyRep uint8
+
+const (
+	RepSuccess              = 0x00
+	RepServerFailure        = 0x01
+	RepRuleFailure          = 0x02
+	RepNetworkUnreachable   = 0x03
+	RepHostUnreachable      = 0x04
+	RepConnectionRefused    = 0x05
+	RepTTLExpired           = 0x06
+	RepCmdNotSupported      = 0x07
+	RepAddrTypeNotSupported = 0x08
+)
+
+func (r ReplyRep) String() string {
+	switch r {
+	case RepSuccess:
+		return "Success"
+	case RepServerFailure:
+		return "General SOCKS server failure"
+	case RepRuleFailure:
+		return "Connection not allowed by ruleset"
+	case RepNetworkUnreachable:
+		return "Network unreachable"
+	case RepHostUnreachable:
+		return "Host unreachable"
+	case RepConnectionRefused:
+		return "Connection refused"
+	case RepTTLExpired:
+		return "TTL expired"
+	case RepCmdNotSupported:
+		return "Command not supported"
+	case RepAddrTypeNotSupported:
+		return "Address type not supported"
+	default:
+		return fmt.Sprintf("unassigned <%#02x>", r)
+	}
+}
+
 type Atyp = uint8
 
 // SOCKS address types as defined in RFC 1928 section 5.
@@ -47,34 +87,6 @@ const (
 	AtypDomainName Atyp = 0x03
 	AtypIPv6       Atyp = 0x04
 )
-
-// Reply field as defined in RFC 1928 section 6.
-type Reply uint8
-
-func (r Reply) String() string {
-	switch r {
-	case 0x00:
-		return "succeeded"
-	case 0x01:
-		return "general SOCKS server failure"
-	case 0x02:
-		return "connection not allowed by ruleset"
-	case 0x03:
-		return "network unreachable"
-	case 0x04:
-		return "host unreachable"
-	case 0x05:
-		return "connection refused"
-	case 0x06:
-		return "TTL expired"
-	case 0x07:
-		return "command not supported"
-	case 0x08:
-		return "address type not supported"
-	default:
-		return fmt.Sprintf("unassigned <%#02x>", r)
-	}
-}
 
 // MaxAddrLen is the maximum size of SOCKS address in bytes.
 const MaxAddrLen = 1 + 1 + 255 + 2
@@ -226,8 +238,8 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 		return nil, err
 	}
 
-	if rep := Reply(buf[1]); rep != 0x00 /* SUCCEEDED */ {
-		return nil, fmt.Errorf("%s: %s", command, rep)
+	if rep := ReplyRep(buf[1]); rep != RepSuccess /* SUCCEEDED */ {
+		return nil, &ReplyRepError{Command: command, Rep: rep}
 	}
 
 	return ReadAddr(rw, buf)

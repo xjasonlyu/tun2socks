@@ -126,10 +126,15 @@ func (c *tcpConnSYN) CompleteHandshake() (net.Conn, error) {
 	defer r.Complete(false)
 
 	err = setSocketOptions(s, ep)
+	if err != nil {
+		r.Complete(true)
+		return nil, errors.New(err.String())
+	}
+
 	tcpConn := gonet.NewTCPConn(&wq, ep)
 	return tcpConn, nil
 }
 
-func (c *tcpConnSYN) StopHandshake() {
+func (c *tcpConnSYN) RST() {
 	c.r.Complete(true)
 }

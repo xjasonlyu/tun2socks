@@ -12,7 +12,7 @@ type TCPConnSYN interface {
 	ID() *stack.TransportEndpointID
 
 	CompleteHandshake() (net.Conn, error)
-	StopHandshake()
+	RST()
 }
 
 // UDPConn implements net.Conn and net.PacketConn.

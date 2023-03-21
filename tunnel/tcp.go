@@ -36,7 +36,9 @@ func handleTCPConn(localConnSYN adapter.TCPConnSYN) {
 
 	targetConn, err := proxy.Dial(metadata)
 	if err != nil {
-		localConnSYN.StopHandshake()
+		if _, ok := err.(*proxy.UnreachableError); !ok {
+			localConnSYN.RST()
+		}
 		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
