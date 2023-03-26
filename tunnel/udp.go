@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"errors"
 	"io"
 	"net"
 	"sync"
@@ -57,28 +58,33 @@ func handleUDPConn(uc adapter.UDPConn) {
 	pc = newSymmetricNATPacketConn(pc, metadata)
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	relayPacket(uc, pc, remote)
+	if err = relayPacket(uc, pc, remote); err != nil {
+		log.Warnf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
+	}
 }
 
-func relayPacket(left net.PacketConn, right net.PacketConn, to net.Addr) {
+func relayPacket(left net.PacketConn, right net.PacketConn, to net.Addr) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
+
+	var leftErr, rightErr error
 
 	go func() {
 		defer wg.Done()
 		if err := copyPacketBuffer(right, left, to, _udpSessionTimeout); err != nil {
-			log.Warnf("[UDP] %v", err)
+			leftErr = errors.Join(leftErr, err)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := copyPacketBuffer(left, right, nil, _udpSessionTimeout); err != nil {
-			log.Warnf("[UDP] %v", err)
+			rightErr = errors.Join(rightErr, err)
 		}
 	}()
 
 	wg.Wait()
+	return errors.Join(leftErr, rightErr)
 }
 
 func copyPacketBuffer(dst net.PacketConn, src net.PacketConn, to net.Addr, timeout time.Duration) error {

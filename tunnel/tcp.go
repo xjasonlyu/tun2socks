@@ -47,18 +47,22 @@ func handleTCPConn(localConn adapter.TCPConn) {
 	defer targetConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	relay(localConn, targetConn) /* relay connections */
+	if err = relay(localConn, targetConn); err != nil {
+		log.Warnf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
+	}
 }
 
 // relay copies between left and right bidirectionally.
-func relay(left, right net.Conn) {
+func relay(left, right net.Conn) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
+
+	var leftErr, rightErr error
 
 	go func() {
 		defer wg.Done()
 		if err := copyBuffer(right, left); err != nil {
-			log.Warnf("[TCP] %v", err)
+			leftErr = errors.Join(leftErr, err)
 		}
 		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
@@ -66,12 +70,13 @@ func relay(left, right net.Conn) {
 	go func() {
 		defer wg.Done()
 		if err := copyBuffer(left, right); err != nil {
-			log.Warnf("[TCP] %v", err)
+			rightErr = errors.Join(rightErr, err)
 		}
 		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
 	wg.Wait()
+	return errors.Join(leftErr, rightErr)
 }
 
 func copyBuffer(dst io.Writer, src io.Reader) error {
