@@ -18,6 +18,10 @@ type TUN struct {
 	mtu    uint32
 	name   string
 	offset int
+
+	rSizes []int
+	rBuffs [][]byte
+	wBuffs [][]byte
 }
 
 func Open(name string, mtu uint32) (_ device.Device, err error) {
@@ -27,7 +31,14 @@ func Open(name string, mtu uint32) (_ device.Device, err error) {
 		}
 	}()
 
-	t := &TUN{name: name, mtu: mtu, offset: offset}
+	t := &TUN{
+		name:   name,
+		mtu:    mtu,
+		offset: offset,
+		rSizes: make([]int, 1),
+		rBuffs: make([][]byte, 1),
+		wBuffs: make([][]byte, 1),
+	}
 
 	forcedMTU := defaultMTU
 	if t.mtu > 0 {
@@ -56,11 +67,14 @@ func Open(name string, mtu uint32) (_ device.Device, err error) {
 }
 
 func (t *TUN) Read(packet []byte) (int, error) {
-	return t.nt.Read(packet, t.offset)
+	t.rBuffs[0] = packet
+	_, err := t.nt.Read(t.rBuffs, t.rSizes, t.offset)
+	return t.rSizes[0], err
 }
 
 func (t *TUN) Write(packet []byte) (int, error) {
-	return t.nt.Write(packet, t.offset)
+	t.wBuffs[0] = packet
+	return t.nt.Write(t.wBuffs, t.offset)
 }
 
 func (t *TUN) Name() string {
