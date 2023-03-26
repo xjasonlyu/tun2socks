@@ -4,6 +4,7 @@ package tun
 
 import (
 	"fmt"
+	"sync"
 
 	"golang.zx2c4.com/wireguard/tun"
 
@@ -22,6 +23,8 @@ type TUN struct {
 	rSizes []int
 	rBuffs [][]byte
 	wBuffs [][]byte
+	rMutex sync.Mutex
+	wMutex sync.Mutex
 }
 
 func Open(name string, mtu uint32) (_ device.Device, err error) {
@@ -67,12 +70,16 @@ func Open(name string, mtu uint32) (_ device.Device, err error) {
 }
 
 func (t *TUN) Read(packet []byte) (int, error) {
+	t.rMutex.Lock()
+	defer t.rMutex.Unlock()
 	t.rBuffs[0] = packet
 	_, err := t.nt.Read(t.rBuffs, t.rSizes, t.offset)
 	return t.rSizes[0], err
 }
 
 func (t *TUN) Write(packet []byte) (int, error) {
+	t.wMutex.Lock()
+	defer t.wMutex.Unlock()
 	t.wBuffs[0] = packet
 	return t.nt.Write(t.wBuffs, t.offset)
 }
