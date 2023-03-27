@@ -3,6 +3,8 @@ package engine
 import (
 	"errors"
 	"net"
+	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
@@ -90,6 +92,15 @@ func stop() (err error) {
 	return err
 }
 
+func execCommand(cmd string) error {
+	parts := strings.Fields(cmd)
+	if len(parts) == 0 {
+		return errors.New("empty command")
+	}
+	_, err := exec.Command(parts[0], parts[1:]...).Output()
+	return err
+}
+
 func general(k *Key) error {
 	level, err := log.ParseLevel(k.LogLevel)
 	if err != nil {
@@ -157,6 +168,21 @@ func netstack(k *Key) (err error) {
 	if k.Device == "" {
 		return errors.New("empty device")
 	}
+
+	if k.TUNPreUp != "" {
+		if preUpErr := execCommand(k.TUNPreUp); preUpErr != nil {
+			log.Warnf("[TUN] failed to pre-execute: %s: %v", k.TUNPreUp, preUpErr)
+		}
+	}
+
+	defer func() {
+		if k.TUNPostUp == "" || err != nil {
+			return
+		}
+		if postUpErr := execCommand(k.TUNPostUp); postUpErr != nil {
+			log.Warnf("[TUN] failed to post-execute: %s: %v", k.TUNPostUp, postUpErr)
+		}
+	}()
 
 	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
 		return
