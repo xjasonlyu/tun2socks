@@ -93,30 +93,13 @@ func stop() (err error) {
 	return err
 }
 
-func doCommand(cmd string) error {
+func execCommand(cmd string) error {
 	parts := strings.Fields(cmd)
+	if len(parts) == 0 {
+		return errors.New("empty command")
+	}
 	_, err := exec.Command(parts[0], parts[1:]...).Output()
 	return err
-}
-
-func preUp(script string) {
-	if script == "" {
-		return
-	}
-
-	if err := doCommand(script); err != nil {
-		log.Warnf("[PREUP] Run: '%s' failed: %v", script, err)
-	}
-}
-
-func postUp(script string) {
-	if script == "" {
-		return
-	}
-
-	if err := doCommand(script); err != nil {
-		log.Warnf("[POSTUP] Run: '%s' failed: %v", script, err)
-	}
 }
 
 func general(k *Key) error {
@@ -187,7 +170,20 @@ func netstack(k *Key) (err error) {
 		return errors.New("empty device")
 	}
 
-	preUp(k.TunPreUp)
+	if k.TUNPreUp != "" {
+		if preUpErr := execCommand(k.TUNPreUp); preUpErr != nil {
+			log.Warnf("[TUN] failed to pre-execute: %s: %v", k.TUNPreUp, preUpErr)
+		}
+	}
+
+	defer func() {
+		if k.TUNPostUp == "" || err != nil {
+			return
+		}
+		if postUpErr := execCommand(k.TUNPostUp); postUpErr != nil {
+			log.Warnf("[TUN] failed to post-execute: %s: %v", k.TUNPostUp, postUpErr)
+		}
+	}()
 
 	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
 		return
@@ -197,8 +193,6 @@ func netstack(k *Key) (err error) {
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
 		return
 	}
-
-	postUp(k.TunPostUp)
 
 	var opts []option.Option
 	if k.TCPModerateReceiveBuffer {
