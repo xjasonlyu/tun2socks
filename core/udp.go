@@ -1,6 +1,7 @@
 package core
 
 import (
+	glog "gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/udp"
@@ -10,7 +11,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-func withUDPHandler(handle func(adapter.UDPConn), printf func(string, ...any)) option.Option {
+func withUDPHandler(handle func(adapter.UDPConn)) option.Option {
 	return func(s *stack.Stack) error {
 		udpForwarder := udp.NewForwarder(s, func(r *udp.ForwarderRequest) {
 			var (
@@ -19,7 +20,7 @@ func withUDPHandler(handle func(adapter.UDPConn), printf func(string, ...any)) o
 			)
 			ep, err := r.CreateEndpoint(&wq)
 			if err != nil {
-				printf("udp forwarder request %s:%d->%s:%d: %s",
+				glog.Warningf("forward udp request: %s:%d->%s:%d: %s",
 					id.RemoteAddress, id.RemotePort, id.LocalAddress, id.LocalPort, err)
 				return
 			}

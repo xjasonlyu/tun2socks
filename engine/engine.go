@@ -2,7 +2,6 @@ package engine
 
 import (
 	"errors"
-	"fmt"
 	"net"
 	"sync"
 	"time"
@@ -192,10 +191,7 @@ func netstack(k *Key) (err error) {
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: &mirror.Tunnel{},
-		PrintFunc: func(format string, v ...any) {
-			log.Warnf("[STACK] %s", fmt.Sprintf(format, v...))
-		},
-		Options: opts,
+		Options:          opts,
 	}); err != nil {
 		return
 	}

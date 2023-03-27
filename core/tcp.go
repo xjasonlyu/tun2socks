@@ -3,6 +3,7 @@ package core
 import (
 	"time"
 
+	glog "gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -40,7 +41,7 @@ const (
 	tcpKeepaliveInterval = 30 * time.Second
 )
 
-func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) option.Option {
+func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
 	return func(s *stack.Stack) error {
 		tcpForwarder := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
 			var (
@@ -52,7 +53,7 @@ func withTCPHandler(handle func(adapter.TCPConn), printf func(string, ...any)) o
 
 			defer func() {
 				if err != nil {
-					printf("forward tcp request %s:%d->%s:%d: %s",
+					glog.Warningf("forward tcp request: %s:%d->%s:%d: %s",
 						id.RemoteAddress, id.RemotePort, id.LocalAddress, id.LocalPort, err)
 				}
 			}()
