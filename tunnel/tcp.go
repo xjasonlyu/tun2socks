@@ -20,10 +20,6 @@ const (
 	tcpWaitTimeout = 5 * time.Second
 )
 
-func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
-	return statistic.NewTCPTracker(conn, metadata, statistic.DefaultManager)
-}
-
 func handleTCPConn(localConn adapter.TCPConn) {
 	defer localConn.Close()
 
@@ -43,7 +39,7 @@ func handleTCPConn(localConn adapter.TCPConn) {
 	}
 	metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr())
 
-	targetConn = newTCPTracker(targetConn, metadata)
+	targetConn = statistic.DefaultTCPTracker(targetConn, metadata)
 	defer targetConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())

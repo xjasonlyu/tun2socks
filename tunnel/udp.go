@@ -22,10 +22,6 @@ func SetUDPTimeout(t time.Duration) {
 	_udpSessionTimeout = t
 }
 
-func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
-	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
-}
-
 // TODO: Port Restricted NAT support.
 func handleUDPConn(uc adapter.UDPConn) {
 	defer uc.Close()
@@ -46,7 +42,7 @@ func handleUDPConn(uc adapter.UDPConn) {
 	}
 	metadata.MidIP, metadata.MidPort = parseAddr(pc.LocalAddr())
 
-	pc = newUDPTracker(pc, metadata)
+	pc = statistic.DefaultUDPTracker(pc, metadata)
 	defer pc.Close()
 
 	var remote net.Addr
