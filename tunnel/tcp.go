@@ -44,7 +44,7 @@ func handleTCPConn(localConn adapter.TCPConn) {
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	if err = relay(localConn, targetConn); err != nil {
-		log.Warnf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
+		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 

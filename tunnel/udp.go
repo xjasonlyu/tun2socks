@@ -55,7 +55,7 @@ func handleUDPConn(uc adapter.UDPConn) {
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	if err = relayPacket(uc, pc, remote); err != nil {
-		log.Warnf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
+		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
