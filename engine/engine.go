@@ -129,6 +129,14 @@ func general(k *Key) error {
 		}
 		tunnel.SetUDPTimeout(k.UDPTimeout)
 	}
+
+	if k.UDPRelayBufferSize != "" {
+		size, err := units.RAMInBytes(k.UDPRelayBufferSize)
+		if err != nil {
+			return err
+		}
+		tunnel.SetUDPRelayBufferSize(int(size))
+	}
 	return nil
 }
 

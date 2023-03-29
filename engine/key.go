@@ -13,7 +13,8 @@ type Key struct {
 	TCPModerateReceiveBuffer bool          `yaml:"tcp-moderate-receive-buffer"`
 	TCPSendBufferSize        string        `yaml:"tcp-send-buffer-size"`
 	TCPReceiveBufferSize     string        `yaml:"tcp-receive-buffer-size"`
+	UDPRelayBufferSize       string        `yaml:"udp-relay-buffer-size"`
+	UDPTimeout               time.Duration `yaml:"udp-timeout"`
 	TUNPreUp                 string        `yaml:"tun-pre-up"`
 	TUNPostUp                string        `yaml:"tun-post-up"`
-	UDPTimeout               time.Duration `yaml:"udp-timeout"`
 }
