@@ -20,7 +20,7 @@ func withUDPHandler(handle func(adapter.UDPConn)) option.Option {
 			)
 			ep, err := r.CreateEndpoint(&wq)
 			if err != nil {
-				glog.Warningf("forward udp request: %s:%d->%s:%d: %s",
+				glog.Debugf("forward udp request: %s:%d->%s:%d: %s",
 					id.RemoteAddress, id.RemotePort, id.LocalAddress, id.LocalPort, err)
 				return
 			}
