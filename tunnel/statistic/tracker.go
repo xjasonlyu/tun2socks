@@ -1,6 +1,7 @@
 package statistic
 
 import (
+	"errors"
 	"net"
 	"time"
 
@@ -82,7 +83,7 @@ func (tt *tcpTracker) CloseWrite() error {
 	if cw, ok := tt.Conn.(CloseWriter); ok {
 		return cw.CloseWrite()
 	}
-	return nil
+	return errors.New("unsupported CloseWrite")
 }
 
 type udpTracker struct {

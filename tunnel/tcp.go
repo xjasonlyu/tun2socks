@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	tcpWaitTimeout = 30 * time.Minute
+	tcpWaitTimeout = 5 * time.Second
 )
 
 func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
@@ -64,12 +64,20 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(right, left); err != nil {
 			leftErr = errors.Join(leftErr, err)
 		}
+
+		cwOk := false
 		if cw, ok := right.(statistic.CloseWriter); ok {
-			if err := cw.CloseWrite(); err != nil && !isIgnorable(err) {
-				leftErr = errors.Join(leftErr, err)
+			if err := cw.CloseWrite(); err != nil {
+				if !isIgnorable(err) {
+					leftErr = errors.Join(leftErr, err)
+				}
+			} else {
+				cwOk = true
 			}
 		}
-		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		if !cwOk {
+			right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		}
 	}()
 
 	go func() {
@@ -77,12 +85,20 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(left, right); err != nil {
 			rightErr = errors.Join(rightErr, err)
 		}
+
+		cwOk := false
 		if cw, ok := left.(statistic.CloseWriter); ok {
-			if err := cw.CloseWrite(); err != nil && !isIgnorable(err) {
-				rightErr = errors.Join(rightErr, err)
+			if err := cw.CloseWrite(); err != nil {
+				if !isIgnorable(err) {
+					rightErr = errors.Join(rightErr, err)
+				}
+			} else {
+				cwOk = true
 			}
 		}
-		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		if !cwOk {
+			left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		}
 	}()
 
 	wg.Wait()
