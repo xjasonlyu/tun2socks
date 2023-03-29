@@ -16,9 +16,11 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-const (
-	tcpWaitTimeout = 5 * time.Second
-)
+var _tcpWaitTimeout = 5 * time.Second
+
+func SetTCPWaitTimeout(t time.Duration) {
+	_tcpWaitTimeout = t
+}
 
 func handleTCPConn(localConn adapter.TCPConn) {
 	defer localConn.Close()
@@ -60,7 +62,7 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(right, left); err != nil {
 			leftErr = errors.Join(leftErr, err)
 		}
-		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		right.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
 	}()
 
 	go func() {
@@ -68,7 +70,7 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(left, right); err != nil {
 			rightErr = errors.Join(rightErr, err)
 		}
-		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+		left.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
 	}()
 
 	wg.Wait()
