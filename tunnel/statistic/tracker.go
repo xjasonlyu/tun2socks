@@ -35,7 +35,7 @@ type tcpTracker struct {
 	manager *Manager
 }
 
-func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) *tcpTracker {
+func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) net.Conn {
 	id, _ := uuid.NewRandom()
 
 	tt := &tcpTracker{
@@ -52,6 +52,11 @@ func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) *tcpTr
 
 	manager.Join(tt)
 	return tt
+}
+
+// DefaultTCPTracker returns a new net.Conn(*tcpTacker) with default manager.
+func DefaultTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
+	return NewTCPTracker(conn, metadata, DefaultManager)
 }
 
 func (tt *tcpTracker) ID() string {
@@ -93,7 +98,7 @@ type udpTracker struct {
 	manager *Manager
 }
 
-func NewUDPTracker(conn net.PacketConn, metadata *M.Metadata, manager *Manager) *udpTracker {
+func NewUDPTracker(conn net.PacketConn, metadata *M.Metadata, manager *Manager) net.PacketConn {
 	id, _ := uuid.NewRandom()
 
 	ut := &udpTracker{
@@ -110,6 +115,11 @@ func NewUDPTracker(conn net.PacketConn, metadata *M.Metadata, manager *Manager) 
 
 	manager.Join(ut)
 	return ut
+}
+
+// DefaultUDPTracker returns a new net.PacketConn(*udpTacker) with default manager.
+func DefaultUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
+	return NewUDPTracker(conn, metadata, DefaultManager)
 }
 
 func (ut *udpTracker) ID() string {

@@ -16,12 +16,10 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-const (
-	tcpWaitTimeout = 5 * time.Second
-)
+var _tcpWaitTimeout = 5 * time.Second
 
-func newTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
-	return statistic.NewTCPTracker(conn, metadata, statistic.DefaultManager)
+func SetTCPWaitTimeout(t time.Duration) {
+	_tcpWaitTimeout = t
 }
 
 func handleTCPConn(localConn adapter.TCPConn) {
@@ -43,12 +41,12 @@ func handleTCPConn(localConn adapter.TCPConn) {
 	}
 	metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr())
 
-	targetConn = newTCPTracker(targetConn, metadata)
+	targetConn = statistic.DefaultTCPTracker(targetConn, metadata)
 	defer targetConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	if err = relay(localConn, targetConn); err != nil {
-		log.Warnf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
+		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
@@ -76,7 +74,7 @@ func relay(left, right net.Conn) error {
 			}
 		}
 		if !cwOk {
-			right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+			right.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
 		}
 	}()
 
@@ -97,7 +95,7 @@ func relay(left, right net.Conn) error {
 			}
 		}
 		if !cwOk {
-			left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+			left.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
 		}
 	}()
 

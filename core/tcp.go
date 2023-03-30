@@ -53,7 +53,7 @@ func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
 
 			defer func() {
 				if err != nil {
-					glog.Warningf("forward tcp request: %s:%d->%s:%d: %s",
+					glog.Debugf("forward tcp request: %s:%d->%s:%d: %s",
 						id.RemoteAddress, id.RemotePort, id.LocalAddress, id.LocalPort, err)
 				}
 			}()

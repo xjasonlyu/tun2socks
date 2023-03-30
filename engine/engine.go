@@ -123,11 +123,23 @@ func general(k *Key) error {
 		log.Infof("[DIALER] set fwmark: %#x", k.Mark)
 	}
 
+	if k.TCPWaitTimeout > 0 {
+		tunnel.SetTCPWaitTimeout(k.TCPWaitTimeout)
+	}
+
 	if k.UDPTimeout > 0 {
 		if k.UDPTimeout < time.Second {
 			return errors.New("invalid udp timeout value")
 		}
 		tunnel.SetUDPTimeout(k.UDPTimeout)
+	}
+
+	if k.UDPRelayBufferSize != "" {
+		size, err := units.RAMInBytes(k.UDPRelayBufferSize)
+		if err != nil {
+			return err
+		}
+		tunnel.SetUDPRelayBufferSize(int(size))
 	}
 	return nil
 }

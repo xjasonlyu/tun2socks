@@ -15,15 +15,20 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-// _udpSessionTimeout is the default timeout for each UDP session.
-var _udpSessionTimeout = 60 * time.Second
+var (
+	// _udpSessionTimeout is the default timeout for each UDP session.
+	_udpSessionTimeout = 60 * time.Second
+
+	// _udpRelayBufferSize is the default size for UDP packets relay.
+	_udpRelayBufferSize = 16 << 10
+)
 
 func SetUDPTimeout(t time.Duration) {
 	_udpSessionTimeout = t
 }
 
-func newUDPTracker(conn net.PacketConn, metadata *M.Metadata) net.PacketConn {
-	return statistic.NewUDPTracker(conn, metadata, statistic.DefaultManager)
+func SetUDPRelayBufferSize(size int) {
+	_udpRelayBufferSize = size
 }
 
 // TODO: Port Restricted NAT support.
@@ -46,7 +51,7 @@ func handleUDPConn(uc adapter.UDPConn) {
 	}
 	metadata.MidIP, metadata.MidPort = parseAddr(pc.LocalAddr())
 
-	pc = newUDPTracker(pc, metadata)
+	pc = statistic.DefaultUDPTracker(pc, metadata)
 	defer pc.Close()
 
 	var remote net.Addr
@@ -59,7 +64,7 @@ func handleUDPConn(uc adapter.UDPConn) {
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	if err = relayPacket(uc, pc, remote); err != nil {
-		log.Warnf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
+		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
@@ -88,7 +93,7 @@ func relayPacket(left net.PacketConn, right net.PacketConn, to net.Addr) error {
 }
 
 func copyPacketBuffer(dst net.PacketConn, src net.PacketConn, to net.Addr, timeout time.Duration) error {
-	buf := pool.Get(pool.MaxSegmentSize)
+	buf := pool.Get(_udpRelayBufferSize)
 	defer pool.Put(buf)
 
 	for {

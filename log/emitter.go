@@ -21,6 +21,6 @@ func EnableStackLog(v bool) {
 
 type emitter struct{}
 
-func (e emitter) Emit(_ int, level glog.Level, _ time.Time, format string, args ...any) {
+func (emitter) Emit(_ int, level glog.Level, _ time.Time, format string, args ...any) {
 	logf(Level(level)+2, "[STACK] "+format, args...)
 }
