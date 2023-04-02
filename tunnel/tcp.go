@@ -5,7 +5,6 @@ import (
 	"io"
 	"net"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
@@ -16,6 +15,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
+// _tcpWaitTimeout is the default timeout to wait after closing each TCP connection.
 var _tcpWaitTimeout = 5 * time.Second
 
 func SetTCPWaitTimeout(t time.Duration) {
@@ -82,19 +82,5 @@ func copyBuffer(dst io.Writer, src io.Reader) error {
 	defer pool.Put(buf)
 
 	_, err := io.CopyBuffer(dst, src, buf)
-	if err != nil && !isIgnorable(err) {
-		return err
-	}
-	return nil
-}
-
-func isIgnorable(err error) bool {
-	if ne, ok := err.(net.Error); ok && ne.Timeout() {
-		return true /* ignore I/O timeout */
-	} else if errors.Is(err, syscall.EPIPE) {
-		return true /* ignore broken pipe */
-	} else if errors.Is(err, syscall.ECONNRESET) {
-		return true /* ignore connection reset by peer */
-	}
-	return false
+	return err
 }
