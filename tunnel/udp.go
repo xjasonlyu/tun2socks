@@ -60,21 +60,17 @@ func pipePacket(origin, remote net.PacketConn, to net.Addr) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
-	go func() {
-		defer wg.Done()
-		if err := copyPacketData(remote, origin, to, _udpSessionTimeout); err != nil {
-			log.Debugf("[UDP] copy data for origin->remote: %v", err)
-		}
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := copyPacketData(origin, remote, nil, _udpSessionTimeout); err != nil {
-			log.Debugf("[UDP] copy data for remote->origin: %v", err)
-		}
-	}()
+	go unidirectionalPacketStream(remote, origin, to, "origin->remote", &wg)
+	go unidirectionalPacketStream(origin, remote, nil, "remote->origin", &wg)
 
 	wg.Wait()
+}
+
+func unidirectionalPacketStream(dst, src net.PacketConn, to net.Addr, dir string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := copyPacketData(dst, src, to, _udpSessionTimeout); err != nil {
+		log.Debugf("[UDP] copy data for %s: %v", dir, err)
+	}
 }
 
 func copyPacketData(dst, src net.PacketConn, to net.Addr, timeout time.Duration) error {
