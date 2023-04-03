@@ -1,8 +1,6 @@
 package tunnel
 
 import (
-	"errors"
-	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -44,30 +42,24 @@ func handleTCPConn(originConn adapter.TCPConn) {
 	defer remoteConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	if err = pipe(originConn, remoteConn); err != nil {
-		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
-	}
+	pipe(originConn, remoteConn)
 }
 
 // pipe copies copy data to & from provided net.Conn(s) bidirectionally.
-func pipe(origin, remote net.Conn) error {
+func pipe(origin, remote net.Conn) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-
-	var leftErr, rightErr error
 
 	go unidirectionalStream(remote, origin, "origin->remote", &wg)
 	go unidirectionalStream(origin, remote, "remote->origin", &wg)
 
 	wg.Wait()
-	return errors.Join(leftErr, rightErr)
 }
 
 func unidirectionalStream(dst, src net.Conn, dir string, wg *sync.WaitGroup) {
 	defer wg.Done()
 	if err := copyData(dst, src); err != nil {
-		_ = fmt.Errorf("%s %v", dir, err)
-		// leftErr = errors.Join(leftErr, err)
+		log.Debugf("[TCP] copy data for %s: %v", dir, err)
 	}
 	// Do the upload/download side TCP half-close.
 	if cr, ok := src.(interface{ CloseRead() error }); ok {
