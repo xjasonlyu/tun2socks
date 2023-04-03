@@ -15,12 +15,10 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-// _tcpWaitTimeout is the default timeout to wait after closing each TCP connection.
-var _tcpWaitTimeout = 5 * time.Second
-
-func SetTCPWaitTimeout(t time.Duration) {
-	_tcpWaitTimeout = t
-}
+const (
+	// tcpWaitTimeout implements a TCP half-close timeout.
+	tcpWaitTimeout = 60 * time.Second
+)
 
 func handleTCPConn(originConn adapter.TCPConn) {
 	defer originConn.Close()
@@ -62,7 +60,7 @@ func pipe(origin, remote net.Conn) error {
 		if err := copyBuffer(remote, origin); err != nil {
 			leftErr = errors.Join(leftErr, err)
 		}
-		remote.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
+		remote.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
 	go func() {
@@ -70,7 +68,7 @@ func pipe(origin, remote net.Conn) error {
 		if err := copyBuffer(origin, remote); err != nil {
 			rightErr = errors.Join(rightErr, err)
 		}
-		origin.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
+		origin.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
 	wg.Wait()
