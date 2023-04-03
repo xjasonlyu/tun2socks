@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"sync"
@@ -20,10 +21,10 @@ const (
 	tcpWaitTimeout = 60 * time.Second
 )
 
-func handleTCPConn(localConn adapter.TCPConn) {
-	defer localConn.Close()
+func handleTCPConn(originConn adapter.TCPConn) {
+	defer originConn.Close()
 
-	id := localConn.ID()
+	id := originConn.ID()
 	metadata := &M.Metadata{
 		Network: M.TCP,
 		SrcIP:   net.IP(id.RemoteAddress),
@@ -32,64 +33,56 @@ func handleTCPConn(localConn adapter.TCPConn) {
 		DstPort: id.LocalPort,
 	}
 
-	targetConn, err := proxy.Dial(metadata)
+	remoteConn, err := proxy.Dial(metadata)
 	if err != nil {
 		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
-	metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr())
+	metadata.MidIP, metadata.MidPort = parseAddr(remoteConn.LocalAddr())
 
-	targetConn = statistic.DefaultTCPTracker(targetConn, metadata)
-	defer targetConn.Close()
+	remoteConn = statistic.DefaultTCPTracker(remoteConn, metadata)
+	defer remoteConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	if err = relay(
-		localConn.(adapter.DuplexConn),
-		targetConn.(adapter.DuplexConn)); err != nil {
+		originConn,
+		remoteConn); err != nil {
 		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
-// relay copies between left and right bidirectionally.
-func relay(left, right adapter.DuplexConn) error {
+// relay copies between origin and remote connections bidirectionally.
+func relay(origin, remote net.Conn) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
 	var leftErr, rightErr error
 
-	go func() {
-		defer wg.Done()
-		if err := copyBuffer(right, left); err != nil {
-			leftErr = errors.Join(leftErr, err)
-		}
-		// Do the upload side TCP half-close.
-		{
-			left.CloseRead()
-			right.CloseWrite()
-		}
-		// Set TCP half-close timeout.
-		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
-	}()
-
-	go func() {
-		defer wg.Done()
-		if err := copyBuffer(left, right); err != nil {
-			rightErr = errors.Join(rightErr, err)
-		}
-		// Do the download side TCP half-close.
-		{
-			right.CloseRead()
-			left.CloseWrite()
-		}
-		// Set TCP half-close timeout.
-		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
-	}()
+	go unidirectionalStream(remote, origin, "origin->remote", &wg)
+	go unidirectionalStream(origin, remote, "remote->origin", &wg)
 
 	wg.Wait()
 	return errors.Join(leftErr, rightErr)
 }
 
-func copyBuffer(dst io.Writer, src io.Reader) error {
+func unidirectionalStream(dst, src net.Conn, dir string, wg *sync.WaitGroup) {
+	defer wg.Done()
+	if err := copyData(dst, src); err != nil {
+		_ = fmt.Errorf("%s %v", dir, err)
+		// leftErr = errors.Join(leftErr, err)
+	}
+	// Do the upload/download side TCP half-close.
+	if cr, ok := src.(interface{ CloseRead() error }); ok {
+		cr.CloseRead()
+	}
+	if cw, ok := dst.(interface{ CloseWrite() error }); ok {
+		cw.CloseWrite()
+	}
+	// Set TCP half-close timeout.
+	dst.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+}
+
+func copyData(dst io.Writer, src io.Reader) error {
 	buf := pool.Get(pool.RelayBufferSize)
 	defer pool.Put(buf)
 
