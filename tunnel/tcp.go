@@ -22,10 +22,10 @@ func SetTCPWaitTimeout(t time.Duration) {
 	_tcpWaitTimeout = t
 }
 
-func handleTCPConn(localConn adapter.TCPConn) {
-	defer localConn.Close()
+func handleTCPConn(originConn adapter.TCPConn) {
+	defer originConn.Close()
 
-	id := localConn.ID()
+	id := originConn.ID()
 	metadata := &M.Metadata{
 		Network: M.TCP,
 		SrcIP:   net.IP(id.RemoteAddress),
@@ -34,24 +34,24 @@ func handleTCPConn(localConn adapter.TCPConn) {
 		DstPort: id.LocalPort,
 	}
 
-	targetConn, err := proxy.Dial(metadata)
+	remoteConn, err := proxy.Dial(metadata)
 	if err != nil {
 		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
-	metadata.MidIP, metadata.MidPort = parseAddr(targetConn.LocalAddr())
+	metadata.MidIP, metadata.MidPort = parseAddr(remoteConn.LocalAddr())
 
-	targetConn = statistic.DefaultTCPTracker(targetConn, metadata)
-	defer targetConn.Close()
+	remoteConn = statistic.DefaultTCPTracker(remoteConn, metadata)
+	defer remoteConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	if err = relay(localConn, targetConn); err != nil {
+	if err = pipe(originConn, remoteConn); err != nil {
 		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
-// relay copies between left and right bidirectionally.
-func relay(left, right net.Conn) error {
+// pipe copies copy data to & from provided net.Conn(s) bidirectionally.
+func pipe(origin, remote net.Conn) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -59,18 +59,18 @@ func relay(left, right net.Conn) error {
 
 	go func() {
 		defer wg.Done()
-		if err := copyBuffer(right, left); err != nil {
+		if err := copyBuffer(remote, origin); err != nil {
 			leftErr = errors.Join(leftErr, err)
 		}
-		right.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
+		remote.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
 	}()
 
 	go func() {
 		defer wg.Done()
-		if err := copyBuffer(left, right); err != nil {
+		if err := copyBuffer(origin, remote); err != nil {
 			rightErr = errors.Join(rightErr, err)
 		}
-		left.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
+		origin.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
 	}()
 
 	wg.Wait()
