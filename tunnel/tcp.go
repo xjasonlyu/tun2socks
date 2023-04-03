@@ -44,15 +44,13 @@ func handleTCPConn(originConn adapter.TCPConn) {
 	defer remoteConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	if err = relay(
-		originConn,
-		remoteConn); err != nil {
+	if err = pipe(originConn, remoteConn); err != nil {
 		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
-// relay copies between origin and remote connections bidirectionally.
-func relay(origin, remote net.Conn) error {
+// pipe copies copy data to & from provided net.Conn(s) bidirectionally.
+func pipe(origin, remote net.Conn) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
