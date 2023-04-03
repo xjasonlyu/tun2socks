@@ -2,6 +2,8 @@ package log
 
 import (
 	"io"
+	"runtime"
+	"strings"
 	"time"
 
 	glog "gvisor.dev/gvisor/pkg/log"
@@ -21,6 +23,12 @@ func EnableStackLog(v bool) {
 
 type emitter struct{}
 
-func (emitter) Emit(_ int, level glog.Level, _ time.Time, format string, args ...any) {
+func (emitter) Emit(depth int, level glog.Level, _ time.Time, format string, args ...any) {
+	if _, file, line, ok := runtime.Caller(depth + 1); ok {
+		// Ignore (*gonet.TCPConn).RemoteAddr() warning: `ep.GetRemoteAddress() failed`.
+		if line == 457 && strings.HasSuffix(file, "/pkg/tcpip/adapters/gonet/gonet.go") {
+			return
+		}
+	}
 	logf(Level(level)+2, "[STACK] "+format, args...)
 }
