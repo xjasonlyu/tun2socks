@@ -1,7 +1,6 @@
 package tunnel
 
 import (
-	"errors"
 	"io"
 	"net"
 	"sync"
@@ -54,36 +53,31 @@ func handleUDPConn(uc adapter.UDPConn) {
 	pc = newSymmetricNATPacketConn(pc, metadata)
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	if err = pipePacket(uc, pc, remote); err != nil {
-		log.Debugf("[UDP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
-	}
+	pipePacket(uc, pc, remote)
 }
 
-func pipePacket(origin net.PacketConn, remote net.PacketConn, to net.Addr) error {
+func pipePacket(origin, remote net.PacketConn, to net.Addr) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
-
-	var leftErr, rightErr error
 
 	go func() {
 		defer wg.Done()
 		if err := copyPacketData(remote, origin, to, _udpSessionTimeout); err != nil {
-			leftErr = errors.Join(leftErr, err)
+			log.Debugf("[UDP] copy data for origin->remote: %v", err)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
 		if err := copyPacketData(origin, remote, nil, _udpSessionTimeout); err != nil {
-			rightErr = errors.Join(rightErr, err)
+			log.Debugf("[UDP] copy data for remote->origin: %v", err)
 		}
 	}()
 
 	wg.Wait()
-	return errors.Join(leftErr, rightErr)
 }
 
-func copyPacketData(dst net.PacketConn, src net.PacketConn, to net.Addr, timeout time.Duration) error {
+func copyPacketData(dst, src net.PacketConn, to net.Addr, timeout time.Duration) error {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 
