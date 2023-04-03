@@ -58,9 +58,11 @@ func pipe(origin, remote net.Conn) {
 
 func unidirectionalStream(dst, src net.Conn, dir string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	if err := copyData(dst, src); err != nil {
+	buf := pool.Get(pool.RelayBufferSize)
+	if _, err := io.CopyBuffer(dst, src, buf); err != nil {
 		log.Debugf("[TCP] copy data for %s: %v", dir, err)
 	}
+	pool.Put(buf)
 	// Do the upload/download side TCP half-close.
 	if cr, ok := src.(interface{ CloseRead() error }); ok {
 		cr.CloseRead()
@@ -70,12 +72,4 @@ func unidirectionalStream(dst, src net.Conn, dir string, wg *sync.WaitGroup) {
 	}
 	// Set TCP half-close timeout.
 	dst.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
-}
-
-func copyData(dst io.Writer, src io.Reader) error {
-	buf := pool.Get(pool.RelayBufferSize)
-	defer pool.Put(buf)
-
-	_, err := io.CopyBuffer(dst, src, buf)
-	return err
 }
