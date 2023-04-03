@@ -1,6 +1,7 @@
 package statistic
 
 import (
+	"errors"
 	"net"
 	"time"
 
@@ -77,6 +78,20 @@ func (tt *tcpTracker) Write(b []byte) (int, error) {
 func (tt *tcpTracker) Close() error {
 	tt.manager.Leave(tt)
 	return tt.Conn.Close()
+}
+
+func (tt *tcpTracker) CloseRead() error {
+	if cr, ok := tt.Conn.(interface{ CloseRead() error }); ok {
+		return cr.CloseRead()
+	}
+	return errors.New("CloseRead is not implemented")
+}
+
+func (tt *tcpTracker) CloseWrite() error {
+	if cw, ok := tt.Conn.(interface{ CloseWrite() error }); ok {
+		return cw.CloseWrite()
+	}
+	return errors.New("CloseWrite is not implemented")
 }
 
 type udpTracker struct {
