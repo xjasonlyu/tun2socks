@@ -82,7 +82,7 @@ func relay(left, right adapter.DuplexConn) error {
 			right.CloseRead()
 			left.CloseWrite()
 		}
-		// Set TCP half-close timeout
+		// Set TCP half-close timeout.
 		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
