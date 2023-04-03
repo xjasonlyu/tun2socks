@@ -8,12 +8,9 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/atomic"
 
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 )
-
-type CloseWriter interface {
-	CloseWrite() error
-}
 
 type tracker interface {
 	ID() string
@@ -28,6 +25,8 @@ type trackerInfo struct {
 	DownloadTotal *atomic.Int64 `json:"download"`
 }
 
+var _ adapter.DuplexConn = (*tcpTracker)(nil)
+
 type tcpTracker struct {
 	net.Conn `json:"-"`
 
@@ -35,7 +34,7 @@ type tcpTracker struct {
 	manager *Manager
 }
 
-func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) net.Conn {
+func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) adapter.DuplexConn {
 	id, _ := uuid.NewRandom()
 
 	tt := &tcpTracker{
@@ -55,7 +54,7 @@ func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) net.Co
 }
 
 // DefaultTCPTracker returns a new net.Conn(*tcpTacker) with default manager.
-func DefaultTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
+func DefaultTCPTracker(conn net.Conn, metadata *M.Metadata) adapter.DuplexConn {
 	return NewTCPTracker(conn, metadata, DefaultManager)
 }
 
@@ -84,11 +83,18 @@ func (tt *tcpTracker) Close() error {
 	return tt.Conn.Close()
 }
 
+func (tt *tcpTracker) CloseRead() error {
+	if cr, ok := tt.Conn.(adapter.CloseReader); ok {
+		return cr.CloseRead()
+	}
+	return errors.New("CloseRead is not implemented")
+}
+
 func (tt *tcpTracker) CloseWrite() error {
-	if cw, ok := tt.Conn.(CloseWriter); ok {
+	if cw, ok := tt.Conn.(adapter.CloseWriter); ok {
 		return cw.CloseWrite()
 	}
-	return errors.New("unsupported CloseWrite")
+	return errors.New("CloseWrite is not implemented")
 }
 
 type udpTracker struct {

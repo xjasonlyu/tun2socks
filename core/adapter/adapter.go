@@ -22,3 +22,21 @@ type UDPConn interface {
 	// ID returns the transport endpoint id of UDPConn.
 	ID() *stack.TransportEndpointID
 }
+
+// CloseReader shuts down the reading side of the TCP connection.
+type CloseReader interface {
+	CloseRead() error
+}
+
+// CloseWriter shuts down the writing side of the TCP connection.
+type CloseWriter interface {
+	CloseWrite() error
+}
+
+// DuplexConn implements the net.Conn interface and keeps the
+// ability to close reading/writing side of the TCP connection.
+type DuplexConn interface {
+	net.Conn
+	CloseReader
+	CloseWriter
+}

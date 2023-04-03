@@ -16,11 +16,10 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-var _tcpWaitTimeout = 5 * time.Second
-
-func SetTCPWaitTimeout(t time.Duration) {
-	_tcpWaitTimeout = t
-}
+const (
+	// tcpWaitTimeout implements a TCP half-close timeout.
+	tcpWaitTimeout = 60 * time.Second
+)
 
 func handleTCPConn(localConn adapter.TCPConn) {
 	defer localConn.Close()
@@ -45,13 +44,15 @@ func handleTCPConn(localConn adapter.TCPConn) {
 	defer targetConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	if err = relay(localConn, targetConn); err != nil {
+	if err = relay(
+		localConn.(adapter.DuplexConn),
+		targetConn.(adapter.DuplexConn)); err != nil {
 		log.Debugf("[TCP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
 // relay copies between left and right bidirectionally.
-func relay(left, right net.Conn) error {
+func relay(left, right adapter.DuplexConn) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -62,20 +63,13 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(right, left); err != nil {
 			leftErr = errors.Join(leftErr, err)
 		}
-
-		cwOk := false
-		if cw, ok := right.(statistic.CloseWriter); ok {
-			if err := cw.CloseWrite(); err != nil {
-				if !isIgnorable(err) {
-					leftErr = errors.Join(leftErr, err)
-				}
-			} else {
-				cwOk = true
-			}
+		// Do the upload side TCP half-close.
+		{
+			left.CloseRead()
+			right.CloseWrite()
 		}
-		if !cwOk {
-			right.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
-		}
+		// Set TCP half-close timeout.
+		right.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
 	go func() {
@@ -83,20 +77,13 @@ func relay(left, right net.Conn) error {
 		if err := copyBuffer(left, right); err != nil {
 			rightErr = errors.Join(rightErr, err)
 		}
-
-		cwOk := false
-		if cw, ok := left.(statistic.CloseWriter); ok {
-			if err := cw.CloseWrite(); err != nil {
-				if !isIgnorable(err) {
-					rightErr = errors.Join(rightErr, err)
-				}
-			} else {
-				cwOk = true
-			}
+		// Do the download side TCP half-close.
+		{
+			right.CloseRead()
+			left.CloseWrite()
 		}
-		if !cwOk {
-			left.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
-		}
+		// Set TCP half-close timeout
+		left.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
 	}()
 
 	wg.Wait()

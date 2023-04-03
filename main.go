@@ -37,7 +37,6 @@ func init() {
 	flag.StringVar(&key.TCPReceiveBufferSize, "tcp-rcvbuf", "", "Set TCP receive buffer size for netstack")
 	flag.StringVar(&key.UDPRelayBufferSize, "udp-rlybuf", "", "Set UDP relay buffer size for tunnel")
 	flag.BoolVar(&key.TCPModerateReceiveBuffer, "tcp-auto-tuning", false, "Enable TCP receive buffer auto-tuning")
-	flag.DurationVar(&key.TCPWaitTimeout, "tcp-wait-timeout", 0, "Set timeout before closing each TCP connection")
 	flag.StringVar(&key.TUNPreUp, "tun-pre-up", "", "Execute a command before TUN device setup")
 	flag.StringVar(&key.TUNPostUp, "tun-post-up", "", "Execute a command after TUN device setup")
 	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
