@@ -54,12 +54,12 @@ func handleUDPConn(uc adapter.UDPConn) {
 	pc = newSymmetricNATPacketConn(pc, metadata)
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-	if err = relayPacket(uc, pc, remote); err != nil {
+	if err = pipePacket(uc, pc, remote); err != nil {
 		log.Debugf("[UDP] %s <-> %s: %v", metadata.SourceAddress(), metadata.DestinationAddress(), err)
 	}
 }
 
-func relayPacket(left net.PacketConn, right net.PacketConn, to net.Addr) error {
+func pipePacket(origin net.PacketConn, remote net.PacketConn, to net.Addr) error {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
 
@@ -67,14 +67,14 @@ func relayPacket(left net.PacketConn, right net.PacketConn, to net.Addr) error {
 
 	go func() {
 		defer wg.Done()
-		if err := copyPacketBuffer(right, left, to, _udpSessionTimeout); err != nil {
+		if err := copyPacketData(remote, origin, to, _udpSessionTimeout); err != nil {
 			leftErr = errors.Join(leftErr, err)
 		}
 	}()
 
 	go func() {
 		defer wg.Done()
-		if err := copyPacketBuffer(left, right, nil, _udpSessionTimeout); err != nil {
+		if err := copyPacketData(origin, remote, nil, _udpSessionTimeout); err != nil {
 			rightErr = errors.Join(rightErr, err)
 		}
 	}()
@@ -83,7 +83,7 @@ func relayPacket(left net.PacketConn, right net.PacketConn, to net.Addr) error {
 	return errors.Join(leftErr, rightErr)
 }
 
-func copyPacketBuffer(dst net.PacketConn, src net.PacketConn, to net.Addr, timeout time.Duration) error {
+func copyPacketData(dst net.PacketConn, src net.PacketConn, to net.Addr, timeout time.Duration) error {
 	buf := pool.Get(pool.MaxSegmentSize)
 	defer pool.Put(buf)
 
