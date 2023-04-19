@@ -214,9 +214,15 @@ func netstack(k *Key) (err error) {
 		opts = append(opts, option.WithTCPReceiveBufferSize(int(size)))
 	}
 
+	var multicastGroups []net.IP = nil
+	if multicastGroups, err = parseMulticastGroups(k.MulticastGroups); err != nil {
+		return err
+	}
+
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: &mirror.Tunnel{},
+		MulticastGroups:  multicastGroups,
 		Options:          opts,
 	}); err != nil {
 		return
