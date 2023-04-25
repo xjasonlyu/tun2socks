@@ -57,6 +57,6 @@
 
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks?ref=badge_large)
 
-## 星星走向
+## 星星历史
 
-[![Stargazers over time](https://starchart.cc/xjasonlyu/tun2socks.svg)](https://starchart.cc/xjasonlyu/tun2socks)
+[![Star History Chart](https://api.star-history.com/svg?repos=xjasonlyu/tun2socks&type=Date)](https://star-history.com/#xjasonlyu/tun2socks&Date)
