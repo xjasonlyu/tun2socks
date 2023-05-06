@@ -1,6 +1,7 @@
 package log
 
 import (
+	"io"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -13,6 +14,10 @@ var _defaultLevel = atomic.NewUint32(uint32(InfoLevel))
 func init() {
 	logrus.SetOutput(os.Stdout)
 	logrus.SetLevel(logrus.DebugLevel)
+}
+
+func SetOutput(out io.Writer) {
+	logrus.SetOutput(out)
 }
 
 func SetLevel(level Level) {
