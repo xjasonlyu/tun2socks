@@ -72,7 +72,7 @@ func (r Reply) String() string {
 	case 0x08:
 		return "address type not supported"
 	default:
-		return fmt.Sprintf("unassigned <%#02x>", r)
+		return fmt.Sprintf("unassigned <%#02x>", uint8(r))
 	}
 }
 
