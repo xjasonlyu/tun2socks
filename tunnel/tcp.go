@@ -25,9 +25,9 @@ func handleTCPConn(originConn adapter.TCPConn) {
 	id := originConn.ID()
 	metadata := &M.Metadata{
 		Network: M.TCP,
-		SrcIP:   net.IP(id.RemoteAddress),
+		SrcIP:   net.IP(id.RemoteAddress.AsSlice()),
 		SrcPort: id.RemotePort,
-		DstIP:   net.IP(id.LocalAddress),
+		DstIP:   net.IP(id.LocalAddress.AsSlice()),
 		DstPort: id.LocalPort,
 	}
 
