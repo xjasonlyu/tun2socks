@@ -1,7 +1,5 @@
 package proxy
 
-// Ref: https://github.com/Dreamacro/clash/adapter/outbound/http
-
 import (
 	"bufio"
 	"context"

@@ -1,8 +1,6 @@
 // Package pool provides a pool of []byte.
 package pool
 
-// Ref: github.com/Dreamacro/clash/common/pool
-
 const (
 	// MaxSegmentSize is the largest possible UDP datagram size.
 	MaxSegmentSize = (1 << 16) - 1

@@ -1,7 +1,5 @@
 package restapi
 
-// Ref: github.com/Dreamacro/clash/hub/route
-
 import (
 	"bytes"
 	"encoding/json"

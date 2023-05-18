@@ -1,7 +1,5 @@
 package observable
 
-// Ref: github.com/Dreamacro/clash/common/observable
-
 import (
 	"errors"
 	"sync"

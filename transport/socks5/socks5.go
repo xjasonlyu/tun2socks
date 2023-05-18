@@ -1,8 +1,6 @@
 // Package socks5 provides SOCKS5 client functionalities.
 package socks5
 
-// Ref: github.com/Dreamacro/clash/component/socks5
-
 import (
 	"bytes"
 	"encoding/binary"
