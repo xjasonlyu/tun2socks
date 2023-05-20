@@ -8,10 +8,10 @@ import (
 
 	"github.com/Dreamacro/go-shadowsocks2/core"
 
-	obfs "github.com/xjasonlyu/tun2socks/v2/component/simple-obfs"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	obfs "github.com/xjasonlyu/tun2socks/v2/transport/simple-obfs"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 )
 
