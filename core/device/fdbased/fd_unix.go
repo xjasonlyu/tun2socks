@@ -12,6 +12,8 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 )
 
+const defaultMTU = 1500
+
 type FD struct {
 	stack.LinkEndpoint
 
