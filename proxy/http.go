@@ -61,9 +61,7 @@ func (h *HTTP) shakeHand(metadata *M.Metadata, rw io.ReadWriter) error {
 	}
 
 	if h.user != "" && h.pass != "" {
-		auth := h.user + ":" + h.pass
-		req.Header.Add("Proxy-Authorization",
-			fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(auth))))
+		req.Header.Set("Proxy-Authorization", basicAuth(h.user, h.pass))
 	}
 
 	if err := req.Write(rw); err != nil {
@@ -75,21 +73,26 @@ func (h *HTTP) shakeHand(metadata *M.Metadata, rw io.ReadWriter) error {
 		return err
 	}
 
-	if resp.StatusCode == http.StatusOK {
+	switch resp.StatusCode {
+	case http.StatusOK:
 		return nil
-	}
-
-	if resp.StatusCode == http.StatusProxyAuthRequired {
-		return errors.New("HTTP need auth")
-	}
-
-	if resp.StatusCode == http.StatusMethodNotAllowed {
+	case http.StatusProxyAuthRequired:
+		return errors.New("HTTP auth required by proxy")
+	case http.StatusMethodNotAllowed:
 		return errors.New("CONNECT method not allowed by proxy")
+	default:
+		return fmt.Errorf("HTTP connect status: %s", resp.Status)
 	}
+}
 
-	if resp.StatusCode >= http.StatusInternalServerError {
-		return errors.New(resp.Status)
-	}
-
-	return fmt.Errorf("HTTP connect status code: %d", resp.StatusCode)
+// The Basic authentication scheme is based on the model that the client
+// needs to authenticate itself with a user-id and a password for each
+// protection space ("realm"). The realm value is a free-form string
+// that can only be compared for equality with other realms on that
+// server. The server will service the request only if it can validate
+// the user-id and password for the protection space applying to the
+// requested resource.
+func basicAuth(username, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }
