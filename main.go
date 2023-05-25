@@ -10,10 +10,10 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 	"gopkg.in/yaml.v3"
 
-	_ "github.com/xjasonlyu/tun2socks/v2/dns"
-	"github.com/xjasonlyu/tun2socks/v2/engine"
-	"github.com/xjasonlyu/tun2socks/v2/internal/version"
-	"github.com/xjasonlyu/tun2socks/v2/log"
+	_ "github.com/TianHe-Labs/Zeus/dns"
+	"github.com/TianHe-Labs/Zeus/engine"
+	"github.com/TianHe-Labs/Zeus/internal/version"
+	"github.com/TianHe-Labs/Zeus/log"
 )
 
 var (

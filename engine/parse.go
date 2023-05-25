@@ -7,11 +7,11 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/xjasonlyu/tun2socks/v2/core/device"
-	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
-	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
-	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/TianHe-Labs/Zeus/core/device"
+	"github.com/TianHe-Labs/Zeus/core/device/fdbased"
+	"github.com/TianHe-Labs/Zeus/core/device/tun"
+	"github.com/TianHe-Labs/Zeus/proxy"
+	"github.com/TianHe-Labs/Zeus/proxy/proto"
 )
 
 func parseRestAPI(s string) (*url.URL, error) {

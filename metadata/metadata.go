@@ -14,6 +14,7 @@ type Metadata struct {
 	SrcPort uint16  `json:"sourcePort"`
 	MidPort uint16  `json:"dialerPort"`
 	DstPort uint16  `json:"destinationPort"`
+	Domain  string  `json:"domain"`
 }
 
 func (m *Metadata) DestinationAddress() string {

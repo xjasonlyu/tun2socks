@@ -6,12 +6,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/v2/common/pool"
-	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
-	"github.com/xjasonlyu/tun2socks/v2/log"
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
+	"github.com/TianHe-Labs/Zeus/common/pool"
+	"github.com/TianHe-Labs/Zeus/core/adapter"
+	"github.com/TianHe-Labs/Zeus/log"
+	M "github.com/TianHe-Labs/Zeus/metadata"
+	"github.com/TianHe-Labs/Zeus/proxy"
+	"github.com/TianHe-Labs/Zeus/tunnel/statistic"
+
+	"github.com/miekg/dns"
 )
 
 // _udpSessionTimeout is the default timeout for each UDP session.
@@ -53,7 +55,22 @@ func handleUDPConn(uc adapter.UDPConn) {
 	pc = newSymmetricNATPacketConn(pc, metadata)
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
+
 	pipePacket(uc, pc, remote)
+}
+
+func analyzeUDPPackets(n int, buf []byte) {
+	packet := buf[:n]
+	// 判断是否为 DNS 回复报文
+	msg := &dns.Msg{}
+	err := msg.Unpack(packet)
+	if err == nil && msg.Response {
+		// 解析 DNS 回复报文
+		for _, answer := range msg.Answer {
+			// 打印 DNS 回复报文内容
+			log.Infof("DNS Reply: %+v", answer)
+		}
+	}
 }
 
 func pipePacket(origin, remote net.PacketConn, to net.Addr) {
@@ -87,6 +104,8 @@ func copyPacketData(dst, src net.PacketConn, to net.Addr, timeout time.Duration)
 		} else if err != nil {
 			return err
 		}
+
+		go analyzeUDPPackets(n, buf)
 
 		if _, err = dst.WriteTo(buf[:n], to); err != nil {
 			return err

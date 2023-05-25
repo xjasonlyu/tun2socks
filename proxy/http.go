@@ -11,9 +11,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/xjasonlyu/tun2socks/v2/dialer"
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/TianHe-Labs/Zeus/dialer"
+	M "github.com/TianHe-Labs/Zeus/metadata"
+	"github.com/TianHe-Labs/Zeus/proxy/proto"
 )
 
 type HTTP struct {

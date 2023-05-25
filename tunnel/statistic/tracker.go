@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 	"go.uber.org/atomic"
 
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
+	M "github.com/TianHe-Labs/Zeus/metadata"
 )
 
 type tracker interface {
@@ -22,19 +22,20 @@ type trackerInfo struct {
 	Metadata      *M.Metadata   `json:"metadata"`
 	UploadTotal   *atomic.Int64 `json:"upload"`
 	DownloadTotal *atomic.Int64 `json:"download"`
+	IsHandled     bool          `json:"isHandled"`
 }
 
-type tcpTracker struct {
+type TcpTracker struct {
 	net.Conn `json:"-"`
 
 	*trackerInfo
 	manager *Manager
 }
 
-func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) net.Conn {
+func NewTcpTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) net.Conn {
 	id, _ := uuid.NewRandom()
 
-	tt := &tcpTracker{
+	tt := &TcpTracker{
 		Conn:    conn,
 		manager: manager,
 		trackerInfo: &trackerInfo{
@@ -50,16 +51,16 @@ func NewTCPTracker(conn net.Conn, metadata *M.Metadata, manager *Manager) net.Co
 	return tt
 }
 
-// DefaultTCPTracker returns a new net.Conn(*tcpTacker) with default manager.
-func DefaultTCPTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
-	return NewTCPTracker(conn, metadata, DefaultManager)
+// DefaultTcpTracker returns a new net.Conn(*tcpTacker) with default manager.
+func DefaultTcpTracker(conn net.Conn, metadata *M.Metadata) net.Conn {
+	return NewTcpTracker(conn, metadata, DefaultManager)
 }
 
-func (tt *tcpTracker) ID() string {
+func (tt *TcpTracker) ID() string {
 	return tt.UUID.String()
 }
 
-func (tt *tcpTracker) Read(b []byte) (int, error) {
+func (tt *TcpTracker) Read(b []byte) (int, error) {
 	n, err := tt.Conn.Read(b)
 	download := int64(n)
 	tt.manager.PushDownloaded(download)
@@ -67,7 +68,7 @@ func (tt *tcpTracker) Read(b []byte) (int, error) {
 	return n, err
 }
 
-func (tt *tcpTracker) Write(b []byte) (int, error) {
+func (tt *TcpTracker) Write(b []byte) (int, error) {
 	n, err := tt.Conn.Write(b)
 	upload := int64(n)
 	tt.manager.PushUploaded(upload)
@@ -75,19 +76,19 @@ func (tt *tcpTracker) Write(b []byte) (int, error) {
 	return n, err
 }
 
-func (tt *tcpTracker) Close() error {
+func (tt *TcpTracker) Close() error {
 	tt.manager.Leave(tt)
 	return tt.Conn.Close()
 }
 
-func (tt *tcpTracker) CloseRead() error {
+func (tt *TcpTracker) CloseRead() error {
 	if cr, ok := tt.Conn.(interface{ CloseRead() error }); ok {
 		return cr.CloseRead()
 	}
 	return errors.New("CloseRead is not implemented")
 }
 
-func (tt *tcpTracker) CloseWrite() error {
+func (tt *TcpTracker) CloseWrite() error {
 	if cw, ok := tt.Conn.(interface{ CloseWrite() error }); ok {
 		return cw.CloseWrite()
 	}

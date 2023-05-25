@@ -1,4 +1,4 @@
-module github.com/xjasonlyu/tun2socks/v2
+module github.com/TianHe-Labs/Zeus
 
 go 1.20
 
@@ -22,12 +22,20 @@ require (
 )
 
 require (
+	github.com/aidarkhanov/nanoid v1.0.8 // indirect
 	github.com/ajg/form v1.5.1 // indirect
+	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/gaukas/godicttls v0.0.3 // indirect
 	github.com/google/btree v1.1.2 // indirect
+	github.com/klauspost/compress v1.15.15 // indirect
 	github.com/kr/text v0.2.0 // indirect
+	github.com/miekg/dns v1.1.54 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/refraction-networking/utls v1.3.2 // indirect
 	golang.org/x/crypto v0.9.0 // indirect
+	golang.org/x/mod v0.7.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/tools v0.5.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 )

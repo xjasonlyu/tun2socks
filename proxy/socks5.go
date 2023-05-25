@@ -7,10 +7,10 @@ import (
 	"io"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/v2/dialer"
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
-	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
+	"github.com/TianHe-Labs/Zeus/dialer"
+	M "github.com/TianHe-Labs/Zeus/metadata"
+	"github.com/TianHe-Labs/Zeus/proxy/proto"
+	"github.com/TianHe-Labs/Zeus/transport/socks5"
 )
 
 var _ Proxy = (*Socks5)(nil)

@@ -12,7 +12,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/link/tun"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
-	"github.com/xjasonlyu/tun2socks/v2/core/device"
+	"github.com/TianHe-Labs/Zeus/core/device"
 )
 
 type TUN struct {

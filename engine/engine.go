@@ -12,15 +12,15 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
-	"github.com/xjasonlyu/tun2socks/v2/core"
-	"github.com/xjasonlyu/tun2socks/v2/core/device"
-	"github.com/xjasonlyu/tun2socks/v2/core/option"
-	"github.com/xjasonlyu/tun2socks/v2/dialer"
-	"github.com/xjasonlyu/tun2socks/v2/engine/mirror"
-	"github.com/xjasonlyu/tun2socks/v2/log"
-	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/restapi"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel"
+	"github.com/TianHe-Labs/Zeus/core"
+	"github.com/TianHe-Labs/Zeus/core/device"
+	"github.com/TianHe-Labs/Zeus/core/option"
+	"github.com/TianHe-Labs/Zeus/dialer"
+	"github.com/TianHe-Labs/Zeus/engine/mirror"
+	"github.com/TianHe-Labs/Zeus/log"
+	"github.com/TianHe-Labs/Zeus/proxy"
+	"github.com/TianHe-Labs/Zeus/restapi"
+	"github.com/TianHe-Labs/Zeus/tunnel"
 )
 
 var (
