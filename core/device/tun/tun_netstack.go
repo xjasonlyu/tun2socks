@@ -4,7 +4,6 @@ package tun
 
 import (
 	"fmt"
-	"unsafe"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
@@ -81,7 +80,6 @@ func (t *TUN) Close() error {
 	return unix.Close(t.fd)
 }
 
-// Ref: wireguard tun/tun_linux.go setMTU.
 func setMTU(name string, n uint32) error {
 	// open datagram socket
 	fd, err := unix.Socket(
@@ -95,22 +93,10 @@ func setMTU(name string, n uint32) error {
 
 	defer unix.Close(fd)
 
-	const ifReqSize = unix.IFNAMSIZ + 64
-
-	// do ioctl call
-	var ifr [ifReqSize]byte
-	copy(ifr[:], name)
-	*(*uint32)(unsafe.Pointer(&ifr[unix.IFNAMSIZ])) = n
-	_, _, errno := unix.Syscall(
-		unix.SYS_IOCTL,
-		uintptr(fd),
-		uintptr(unix.SIOCSIFMTU),
-		uintptr(unsafe.Pointer(&ifr[0])),
-	)
-
-	if errno != 0 {
-		return fmt.Errorf("failed to set MTU: %w", errno)
+	ifr, err := unix.NewIfreq(name)
+	if err != nil {
+		return err
 	}
-
-	return nil
+	ifr.SetUint32(n)
+	return unix.IoctlIfreq(fd, unix.SIOCSIFMTU, ifr)
 }
