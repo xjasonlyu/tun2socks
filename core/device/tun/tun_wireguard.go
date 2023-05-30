@@ -48,7 +48,7 @@ func Open(name string, mtu uint32) (_ device.Device, err error) {
 		forcedMTU = int(t.mtu)
 	}
 
-	nt, err := tun.CreateTUN(t.name, forcedMTU)
+	nt, err := createTUN(t.name, forcedMTU)
 	if err != nil {
 		return nil, fmt.Errorf("create tun: %w", err)
 	}

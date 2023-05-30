@@ -3,22 +3,24 @@
 package tun
 
 import (
-	"unsafe"
+	"fmt"
+	"os"
+
+	"golang.zx2c4.com/wireguard/tun"
+	gun "gvisor.dev/gvisor/pkg/tcpip/link/tun"
 )
 
 const (
-	virtioNetHdrLen = int(unsafe.Sizeof(virtioNetHdr{}))
-	offset          = virtioNetHdrLen + 0 /* NO_PI */
-	defaultMTU      = 1500
+	offset     = 0 /* IFF_NO_PI */
+	defaultMTU = 1500
 )
 
-// virtioNetHdr is defined in the kernel in include/uapi/linux/virtio_net.h. The
-// kernel symbol is virtio_net_hdr.
-type virtioNetHdr struct {
-	flags      uint8
-	gsoType    uint8
-	hdrLen     uint16
-	gsoSize    uint16
-	csumStart  uint16
-	csumOffset uint16
+func createTUN(name string, mtu int) (tun.Device, error) {
+	nfd, err := gun.Open(name)
+	if err != nil {
+		return nil, fmt.Errorf("create tun: %w", err)
+	}
+
+	fd := os.NewFile(uintptr(nfd), "/dev/net/tun")
+	return tun.CreateTUNFromFile(fd, mtu)
 }
