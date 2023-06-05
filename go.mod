@@ -10,7 +10,7 @@ require (
 	github.com/go-chi/render v1.0.2
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/websocket v1.5.0
-	github.com/sirupsen/logrus v1.9.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.7.1
 	go.uber.org/atomic v1.11.0
 	go.uber.org/automaxprocs v1.5.2
@@ -18,7 +18,7 @@ require (
 	golang.org/x/time v0.3.0
 	golang.zx2c4.com/wireguard v0.0.0-20230325221338-052af4a8072b
 	gopkg.in/yaml.v3 v3.0.1
-	gvisor.dev/gvisor v0.0.0-20230526012928-142d38d770a0
+	gvisor.dev/gvisor v0.0.0-20230603040744-5c9219dedd33
 )
 
 require (
