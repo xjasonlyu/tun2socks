@@ -61,7 +61,7 @@ func (h *HTTP) shakeHand(metadata *M.Metadata, rw io.ReadWriter) error {
 	}
 
 	if h.user != "" && h.pass != "" {
-		req.Header.Set("Proxy-Authorization", basicAuth(h.user, h.pass))
+		req.Header.Set("Proxy-Authorization", fmt.Sprintf("Basic %s", basicAuth(h.user, h.pass)))
 	}
 
 	if err := req.Write(rw); err != nil {
