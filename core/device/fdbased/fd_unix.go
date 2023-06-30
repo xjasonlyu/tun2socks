@@ -21,7 +21,7 @@ type FD struct {
 	mtu uint32
 }
 
-func Open(name string, mtu uint32) (device.Device, error) {
+func Open(name string, mtu uint32, offset int) (device.Device, error) {
 	fd, err := strconv.Atoi(name)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open fd: %s", name)
@@ -29,7 +29,7 @@ func Open(name string, mtu uint32) (device.Device, error) {
 	if mtu == 0 {
 		mtu = defaultMTU
 	}
-	return open(fd, mtu)
+	return open(fd, mtu, offset)
 }
 
 func (f *FD) Type() string {

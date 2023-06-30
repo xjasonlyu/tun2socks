@@ -10,7 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 )
 
-func open(fd int, mtu uint32) (device.Device, error) {
+func open(fd int, mtu uint32, offset int) (device.Device, error) {
 	f := &FD{fd: fd, mtu: mtu}
 
 	ep, err := fdbased.New(&fdbased.Options{

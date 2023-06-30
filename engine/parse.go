@@ -56,7 +56,7 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 
 	switch driver {
 	case fdbased.Driver:
-		return fdbased.Open(name, mtu)
+		return fdbased.Open(name, mtu, 0)
 	case tun.Driver:
 		return tun.Open(name, mtu)
 	default:
