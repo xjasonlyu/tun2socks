@@ -14,10 +14,12 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-const (
-	// tcpWaitTimeout implements a TCP half-close timeout.
-	tcpWaitTimeout = 60 * time.Second
-)
+// _tcpWaitTimeout implements a TCP half-close timeout.
+var _tcpWaitTimeout = 60 * time.Second
+
+func SetTCPWaitTimeout(t time.Duration) {
+	_tcpWaitTimeout = t
+}
 
 func handleTCPConn(originConn adapter.TCPConn) {
 	defer originConn.Close()
@@ -71,5 +73,5 @@ func unidirectionalStream(dst, src net.Conn, dir string, wg *sync.WaitGroup) {
 		cw.CloseWrite()
 	}
 	// Set TCP half-close timeout.
-	dst.SetReadDeadline(time.Now().Add(tcpWaitTimeout))
+	dst.SetReadDeadline(time.Now().Add(_tcpWaitTimeout))
 }
