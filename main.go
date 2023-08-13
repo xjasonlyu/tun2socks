@@ -4,7 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"go.uber.org/automaxprocs/maxprocs"
@@ -21,6 +23,8 @@ var (
 
 	configFile  string
 	versionFlag bool
+
+	autoSetup bool
 )
 
 func init() {
@@ -39,6 +43,7 @@ func init() {
 	flag.StringVar(&key.TUNPreUp, "tun-pre-up", "", "Execute a command before TUN device setup")
 	flag.StringVar(&key.TUNPostUp, "tun-post-up", "", "Execute a command after TUN device setup")
 	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
+	flag.BoolVar(&autoSetup, "auto-setup", false, "Auto setup TUN device (Linux only)")
 	flag.Parse()
 }
 
@@ -59,6 +64,36 @@ func main() {
 		if err = yaml.Unmarshal(data, key); err != nil {
 			log.Fatalf("Failed to unmarshal config file '%s': %v", configFile, err)
 		}
+	}
+
+	if autoSetup {
+		commands := []string{
+			fmt.Sprintf("tuntap add mode tun dev %s", key.Device),
+			fmt.Sprintf("addr add 10.10.10.10/24 dev %s", key.Device),
+			fmt.Sprintf("link set dev %s up", key.Device),
+			fmt.Sprintf("route add default dev %s metric 1", key.Device),
+		}
+		for _, cmd := range commands {
+			if err := exec.Command("ip", strings.Split(cmd, " ")...).Run(); err != nil {
+				log.Fatalf("Failed to setup TUN device: %v", err)
+			}
+		}
+
+		defer func() {
+			// Run shell command to delete TUN device
+			commands = []string{
+				fmt.Sprintf("link set dev %s down", key.Device),
+				fmt.Sprintf("tuntap del mode tun dev %s", key.Device),
+				fmt.Sprintf("route del default dev %s metric 1", key.Device),
+			}
+
+			for _, cmd := range commands {
+				if err := exec.Command("ip", strings.Split(cmd, " ")...).Run(); err != nil {
+					log.Fatalf("Failed to delete TUN device: %v", err)
+				}
+			}
+		}()
+
 	}
 
 	engine.Insert(key)
