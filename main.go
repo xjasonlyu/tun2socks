@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 
@@ -66,7 +67,7 @@ func main() {
 		}
 	}
 
-	if autoSetup {
+	if autoSetup && runtime.GOOS == "linux" {
 		commands := []string{
 			fmt.Sprintf("tuntap add mode tun dev %s", key.Device),
 			fmt.Sprintf("addr add 10.10.10.10/24 dev %s", key.Device),
@@ -99,6 +100,30 @@ func main() {
 
 	engine.Start()
 	defer engine.Stop()
+
+	// Use ifconfig to bring the TUN interface up and assign addresses for it.
+	if autoSetup && runtime.GOOS == "darwin" {
+		privateIP := "10.10.10.10"
+		if err := exec.Command("ifconfig", key.Device, privateIP, privateIP, "up").Run(); err != nil {
+			log.Fatalf("Failed to setup TUN device: %v", err)
+		}
+		routes := []string{
+			"1.0.0.0/8",
+			"2.0.0.0/7",
+			"4.0.0.0/6",
+			"8.0.0.0/5",
+			"16.0.0.0/4",
+			"32.0.0.0/3",
+			"64.0.0.0/2",
+			"128.0.0.0/1",
+			"198.18.0.0/15",
+		}
+		for _, route := range routes {
+			if err := exec.Command("route", "add", "-net", route, privateIP).Run(); err != nil {
+				log.Fatalf("Failed to add route: %v", err)
+			}
+		}
+	}
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
