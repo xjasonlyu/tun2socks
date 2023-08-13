@@ -75,7 +75,7 @@ func main() {
 		}
 		for _, cmd := range commands {
 			if err := exec.Command("ip", strings.Split(cmd, " ")...).Run(); err != nil {
-				log.Fatalf("Failed to setup TUN device: %v", err)
+				log.Fatalf("Failed to setup TUN device: %v on command: %s", err, cmd)
 			}
 		}
 
@@ -84,12 +84,11 @@ func main() {
 			commands = []string{
 				fmt.Sprintf("link set dev %s down", key.Device),
 				fmt.Sprintf("tuntap del mode tun dev %s", key.Device),
-				fmt.Sprintf("route del default dev %s metric 1", key.Device),
 			}
 
 			for _, cmd := range commands {
 				if err := exec.Command("ip", strings.Split(cmd, " ")...).Run(); err != nil {
-					log.Fatalf("Failed to delete TUN device: %v", err)
+					log.Fatalf("Failed to delete TUN device: %v on command: %s", err, cmd)
 				}
 			}
 		}()
