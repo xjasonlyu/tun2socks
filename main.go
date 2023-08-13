@@ -28,6 +28,8 @@ var (
 	autoSetup bool
 )
 
+const privateIP = "10.10.10.10"
+
 func init() {
 	flag.IntVar(&key.Mark, "fwmark", 0, "Set firewall MARK (Linux only)")
 	flag.IntVar(&key.MTU, "mtu", 0, "Set device maximum transmission unit (MTU)")
@@ -70,7 +72,7 @@ func main() {
 	if autoSetup && runtime.GOOS == "linux" {
 		commands := []string{
 			fmt.Sprintf("tuntap add mode tun dev %s", key.Device),
-			fmt.Sprintf("addr add 10.10.10.10/24 dev %s", key.Device),
+			fmt.Sprintf("addr add %s/24 dev %s", privateIP, key.Device),
 			fmt.Sprintf("link set dev %s up", key.Device),
 			fmt.Sprintf("route add default dev %s metric 1", key.Device),
 		}
@@ -103,7 +105,7 @@ func main() {
 
 	// Use ifconfig to bring the TUN interface up and assign addresses for it.
 	if autoSetup && runtime.GOOS == "darwin" {
-		privateIP := "10.10.10.10"
+
 		if err := exec.Command("ifconfig", key.Device, privateIP, privateIP, "up").Run(); err != nil {
 			log.Fatalf("Failed to setup TUN device: %v", err)
 		}
@@ -124,8 +126,47 @@ func main() {
 			}
 		}
 	}
+	if autoSetup && runtime.GOOS == "windows" {
+		cmd := fmt.Sprintf(`interface ip set address name="%s" source=static addr=%s mask=255.255.255.0 gateway=none`, key.Device, privateIP)
+		if err := exec.Command("netsh", strings.Split(cmd, " ")...).Run(); err != nil {
+			log.Fatalf("Failed to setup TUN device: %v", err)
+		}
+		interfaceIndex, err := getInterfaceIndex(key.Device)
+		if err != nil {
+			log.Fatalf("Could not find interface index: %v", err)
+		}
+		// route add 0.0.0.0 mask 0.0.0.0 192.168.123.1 if <IF NUM> metric 5
+		cmd = fmt.Sprintf(`add 0.0.0.0 mask 0.0.0.0 %s if %s metric 5`, privateIP, interfaceIndex)
+		if err := exec.Command("route", strings.Split(cmd, " ")...).Run(); err != nil {
+			log.Fatalf("Failed to setup TUN device: %v", err)
+		}
+	}
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	<-sigCh
+}
+
+// Windows only
+func getInterfaceIndex(deviceName string) (string, error) {
+	if runtime.GOOS != "windows" {
+		return "", fmt.Errorf("not windows")
+	}
+	cmd := exec.Command("netsh", "interface", "ipv4", "show", "interfaces")
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("error running netsh command: %v", err)
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, deviceName) {
+			fields := strings.Fields(line)
+			if len(fields) >= 3 {
+				return fields[2], nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("interface not found")
 }
