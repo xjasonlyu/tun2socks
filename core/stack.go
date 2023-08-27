@@ -26,7 +26,7 @@ type Config struct {
 	TransportHandler adapter.TransportHandler
 
 	// MulticastGroups is used by internal stack to add
-	// nic to given groups
+	// nic to given groups.
 	MulticastGroups []net.IP
 
 	// Options are supplement options to apply settings
@@ -95,7 +95,7 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// all incoming ICMP packets.
 		withRouteTable(nicID),
 
-		// Adds default NIC to the given multicast groups.
+		// Add default NIC to the given multicast groups.
 		withMulticastGroups(nicID, cfg.MulticastGroups),
 	)
 
