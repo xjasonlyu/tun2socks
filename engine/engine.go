@@ -193,6 +193,11 @@ func netstack(k *Key) (err error) {
 		return
 	}
 
+	var multicastGroups []net.IP
+	if multicastGroups, err = parseMulticastGroups(k.MulticastGroups); err != nil {
+		return err
+	}
+
 	var opts []option.Option
 	if k.TCPModerateReceiveBuffer {
 		opts = append(opts, option.WithTCPModerateReceiveBuffer(true))
@@ -217,6 +222,7 @@ func netstack(k *Key) (err error) {
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: &mirror.Tunnel{},
+		MulticastGroups:  multicastGroups,
 		Options:          opts,
 	}); err != nil {
 		return

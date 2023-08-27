@@ -1,6 +1,8 @@
 package core
 
 import (
+	"net"
+
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv6"
@@ -22,6 +24,10 @@ type Config struct {
 	// TransportHandler is the handler used by internal
 	// stack to set transport handlers.
 	TransportHandler adapter.TransportHandler
+
+	// MulticastGroups is used by internal stack to add
+	// nic to given groups.
+	MulticastGroups []net.IP
 
 	// Options are supplement options to apply settings
 	// for the internal stack.
@@ -88,6 +94,9 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// Add default route table for IPv4 and IPv6. This will handle
 		// all incoming ICMP packets.
 		withRouteTable(nicID),
+
+		// Add default NIC to the given multicast groups.
+		withMulticastGroups(nicID, cfg.MulticastGroups),
 	)
 
 	for _, opt := range opts {
