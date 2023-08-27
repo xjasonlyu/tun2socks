@@ -63,10 +63,10 @@ func withSpoofing(nicID tcpip.NICID, v bool) option.Option {
 // withMulticastGroups adds a NIC to the given multicast groups.
 func withMulticastGroups(nicID tcpip.NICID, multicastGroups []net.IP) option.Option {
 	return func(s *stack.Stack) error {
-		if multicastGroups == nil {
+		if len(multicastGroups) == 0 {
 			return nil
 		}
-		// The default NIC of tun2 is working on Spoofing mode. When the UDP Endpoint
+		// The default NIC of tun2socks is working on Spoofing mode. When the UDP Endpoint
 		// tries to use a non-local address to connect, the network stack will
 		// generate a temporary addressState to build the route, which can be primary
 		// but is ephemeral. Nevertheless, when the UDP Endpoint tries to use a
@@ -85,7 +85,7 @@ func withMulticastGroups(nicID tcpip.NICID, multicastGroups []net.IP) option.Opt
 			tcpip.ProtocolAddress{
 				Protocol: ipv4.ProtocolNumber,
 				AddressWithPrefix: tcpip.AddressWithPrefix{
-					Address:   "\x0A\x00\x00\x01",
+					Address:   tcpip.AddrFrom4([4]byte{0x0a, 0, 0, 0x01}),
 					PrefixLen: 8,
 				},
 			},
@@ -96,21 +96,21 @@ func withMulticastGroups(nicID tcpip.NICID, multicastGroups []net.IP) option.Opt
 			tcpip.ProtocolAddress{
 				Protocol: ipv6.ProtocolNumber,
 				AddressWithPrefix: tcpip.AddressWithPrefix{
-					Address:   "\xfd\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01",
+					Address:   tcpip.AddrFrom16([16]byte{0xfd, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0x01}),
 					PrefixLen: 8,
 				},
 			},
 			stack.AddressProperties{PEB: stack.CanBePrimaryEndpoint},
 		)
 		for _, multicastGroup := range multicastGroups {
-			if tcpIpAddr := multicastGroup.To4(); tcpIpAddr != nil {
-				if err := s.JoinGroup(ipv4.ProtocolNumber, nicID, tcpip.Address(tcpIpAddr)); err != nil {
-					return fmt.Errorf("join multicast groups: %s", err)
+			if ip := multicastGroup.To4(); ip != nil {
+				if err := s.JoinGroup(ipv4.ProtocolNumber, nicID, tcpip.AddrFrom4Slice(ip)); err != nil {
+					return fmt.Errorf("join multicast group: %s", err)
 				}
 			} else {
-				tcpIpAddr := multicastGroup.To16()
-				if err := s.JoinGroup(ipv6.ProtocolNumber, nicID, tcpip.Address(tcpIpAddr)); err != nil {
-					return fmt.Errorf("join multicast groups: %s", err)
+				ip := multicastGroup.To16()
+				if err := s.JoinGroup(ipv6.ProtocolNumber, nicID, tcpip.AddrFrom16Slice(ip)); err != nil {
+					return fmt.Errorf("join multicast group: %s", err)
 				}
 			}
 		}
