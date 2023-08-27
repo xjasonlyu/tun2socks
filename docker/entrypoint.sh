@@ -81,6 +81,10 @@ run() {
     ARGS="$ARGS --tcp-auto-tuning"
   fi
 
+  if [ -n "$MULTICAST_GROUPS" ]; then
+    ARGS="$ARGS --multicast-groups $MULTICAST_GROUPS"
+  fi
+
   exec tun2socks \
     --loglevel "$LOGLEVEL" \
     --fwmark "$FWMARK" \
