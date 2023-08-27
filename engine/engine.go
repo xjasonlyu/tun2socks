@@ -193,6 +193,11 @@ func netstack(k *Key) (err error) {
 		return
 	}
 
+	var multicastGroups []net.IP
+	if multicastGroups, err = parseMulticastGroups(k.MulticastGroups); err != nil {
+		return err
+	}
+
 	var opts []option.Option
 	if k.TCPModerateReceiveBuffer {
 		opts = append(opts, option.WithTCPModerateReceiveBuffer(true))
@@ -212,11 +217,6 @@ func netstack(k *Key) (err error) {
 			return err
 		}
 		opts = append(opts, option.WithTCPReceiveBufferSize(int(size)))
-	}
-
-	var multicastGroups []net.IP = nil
-	if multicastGroups, err = parseMulticastGroups(k.MulticastGroups); err != nil {
-		return err
 	}
 
 	if _defaultStack, err = core.CreateStack(&core.Config{

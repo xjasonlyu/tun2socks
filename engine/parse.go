@@ -151,21 +151,20 @@ func parseShadowsocks(u *url.URL) (address, method, password, obfsMode, obfsHost
 	return
 }
 
-func parseMulticastGroups(multicastGroupsString string) ([]net.IP, error) {
-	if multicastGroupsString == "" {
-		return nil, nil
-	}
-	ipStrings := strings.Split(multicastGroupsString, ",")
-	multicastGroups := []net.IP{}
+func parseMulticastGroups(s string) (multicastGroups []net.IP, _ error) {
+	ipStrings := strings.Split(s, ",")
 	for _, ipString := range ipStrings {
+		if strings.TrimSpace(ipString) == "" {
+			continue
+		}
 		ip := net.ParseIP(ipString)
 		if ip == nil {
-			return nil, fmt.Errorf("unsupported ip format: %s", ipString)
+			return nil, fmt.Errorf("invalid IP format: %s", ipString)
 		}
 		if !ip.IsMulticast() {
-			return nil, fmt.Errorf("invalid multicast address: %s", ipString)
+			return nil, fmt.Errorf("invalid multicast IP address: %s", ipString)
 		}
 		multicastGroups = append(multicastGroups, ip)
 	}
-	return multicastGroups, nil
+	return
 }
