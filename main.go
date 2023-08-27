@@ -27,8 +27,7 @@ var (
 
 	autoSetup bool
 )
-
-const privateIP = "10.10.10.10"
+var privateIP string
 
 func init() {
 	flag.IntVar(&key.Mark, "fwmark", 0, "Set firewall MARK (Linux only)")
@@ -47,6 +46,7 @@ func init() {
 	flag.StringVar(&key.TUNPostUp, "tun-post-up", "", "Execute a command after TUN device setup")
 	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
 	flag.BoolVar(&autoSetup, "auto-setup", false, "Auto setup TUN device (Linux only)")
+	flag.StringVar(&privateIP, "private-ip", "10.10.10.10", "Private IP address for TUN device (Linux only)")
 	flag.Parse()
 }
 
