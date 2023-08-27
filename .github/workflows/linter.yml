@@ -1,5 +1,11 @@
 name: Linter
+
+concurrency:
+  group: linter-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on: [ push, pull_request ]
+
 jobs:
   lint:
     runs-on: ubuntu-latest
