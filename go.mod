@@ -1,6 +1,6 @@
 module github.com/xjasonlyu/tun2socks/v2
 
-go 1.20
+go 1.21
 
 require (
 	github.com/Dreamacro/go-shadowsocks2 v0.1.8
