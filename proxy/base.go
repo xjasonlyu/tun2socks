@@ -25,9 +25,9 @@ func (b *Base) Proto() proto.Proto {
 }
 
 func (b *Base) DialContext(context.Context, *M.Metadata) (net.Conn, error) {
-	return nil, errors.New("not supported")
+	return nil, errors.ErrUnsupported
 }
 
 func (b *Base) DialUDP(*M.Metadata) (net.PacketConn, error) {
-	return nil, errors.New("not supported")
+	return nil, errors.ErrUnsupported
 }

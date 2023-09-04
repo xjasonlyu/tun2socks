@@ -7,5 +7,5 @@ import (
 )
 
 func Open(name string, mtu uint32, offset int) (device.Device, error) {
-	return nil, errors.New("not supported")
+	return nil, errors.ErrUnsupported
 }
