@@ -51,17 +51,20 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 		return nil, err
 	}
 
-	name := u.Host
 	driver := strings.ToLower(u.Scheme)
 
 	switch driver {
 	case fdbased.Driver:
-		return fdbased.Open(name, mtu, 0)
+		return parseFD(u, mtu)
 	case tun.Driver:
-		return tun.Open(name, mtu)
+		return parseTUN(u, mtu)
 	default:
 		return nil, fmt.Errorf("unsupported driver: %s", driver)
 	}
+}
+
+func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
+	return fdbased.Open(u.Host, mtu, 0)
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
