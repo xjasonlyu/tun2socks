@@ -3,6 +3,7 @@ package engine
 import (
 	"encoding/base64"
 	"fmt"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/unixbase"
 	"net"
 	"net/url"
 	"strings"
@@ -58,6 +59,8 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 		return parseFD(u, mtu)
 	case tun.Driver:
 		return parseTUN(u, mtu)
+	case unixbase.Driver:
+		return parseUnix(u, mtu)
 	default:
 		return nil, fmt.Errorf("unsupported driver: %s", driver)
 	}
@@ -65,6 +68,10 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 
 func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
 	return fdbased.Open(u.Host, mtu, 0)
+}
+
+func parseUnix(u *url.URL, mtu uint32) (device.Device, error) {
+	return unixbase.Open(u.Host, mtu, 0)
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
