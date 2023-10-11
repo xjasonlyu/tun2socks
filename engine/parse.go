@@ -3,7 +3,6 @@ package engine
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/xjasonlyu/tun2socks/v2/core/device/unixbase"
 	"net"
 	"net/url"
 	"strings"
@@ -11,6 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
+	"github.com/xjasonlyu/tun2socks/v2/core/device/unixbase"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )
