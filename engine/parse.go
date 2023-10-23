@@ -85,42 +85,46 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	case proto.Reject.String():
 		return proxy.NewReject(), nil
 	case proto.HTTP.String():
-		return proxy.NewHTTP(parseHTTP(u))
+		return parseHTTP(u)
 	case proto.Socks4.String():
-		return proxy.NewSocks4(parseSocks4(u))
+		return parseSocks4(u)
 	case proto.Socks5.String():
-		return proxy.NewSocks5(parseSocks5(u))
+		return parseSocks5(u)
 	case proto.Shadowsocks.String():
-		return proxy.NewShadowsocks(parseShadowsocks(u))
+		return parseShadowsocks(u)
 	default:
 		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
 }
 
-func parseHTTP(u *url.URL) (address, username, password string) {
-	address, username = u.Host, u.User.Username()
-	password, _ = u.User.Password()
-	return
+func parseHTTP(u *url.URL) (proxy.Proxy, error) {
+	address, username := u.Host, u.User.Username()
+	password, _ := u.User.Password()
+	return proxy.NewHTTP(address, username, password)
 }
 
-func parseSocks4(u *url.URL) (address, username string) {
-	address, username = u.Host, u.User.Username()
-	return
+func parseSocks4(u *url.URL) (proxy.Proxy, error) {
+	address, userID := u.Host, u.User.Username()
+	return proxy.NewSocks4(address, userID)
 }
 
-func parseSocks5(u *url.URL) (address, username, password string) {
-	address, username = u.Host, u.User.Username()
-	password, _ = u.User.Password()
+func parseSocks5(u *url.URL) (proxy.Proxy, error) {
+	address, username := u.Host, u.User.Username()
+	password, _ := u.User.Password()
 
 	// Socks5 over UDS
 	if address == "" {
 		address = u.Path
 	}
-	return
+	return proxy.NewSocks5(address, username, password)
 }
 
-func parseShadowsocks(u *url.URL) (address, method, password, obfsMode, obfsHost string) {
-	address = u.Host
+func parseShadowsocks(u *url.URL) (proxy.Proxy, error) {
+	var (
+		address            = u.Host
+		method, password   string
+		obfsMode, obfsHost string
+	)
 
 	if pass, set := u.User.Password(); set {
 		method = u.User.Username()
@@ -151,7 +155,7 @@ func parseShadowsocks(u *url.URL) (address, method, password, obfsMode, obfsHost
 		}
 	}
 
-	return
+	return proxy.NewShadowsocks(address, method, password, obfsMode, obfsHost)
 }
 
 func parseMulticastGroups(s string) (multicastGroups []net.IP, _ error) {
