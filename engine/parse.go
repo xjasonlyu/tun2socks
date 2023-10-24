@@ -7,6 +7,8 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/gorilla/schema"
+
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
@@ -92,6 +94,8 @@ func parseProxy(s string) (proxy.Proxy, error) {
 		return parseSocks5(u)
 	case proto.Shadowsocks.String():
 		return parseShadowsocks(u)
+	case proto.Relay.String():
+		return parseRelay(u)
 	default:
 		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
 	}
@@ -156,6 +160,20 @@ func parseShadowsocks(u *url.URL) (proxy.Proxy, error) {
 	}
 
 	return proxy.NewShadowsocks(address, method, password, obfsMode, obfsHost)
+}
+
+func parseRelay(u *url.URL) (proxy.Proxy, error) {
+	address, username := u.Host, u.User.Username()
+	password, _ := u.User.Password()
+
+	opts := struct {
+		NoDelay bool
+	}{}
+	if err := schema.NewDecoder().Decode(&opts, u.Query()); err != nil {
+		return nil, err
+	}
+
+	return proxy.NewRelay(address, username, password, opts.NoDelay)
 }
 
 func parseMulticastGroups(s string) (multicastGroups []net.IP, _ error) {
