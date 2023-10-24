@@ -36,7 +36,9 @@ func (ss *Socks4) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 	}
 	setKeepAlive(c)
 
-	defer safeConnClose(c, err)
+	defer func(c net.Conn) {
+		safeConnClose(c, err)
+	}(c)
 
 	err = socks4.ClientHandshake(c, metadata.DestinationAddress(), socks4.CmdConnect, ss.userID)
 	return

@@ -49,7 +49,9 @@ func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *M.Metadata) (c
 	}
 	setKeepAlive(c)
 
-	defer safeConnClose(c, err)
+	defer func(c net.Conn) {
+		safeConnClose(c, err)
+	}(c)
 
 	switch ss.obfsMode {
 	case "tls":
