@@ -41,7 +41,9 @@ func (h *HTTP) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Con
 	}
 	setKeepAlive(c)
 
-	defer safeConnClose(c, err)
+	defer func(c net.Conn) {
+		safeConnClose(c, err)
+	}(c)
 
 	err = h.shakeHand(metadata, c)
 	return

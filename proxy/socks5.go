@@ -49,7 +49,9 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 	}
 	setKeepAlive(c)
 
-	defer safeConnClose(c, err)
+	defer func(c net.Conn) {
+		safeConnClose(c, err)
+	}(c)
 
 	var user *socks5.User
 	if ss.user != "" {
