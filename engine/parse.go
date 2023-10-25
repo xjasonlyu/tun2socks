@@ -130,11 +130,13 @@ func parseShadowsocks(u *url.URL) (proxy.Proxy, error) {
 		obfsMode, obfsHost string
 	)
 
-	if pass, set := u.User.Password(); set {
+	if ss := u.User.String(); ss == "" {
+		method = "dummy" // none cipher mode
+	} else if pass, set := u.User.Password(); set {
 		method = u.User.Username()
 		password = pass
 	} else {
-		data, _ := base64.RawURLEncoding.DecodeString(u.User.String())
+		data, _ := base64.RawURLEncoding.DecodeString(ss)
 		userInfo := strings.SplitN(string(data), ":", 2)
 		if len(userInfo) == 2 {
 			method = userInfo[0]
