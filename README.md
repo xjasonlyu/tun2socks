@@ -47,7 +47,6 @@ Welcome and feel free to ask any questions at [Discussions](https://github.com/x
 
 ## Credits
 
-- [Dreamacro/clash](https://github.com/Dreamacro/clash) - A rule-based tunnel in Go
 - [google/gvisor](https://github.com/google/gvisor) - Application Kernel for Containers
 - [wireguard-go](https://git.zx2c4.com/wireguard-go) - Go Implementation of WireGuard
 
