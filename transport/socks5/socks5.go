@@ -16,10 +16,8 @@ type AuthMethod = uint8
 
 // SOCKS authentication methods as defined in RFC 1928 section 3.
 const (
-	MethodNoAuth       AuthMethod = 0x00
-	MethodGSSAPI       AuthMethod = 0x01
-	MethodUserPass     AuthMethod = 0x02
-	MethodNoAcceptable AuthMethod = 0xff
+	MethodNoAuth   AuthMethod = 0x00
+	MethodUserPass AuthMethod = 0x02
 )
 
 // Version is the protocol version as defined in RFC 1928 section 4.
