@@ -11,6 +11,15 @@ import (
 	"strconv"
 )
 
+// AuthMethod is the authentication method as defined in RFC 1928 section 3.
+type AuthMethod = uint8
+
+// SOCKS authentication methods as defined in RFC 1928 section 3.
+const (
+	MethodNoAuth   AuthMethod = 0x00
+	MethodUserPass AuthMethod = 0x02
+)
+
 // Version is the protocol version as defined in RFC 1928 section 4.
 const Version = 0x05
 
@@ -162,9 +171,9 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 
 	var method uint8
 	if user != nil {
-		method = 0x02 /* USERNAME/PASSWORD */
+		method = MethodUserPass /* USERNAME/PASSWORD */
 	} else {
-		method = 0x00 /* NO AUTHENTICATION REQUIRED */
+		method = MethodNoAuth /* NO AUTHENTICATION REQUIRED */
 	}
 
 	// VER, NMETHODS, METHODS
@@ -181,22 +190,23 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 		return nil, errors.New("socks version mismatched")
 	}
 
-	if buf[1] == 0x02 /* USERNAME/PASSWORD */ {
+	if buf[1] == MethodUserPass /* USERNAME/PASSWORD */ {
 		if user == nil {
 			return nil, errors.New("auth required")
 		}
 
+		authMsgLen := 1 + 1 + len(user.Username) + 1 + len(user.Password)
+		if authMsgLen > MaxAuthLen {
+			return nil, errors.New("auth message too long")
+		}
+
 		// password protocol version
-		authMsg := &bytes.Buffer{}
+		authMsg := bytes.NewBuffer(make([]byte, 0, authMsgLen))
 		authMsg.WriteByte(0x01 /* VER */)
 		authMsg.WriteByte(byte(len(user.Username)) /* ULEN */)
 		authMsg.WriteString(user.Username /* UNAME */)
 		authMsg.WriteByte(byte(len(user.Password)) /* PLEN */)
 		authMsg.WriteString(user.Password /* PASSWD */)
-
-		if len(authMsg.Bytes()) > MaxAuthLen {
-			return nil, errors.New("auth message too long")
-		}
 
 		if _, err := rw.Write(authMsg.Bytes()); err != nil {
 			return nil, err
@@ -210,7 +220,7 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 			return nil, errors.New("rejected username/password")
 		}
 
-	} else if buf[1] != 0x00 /* NO AUTHENTICATION REQUIRED */ {
+	} else if buf[1] != MethodNoAuth /* NO AUTHENTICATION REQUIRED */ {
 		return nil, errors.New("unsupported method")
 	}
 
