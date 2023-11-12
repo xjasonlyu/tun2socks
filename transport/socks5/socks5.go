@@ -16,8 +16,10 @@ type AuthMethod = uint8
 
 // SOCKS authentication methods as defined in RFC 1928 section 3.
 const (
-	AuthNo               AuthMethod = 0x00
-	AuthUsernamePassword AuthMethod = 0x02
+	MethodNoAuth                  = 0x00
+	MethodGSSAPI       AuthMethod = 0x01
+	MethodUserPass     AuthMethod = 0x02
+	MethodNoAcceptable AuthMethod = 0xff
 )
 
 // Version is the protocol version as defined in RFC 1928 section 4.
@@ -171,9 +173,9 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 
 	var method uint8
 	if user != nil {
-		method = AuthUsernamePassword /* USERNAME/PASSWORD */
+		method = MethodUserPass /* USERNAME/PASSWORD */
 	} else {
-		method = AuthNo /* NO AUTHENTICATION REQUIRED */
+		method = MethodNoAuth /* NO AUTHENTICATION REQUIRED */
 	}
 
 	// VER, NMETHODS, METHODS
@@ -190,7 +192,7 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 		return nil, errors.New("socks version mismatched")
 	}
 
-	if buf[1] == AuthUsernamePassword /* USERNAME/PASSWORD */ {
+	if buf[1] == MethodUserPass /* USERNAME/PASSWORD */ {
 		if user == nil {
 			return nil, errors.New("auth required")
 		}
@@ -220,7 +222,7 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 			return nil, errors.New("rejected username/password")
 		}
 
-	} else if buf[1] != AuthNo /* NO AUTHENTICATION REQUIRED */ {
+	} else if buf[1] != MethodNoAuth /* NO AUTHENTICATION REQUIRED */ {
 		return nil, errors.New("unsupported method")
 	}
 
