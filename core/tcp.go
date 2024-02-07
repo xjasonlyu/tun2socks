@@ -101,7 +101,7 @@ func setSocketOptions(s *stack.Stack, ep tcpip.Endpoint) tcpip.Error {
 	{ /* TCP recv/send buffer size */
 		var ss tcpip.TCPSendBufferSizeRangeOption
 		if err := s.TransportProtocolOption(header.TCPProtocolNumber, &ss); err == nil {
-			ep.SocketOptions().SetReceiveBufferSize(int64(ss.Default), false)
+			ep.SocketOptions().SetSendBufferSize(int64(ss.Default), false)
 		}
 
 		var rs tcpip.TCPReceiveBufferSizeRangeOption
