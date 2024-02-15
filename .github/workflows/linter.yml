@@ -4,7 +4,11 @@ concurrency:
   group: linter-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
 
 jobs:
   lint:
@@ -16,7 +20,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           check-latest: true
-          go-version: '1.21'
+          go-version: '1.22'
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
