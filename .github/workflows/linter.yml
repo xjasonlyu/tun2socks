@@ -4,7 +4,11 @@ concurrency:
   group: linter-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
-on: [ push, pull_request ]
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
 
 jobs:
   lint:
