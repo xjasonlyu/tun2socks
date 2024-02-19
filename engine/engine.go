@@ -4,11 +4,11 @@ import (
 	"errors"
 	"net"
 	"os/exec"
-	"strings"
 	"sync"
 	"time"
 
 	"github.com/docker/go-units"
+	"github.com/google/shlex"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
@@ -93,11 +93,14 @@ func stop() (err error) {
 }
 
 func execCommand(cmd string) error {
-	parts := strings.Fields(cmd)
+	parts, err := shlex.Split(cmd)
+	if err != nil {
+		return err
+	}
 	if len(parts) == 0 {
 		return errors.New("empty command")
 	}
-	_, err := exec.Command(parts[0], parts[1:]...).Output()
+	_, err = exec.Command(parts[0], parts[1:]...).Output()
 	return err
 }
 
@@ -170,6 +173,7 @@ func netstack(k *Key) (err error) {
 	}
 
 	if k.TUNPreUp != "" {
+		log.Infof("[TUN] pre-execute command: `%s`", k.TUNPreUp)
 		if preUpErr := execCommand(k.TUNPreUp); preUpErr != nil {
 			log.Warnf("[TUN] failed to pre-execute: %s: %v", k.TUNPreUp, preUpErr)
 		}
@@ -179,6 +183,7 @@ func netstack(k *Key) (err error) {
 		if k.TUNPostUp == "" || err != nil {
 			return
 		}
+		log.Infof("[TUN] post-execute command: `%s`", k.TUNPostUp)
 		if postUpErr := execCommand(k.TUNPostUp); postUpErr != nil {
 			log.Warnf("[TUN] failed to post-execute: %s: %v", k.TUNPostUp, postUpErr)
 		}
