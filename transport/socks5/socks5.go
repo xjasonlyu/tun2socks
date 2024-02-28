@@ -195,17 +195,24 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 			return nil, errors.New("auth required")
 		}
 
-		authMsgLen := 1 + 1 + len(user.Username) + 1 + len(user.Password)
-		if authMsgLen > MaxAuthLen {
-			return nil, errors.New("auth message too long")
+		uLen := len(user.Username)
+		pLen := len(user.Password)
+
+		// Both ULEN and PLEN are limited to the range [1, 255].
+		if uLen == 0 || pLen == 0 {
+			return nil, errors.New("auth username/password empty")
+		} else if uLen > MaxAuthLen || pLen > MaxAuthLen {
+			return nil, errors.New("auth username/password too long")
 		}
+
+		authMsgLen := 1 + 1 + uLen + 1 + pLen
 
 		// password protocol version
 		authMsg := bytes.NewBuffer(make([]byte, 0, authMsgLen))
 		authMsg.WriteByte(0x01 /* VER */)
-		authMsg.WriteByte(byte(len(user.Username)) /* ULEN */)
+		authMsg.WriteByte(byte(uLen) /* ULEN */)
 		authMsg.WriteString(user.Username /* UNAME */)
-		authMsg.WriteByte(byte(len(user.Password)) /* PLEN */)
+		authMsg.WriteByte(byte(pLen) /* PLEN */)
 		authMsg.WriteString(user.Password /* PASSWD */)
 
 		if _, err := rw.Write(authMsg.Bytes()); err != nil {
