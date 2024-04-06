@@ -1,8 +1,13 @@
 name: "CodeQL"
 
+concurrency:
+  group: codeql-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
   analyze:
@@ -17,6 +22,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v4
+        with:
+          check-latest: true
+          go-version-file: 'go.mod'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
