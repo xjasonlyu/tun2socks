@@ -1,8 +1,13 @@
 name: "CodeQL"
 
+concurrency:
+  group: codeql-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     branches: [ main ]
+  pull_request:
 
 jobs:
   analyze:
