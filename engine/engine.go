@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"os/exec"
 	"sync"
@@ -12,11 +13,14 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
+	"github.com/xjasonlyu/tun2socks/v2/component/fakeip"
+	"github.com/xjasonlyu/tun2socks/v2/component/trie"
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
@@ -176,6 +180,45 @@ func restAPI(k *Key) error {
 	return nil
 }
 
+// remoteDNSProtocols lists the proxy protocols whose upstream can resolve
+// FQDNs itself, so that fake DNS can hand off the original hostname.
+var remoteDNSProtocols = map[string]bool{
+	"socks5": true,
+	"socks4": true,
+	"http":   true,
+	"ss":     true,
+}
+
+func fakeDNS(k *Key, proxyScheme string) (err error) {
+	if !k.FakeDNS {
+		return
+	}
+
+	if !remoteDNSProtocols[proxyScheme] {
+		return fmt.Errorf("remote DNS not supported with proxy protocol %q", proxyScheme)
+	}
+
+	_, ipnet, err := net.ParseCIDR(k.FakeDNSNetIPv4)
+	if err != nil {
+		return err
+	}
+
+	pool, err := fakeip.New(fakeip.Options{
+		IPNet: ipnet,
+		Size:  1000,
+		Host:  trie.New(),
+	})
+	if err != nil {
+		return err
+	}
+
+	dns.EnableFakeDNS()
+	dns.ReCreateServer(k.FakeDNSListenAddress, pool)
+
+	log.Infof("[DNS] fake DNS enabled")
+	return nil
+}
+
 func netstack(k *Key) (err error) {
 	if k.Proxy == "" {
 		return errors.New("empty proxy")
@@ -206,7 +249,8 @@ func netstack(k *Key) (err error) {
 		return err
 	}
 
-	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
+	var proxyScheme string
+	if _defaultProxy, proxyScheme, err = parseProxy(k.Proxy); err != nil {
 		return err
 	}
 	tunnel.T().SetProxy(_defaultProxy)
@@ -247,5 +291,10 @@ func netstack(k *Key) (err error) {
 	}
 
 	log.Infof("[STACK] %s <-> %s", k.Device, k.Proxy)
+
+	if err = fakeDNS(k, proxyScheme); err != nil {
+		return err
+	}
+
 	return nil
 }
