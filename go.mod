@@ -12,6 +12,8 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/websocket v1.5.1
+	github.com/jellydator/ttlcache/v3 v3.2.0
+	github.com/miekg/dns v1.1.52
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/atomic v1.11.0
@@ -28,8 +30,10 @@ require (
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/sync v0.6.0 // indirect
+	golang.org/x/tools v0.16.1 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 )

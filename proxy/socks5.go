@@ -186,5 +186,5 @@ func (pc *socksPacketConn) Close() error {
 }
 
 func serializeSocksAddr(m *M.Metadata) socks5.Addr {
-	return socks5.SerializeAddr("", m.DstIP, m.DstPort)
+	return socks5.SerializeAddr(m.DstName, m.DstIP, m.DstPort)
 }

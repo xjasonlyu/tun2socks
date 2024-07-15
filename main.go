@@ -40,6 +40,9 @@ func init() {
 	flag.StringVar(&key.TUNPreUp, "tun-pre-up", "", "Execute a command before TUN device setup")
 	flag.StringVar(&key.TUNPostUp, "tun-post-up", "", "Execute a command after TUN device setup")
 	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
+	flag.BoolVar(&key.FakeDNS, "fakedns", false, "Enable fake DNS (HTTP, Shadowsocks, SOCKS)")
+	flag.StringVar(&key.FakeDNSNetIPv4, "fakedns-net-ipv4", "198.18.0.0/15", "IPv4 network for fake DNS A records")
+	flag.StringVar(&key.FakeDNSListenAddress, "fakedns-listen-addr", "127.0.0.1:53", "IP:port to listen on for DNS requests")
 	flag.Parse()
 }
 

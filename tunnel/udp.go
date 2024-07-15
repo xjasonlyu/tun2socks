@@ -8,6 +8,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/v2/common/pool"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
@@ -33,6 +34,8 @@ func handleUDPConn(uc adapter.UDPConn) {
 		DstIP:   net.IP(id.LocalAddress.AsSlice()),
 		DstPort: id.LocalPort,
 	}
+
+	dns.ProcessMetadata(metadata)
 
 	pc, err := proxy.DialUDP(metadata)
 	if err != nil {
@@ -113,7 +116,10 @@ func (pc *symmetricNATPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
 	for {
 		n, from, err := pc.PacketConn.ReadFrom(p)
 
-		if from != nil && from.String() != pc.dst {
+		// If pc.dst is not an IP address, it is a hostname. In that case, we
+		// do not know the source IP which packets should originate from and
+		// cannot drop them accordingly.
+		if from != nil && from.String() != pc.dst && net.ParseIP(pc.dst) != nil {
 			log.Warnf("[UDP] symmetric NAT %s->%s: drop packet from %s", pc.src, pc.dst, from)
 			continue
 		}
