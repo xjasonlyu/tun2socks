@@ -11,10 +11,12 @@ on:
   pull_request:
 
 jobs:
-  lint:
+  linter:
+    name: Linter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup Go
         uses: actions/setup-go@v5
