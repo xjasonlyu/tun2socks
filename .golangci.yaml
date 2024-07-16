@@ -19,5 +19,3 @@ linters-settings:
       - standard
       - default
       - prefix(github.com/xjasonlyu/tun2socks)
-  staticcheck:
-    go: '1.22'
