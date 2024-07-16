@@ -55,13 +55,13 @@ jobs:
         with:
           version: latest
 
-      - name: Build image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: Dockerfile.test
-          platforms: linux/amd64
-          tags: tun2socks:test
+#      - name: Build image
+#        uses: docker/build-push-action@v6
+#        with:
+#          context: .
+#          file: Dockerfile.test
+#          platforms: linux/amd64
+#          tags: tun2socks:test
 
       - name: Set up env
         env:
