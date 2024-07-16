@@ -3,7 +3,6 @@ package core
 import (
 	"net"
 
-	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv6"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
@@ -55,7 +54,7 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 	})
 
 	// Generate unique NIC id.
-	nicID := tcpip.NICID(s.UniqueID())
+	nicID := s.NextNICID()
 
 	opts = append(opts,
 		// Important: We must initiate transport protocol handlers

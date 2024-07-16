@@ -40,8 +40,9 @@ func (f *FD) Name() string {
 	return strconv.Itoa(f.fd)
 }
 
-func (f *FD) Close() error {
-	return unix.Close(f.fd)
+func (f *FD) Close() {
+	defer f.LinkEndpoint.Close()
+	_ = unix.Close(f.fd)
 }
 
 var _ device.Device = (*FD)(nil)

@@ -82,14 +82,14 @@ func start() error {
 func stop() (err error) {
 	_engineMu.Lock()
 	if _defaultDevice != nil {
-		err = _defaultDevice.Close()
+		_defaultDevice.Close()
 	}
 	if _defaultStack != nil {
 		_defaultStack.Close()
 		_defaultStack.Wait()
 	}
 	_engineMu.Unlock()
-	return err
+	return nil
 }
 
 func execCommand(cmd string) error {
