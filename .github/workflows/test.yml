@@ -44,7 +44,6 @@ jobs:
     name: Docker Test
     runs-on: ubuntu-latest
     steps:
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -60,13 +59,43 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: Dockerfile.test
           platforms: linux/amd64
           tags: tun2socks:test
 
-      - name: Run tun2socks
+      - name: Set up env
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          CONTAINER: t2s
+          DNS: 1.1.1.1
+          TUN: tun0
+          ADDR: 198.18.0.1/15
+          PROXY: direct://
+          IFACE: eth0
         run: |
-          docker run --rm \
-            -v $(pwd):/resume \
-            --workdir /resume \
-            ghcr.io/ghcr.io/typst/typst:latest \
-            sh -euc "typst --version && typst compile --font-path ./fonts resume.typ"
+          docker run --rm -d --privileged \
+            -v $PWD:/src \
+            --dns $DNS \
+            --name $CONTAINER golang:bullseye \
+            bash -c \
+            "set -x;
+          cd /src;
+          apt update && apt install -y iputils-ping net-tools iptables \
+            iproute2 netcat curl dnsutils iperf3 tcpdump git make gcc;
+          make tun2socks && mv /src/build/tun2socks /usr/bin/tun2socks;
+          ip tuntap add mode tun dev $TUN;
+          ip addr add $ADDR dev $TUN;
+          ip link set dev $TUN up;
+          sysctl net.ipv4.conf.all.rp_filter=0;
+          sysctl net.ipv4.conf.default.rp_filter=0;
+          sysctl net.ipv4.conf.eth0.rp_filter=0;
+          sysctl net.ipv4.conf.$TUN.rp_filter=0;
+          ip route add 0.0.0.0/1 dev $TUN
+          ip route add 128.0.0.0/1 dev $TUN
+          exec tun2socks --device $TUN --proxy $PROXY --interface $IFACE"
+
+      - name: Run tests
+        env:
+          CONTAINER: t2s
+        run: |
+          docker exec -it $CONTAINER bash -c "curl -v 223.5.5.5"
