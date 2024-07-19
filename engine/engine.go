@@ -12,13 +12,17 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
+	"github.com/xjasonlyu/tun2socks/v2/component/fakeip"
+	"github.com/xjasonlyu/tun2socks/v2/component/trie"
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/engine/mirror"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel"
 )
@@ -164,6 +168,35 @@ func restAPI(k *Key) error {
 	return nil
 }
 
+func fakeDNS(k *Key, proxy proxy.Proxy) (err error) {
+	if !k.FakeDNS {
+		return
+	}
+
+	if proxy.Proto() != proto.Socks5 && proxy.Proto() != proto.HTTP && proxy.Proto() != proto.Shadowsocks &&
+		proxy.Proto() != proto.Socks4 {
+		return errors.New("remote DNS not supported with this proxy protocol")
+	}
+
+	_, ipnet, err := net.ParseCIDR(k.FakeDNSNetIPv4)
+	if err != nil {
+		return err
+	}
+
+	pool, err := fakeip.New(fakeip.Options{
+		IPNet: ipnet,
+		Size:  1000,
+		Host:  trie.New(),
+	})
+
+	dns.EnableFakeDNS()
+
+	dns.ReCreateServer(k.FakeDNSListenAddress, pool)
+
+	log.Infof("[DNS] Remote DNS enabled")
+	return
+}
+
 func netstack(k *Key) (err error) {
 	if k.Proxy == "" {
 		return errors.New("empty proxy")
@@ -238,5 +271,11 @@ func netstack(k *Key) (err error) {
 		_defaultDevice.Type(), _defaultDevice.Name(),
 		_defaultProxy.Proto(), _defaultProxy.Addr(),
 	)
+
+	err = fakeDNS(k, _defaultProxy)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
