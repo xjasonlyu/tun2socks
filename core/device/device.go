@@ -9,9 +9,6 @@ import (
 type Device interface {
 	stack.LinkEndpoint
 
-	// Close stops and closes the device.
-	Close() error
-
 	// Name returns the current name of the device.
 	Name() string
 

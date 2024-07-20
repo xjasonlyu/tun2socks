@@ -1,4 +1,4 @@
-//go:build !(linux && amd64) && !(linux && arm64)
+//go:build !linux
 
 package tun
 
@@ -89,7 +89,7 @@ func (t *TUN) Name() string {
 	return name
 }
 
-func (t *TUN) Close() error {
+func (t *TUN) Close() {
 	defer t.Endpoint.Close()
-	return t.nt.Close()
+	_ = t.nt.Close()
 }

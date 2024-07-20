@@ -1,4 +1,4 @@
-//go:build (linux && amd64) || (linux && arm64)
+//go:build linux
 
 package tun
 
@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"golang.org/x/sys/unix"
+	"gvisor.dev/gvisor/pkg/rawfile"
 	"gvisor.dev/gvisor/pkg/tcpip/link/fdbased"
-	"gvisor.dev/gvisor/pkg/tcpip/link/rawfile"
 	"gvisor.dev/gvisor/pkg/tcpip/link/tun"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
@@ -76,8 +76,9 @@ func (t *TUN) Name() string {
 	return t.name
 }
 
-func (t *TUN) Close() error {
-	return unix.Close(t.fd)
+func (t *TUN) Close() {
+	defer t.LinkEndpoint.Close()
+	_ = unix.Close(t.fd)
 }
 
 func setMTU(name string, n uint32) error {
