@@ -189,7 +189,7 @@ func netstack(k *Key) (err error) {
 		}
 	}()
 
-	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
+	if _defaultProxy, err = proxy.ParseFromURL(k.Proxy); err != nil {
 		return
 	}
 	proxy.DefaultProxy = _defaultProxy

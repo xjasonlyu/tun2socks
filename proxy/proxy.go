@@ -17,10 +17,19 @@ const (
 var DefaultProxy Proxy = nil
 
 type Proxy interface {
+	// Address returns the address of the proxy.
 	Address() string
+
+	// Protocol returns the protocol of the proxy.
 	Protocol() string
+
+	// String returns the string representation of the proxy.
 	String() string
+
+	// DialContext is used to dial TCP networks with context.
 	DialContext(context.Context, *M.Metadata) (net.Conn, error)
+
+	// DialUDP is used to to dial/listen UDP networks.
 	DialUDP(*M.Metadata) (net.PacketConn, error)
 }
 

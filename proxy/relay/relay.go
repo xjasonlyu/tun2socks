@@ -20,14 +20,15 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/base"
 )
 
 var _ proxy.Proxy = (*Relay)(nil)
 
-const Protocol = "relay"
+const protocol = "relay"
 
 type Relay struct {
-	*internal.Base
+	*base.Base
 
 	user string
 	pass string
@@ -37,7 +38,7 @@ type Relay struct {
 
 func New(addr, user, pass string, noDelay bool) (*Relay, error) {
 	return &Relay{
-		Base:    internal.New(Protocol, addr),
+		Base:    base.New(addr, protocol),
 		user:    user,
 		pass:    pass,
 		noDelay: noDelay,
@@ -268,5 +269,5 @@ func serializeRelayAddr(m *M.Metadata) *relay.AddrFeature {
 }
 
 func init() {
-	proxy.RegisterProtocol(Protocol, Parse)
+	proxy.RegisterProtocol(protocol, Parse)
 }

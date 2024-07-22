@@ -1,4 +1,4 @@
-package internal
+package base
 
 import (
 	"context"
@@ -13,13 +13,13 @@ import (
 var _ proxy.Proxy = (*Base)(nil)
 
 type Base struct {
-	protocol, address string
+	address, protocol string
 }
 
-func New(protocol, address string) *Base {
+func New(address, protocol string) *Base {
 	return &Base{
-		protocol: protocol,
 		address:  address,
+		protocol: protocol,
 	}
 }
 

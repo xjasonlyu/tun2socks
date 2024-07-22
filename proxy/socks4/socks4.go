@@ -10,22 +10,23 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/base"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks4"
 )
 
 var _ proxy.Proxy = (*Socks4)(nil)
 
-const Protocol = "socks4"
+const protocol = "socks4"
 
 type Socks4 struct {
-	*internal.Base
+	*base.Base
 
 	userID string
 }
 
 func New(addr, userID string) (*Socks4, error) {
 	return &Socks4{
-		Base:   internal.New(Protocol, addr),
+		Base:   base.New(addr, protocol),
 		userID: userID,
 	}, nil
 }
@@ -51,5 +52,5 @@ func (ss *Socks4) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 }
 
 func init() {
-	proxy.RegisterProtocol(Protocol, Parse)
+	proxy.RegisterProtocol(protocol, Parse)
 }

@@ -9,16 +9,16 @@ import (
 
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/base"
 )
 
 var _ proxy.Proxy = (*Reject)(nil)
 
-const Protocol = "reject"
+const protocol = "reject"
 
-type Reject struct{ *internal.Base }
+type Reject struct{ *base.Base }
 
-func New() *Reject { return &Reject{internal.New(Protocol, "")} }
+func New() *Reject { return &Reject{base.New("", protocol)} }
 
 func Parse(*url.URL) (proxy.Proxy, error) { return New(), nil }
 
@@ -48,5 +48,5 @@ func (npc *nopPacketConn) SetReadDeadline(time.Time) error                 { ret
 func (npc *nopPacketConn) SetWriteDeadline(time.Time) error                { return nil }
 
 func init() {
-	proxy.RegisterProtocol(Protocol, Parse)
+	proxy.RegisterProtocol(protocol, Parse)
 }

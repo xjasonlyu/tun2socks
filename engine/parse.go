@@ -9,7 +9,6 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
-	"github.com/xjasonlyu/tun2socks/v2/proxy"
 )
 
 func parseRestAPI(s string) (*url.URL, error) {
@@ -63,10 +62,6 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 
 func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
 	return fdbased.Open(u.Host, mtu, 0)
-}
-
-func parseProxy(s string) (proxy.Proxy, error) {
-	return proxy.ParseFromURL(s)
 }
 
 func parseMulticastGroups(s string) (multicastGroups []net.IP, _ error) {

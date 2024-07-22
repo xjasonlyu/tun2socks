@@ -13,6 +13,7 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/base"
 	"github.com/xjasonlyu/tun2socks/v2/transport/shadowsocks/core"
 	obfs "github.com/xjasonlyu/tun2socks/v2/transport/simple-obfs"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
@@ -20,10 +21,10 @@ import (
 
 var _ proxy.Proxy = (*Shadowsocks)(nil)
 
-const Protocol = "ss"
+const protocol = "ss"
 
 type Shadowsocks struct {
-	*internal.Base
+	*base.Base
 
 	cipher core.Cipher
 
@@ -38,7 +39,7 @@ func New(addr, method, password, obfsMode, obfsHost string) (*Shadowsocks, error
 	}
 
 	return &Shadowsocks{
-		Base:     internal.New(Protocol, addr),
+		Base:     base.New(addr, protocol),
 		cipher:   cipher,
 		obfsMode: obfsMode,
 		obfsHost: obfsHost,
@@ -166,5 +167,5 @@ func (pc *ssPacketConn) ReadFrom(b []byte) (int, net.Addr, error) {
 }
 
 func init() {
-	proxy.RegisterProtocol(Protocol, Parse)
+	proxy.RegisterProtocol(protocol, Parse)
 }

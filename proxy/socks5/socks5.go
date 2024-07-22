@@ -12,15 +12,16 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/base"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 )
 
 var _ proxy.Proxy = (*Socks5)(nil)
 
-const Protocol = "socks5"
+const protocol = "socks5"
 
 type Socks5 struct {
-	*internal.Base
+	*base.Base
 
 	user string
 	pass string
@@ -31,7 +32,7 @@ type Socks5 struct {
 
 func New(addr, user, pass string) (*Socks5, error) {
 	return &Socks5{
-		Base: internal.New(Protocol, addr),
+		Base: base.New(addr, protocol),
 		user: user,
 		pass: pass,
 		unix: len(addr) > 0 && addr[0] == '/',
@@ -198,5 +199,5 @@ func (pc *socksPacketConn) Close() error {
 }
 
 func init() {
-	proxy.RegisterProtocol(Protocol, Parse)
+	proxy.RegisterProtocol(protocol, Parse)
 }

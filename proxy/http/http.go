@@ -15,14 +15,15 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/base"
 )
 
 var _ proxy.Proxy = (*HTTP)(nil)
 
-const Protocol = "http"
+const protocol = "http"
 
 type HTTP struct {
-	*internal.Base
+	*base.Base
 
 	user string
 	pass string
@@ -30,7 +31,7 @@ type HTTP struct {
 
 func New(addr, user, pass string) (*HTTP, error) {
 	return &HTTP{
-		Base: internal.New(Protocol, addr),
+		Base: base.New(addr, protocol),
 		user: user,
 		pass: pass,
 	}, nil
@@ -108,5 +109,5 @@ func basicAuth(username, password string) string {
 }
 
 func init() {
-	proxy.RegisterProtocol(Protocol, Parse)
+	proxy.RegisterProtocol(protocol, Parse)
 }

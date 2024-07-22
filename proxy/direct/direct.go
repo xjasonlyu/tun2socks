@@ -9,15 +9,16 @@ import (
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/base"
 )
 
 var _ proxy.Proxy = (*Direct)(nil)
 
-const Protocol = "direct"
+const protocol = "direct"
 
-type Direct struct{ *internal.Base }
+type Direct struct{ *base.Base }
 
-func New() *Direct { return &Direct{internal.New(Protocol, "")} }
+func New() *Direct { return &Direct{base.New("", protocol)} }
 
 func Parse(*url.URL) (proxy.Proxy, error) { return New(), nil }
 
@@ -55,5 +56,5 @@ func (pc *directPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 }
 
 func init() {
-	proxy.RegisterProtocol(Protocol, Parse)
+	proxy.RegisterProtocol(protocol, Parse)
 }
