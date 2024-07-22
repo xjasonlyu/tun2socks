@@ -210,7 +210,6 @@ func version(w http.ResponseWriter, r *http.Request) {
 	render.JSON(w, r, render.M{
 		"version": V.Version,
 		"commit":  V.GitCommit,
-		"debug":   V.Debug(),
 		"modules": V.Info(),
 	})
 }
