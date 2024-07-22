@@ -21,12 +21,12 @@
 go.work
 go.work.sum
 
+# Build directory
+build/
+
 # IDE
 .idea/
 .vscode/
-
-# Build directory
-build/
 
 # Misc
 .DS_Store
