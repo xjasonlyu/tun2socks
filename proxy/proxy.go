@@ -7,44 +7,36 @@ import (
 	"time"
 
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )
 
 const (
-	tcpConnectTimeout = 5 * time.Second
+	TCPConnectTimeout = 5 * time.Second
 )
 
-var _defaultDialer Dialer = &Base{}
+// DefaultProxy is the default [Proxy] and is used by [Dial], [DialContext], and [DialUDP].
+var DefaultProxy Proxy = nil
 
-type Dialer interface {
+type Proxy interface {
+	Address() string
+	Protocol() string
+	String() string
 	DialContext(context.Context, *M.Metadata) (net.Conn, error)
 	DialUDP(*M.Metadata) (net.PacketConn, error)
 }
 
-type Proxy interface {
-	Dialer
-	Addr() string
-	Proto() proto.Proto
-}
-
-// SetDialer sets default Dialer.
-func SetDialer(d Dialer) {
-	_defaultDialer = d
-}
-
-// Dial uses default Dialer to dial TCP.
+// Dial uses the DefaultProxy to dial TCP.
 func Dial(metadata *M.Metadata) (net.Conn, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), TCPConnectTimeout)
 	defer cancel()
-	return _defaultDialer.DialContext(ctx, metadata)
+	return DialContext(ctx, metadata)
 }
 
-// DialContext uses default Dialer to dial TCP with context.
+// DialContext uses the DefaultProxy to dial TCP with context.
 func DialContext(ctx context.Context, metadata *M.Metadata) (net.Conn, error) {
-	return _defaultDialer.DialContext(ctx, metadata)
+	return DefaultProxy.DialContext(ctx, metadata)
 }
 
-// DialUDP uses default Dialer to dial UDP.
+// DialUDP uses the DefaultProxy to dial UDP.
 func DialUDP(metadata *M.Metadata) (net.PacketConn, error) {
-	return _defaultDialer.DialUDP(metadata)
+	return DefaultProxy.DialUDP(metadata)
 }

@@ -192,7 +192,7 @@ func netstack(k *Key) (err error) {
 	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
 		return
 	}
-	proxy.SetDialer(_defaultProxy)
+	proxy.DefaultProxy = _defaultProxy
 
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
 		return
@@ -236,7 +236,7 @@ func netstack(k *Key) (err error) {
 	log.Infof(
 		"[STACK] %s://%s <-> %s://%s",
 		_defaultDevice.Type(), _defaultDevice.Name(),
-		_defaultProxy.Proto(), _defaultProxy.Addr(),
+		_defaultProxy.Protocol(), _defaultProxy.Address(),
 	)
 	return nil
 }

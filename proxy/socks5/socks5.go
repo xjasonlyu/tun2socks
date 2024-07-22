@@ -1,4 +1,4 @@
-package proxy
+package socks5
 
 import (
 	"context"
@@ -6,17 +6,21 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 )
 
-var _ Proxy = (*Socks5)(nil)
+var _ proxy.Proxy = (*Socks5)(nil)
+
+const Protocol = "socks5"
 
 type Socks5 struct {
-	*Base
+	*internal.Base
 
 	user string
 	pass string
@@ -25,16 +29,24 @@ type Socks5 struct {
 	unix bool
 }
 
-func NewSocks5(addr, user, pass string) (*Socks5, error) {
+func New(addr, user, pass string) (*Socks5, error) {
 	return &Socks5{
-		Base: &Base{
-			addr:  addr,
-			proto: proto.Socks5,
-		},
+		Base: internal.New(Protocol, addr),
 		user: user,
 		pass: pass,
 		unix: len(addr) > 0 && addr[0] == '/',
 	}, nil
+}
+
+func Parse(proxyURL *url.URL) (proxy.Proxy, error) {
+	address, username := proxyURL.Host, proxyURL.User.Username()
+	password, _ := proxyURL.User.Password()
+
+	// Socks5 over UDS
+	if address == "" {
+		address = proxyURL.Path
+	}
+	return New(address, username, password)
 }
 
 func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Conn, err error) {
@@ -43,14 +55,14 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 		network = "unix"
 	}
 
-	c, err = dialer.DialContext(ctx, network, ss.Addr())
+	c, err = dialer.DialContext(ctx, network, ss.Address())
 	if err != nil {
-		return nil, fmt.Errorf("connect to %s: %w", ss.Addr(), err)
+		return nil, fmt.Errorf("connect to %s: %w", ss.Address(), err)
 	}
-	setKeepAlive(c)
+	internal.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		safeConnClose(c, err)
+		internal.SafeConnClose(c, err)
 	}(c)
 
 	var user *socks5.User
@@ -61,7 +73,7 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 		}
 	}
 
-	_, err = socks5.ClientHandshake(c, serializeSocksAddr(metadata), socks5.CmdConnect, user)
+	_, err = socks5.ClientHandshake(c, internal.SerializeSocksAddr(metadata), socks5.CmdConnect, user)
 	return
 }
 
@@ -70,15 +82,15 @@ func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 		return nil, fmt.Errorf("%w when unix domain socket is enabled", errors.ErrUnsupported)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), proxy.TCPConnectTimeout)
 	defer cancel()
 
-	c, err := dialer.DialContext(ctx, "tcp", ss.Addr())
+	c, err := dialer.DialContext(ctx, "tcp", ss.Address())
 	if err != nil {
-		err = fmt.Errorf("connect to %s: %w", ss.Addr(), err)
+		err = fmt.Errorf("connect to %s: %w", ss.Address(), err)
 		return
 	}
-	setKeepAlive(c)
+	internal.SetKeepAlive(c)
 
 	defer func() {
 		if err != nil && c != nil {
@@ -128,9 +140,9 @@ func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 	}
 
 	if bindAddr.IP.IsUnspecified() { /* e.g. "0.0.0.0" or "::" */
-		udpAddr, err := net.ResolveUDPAddr("udp", ss.Addr())
+		udpAddr, err := net.ResolveUDPAddr("udp", ss.Address())
 		if err != nil {
-			return nil, fmt.Errorf("resolve udp address %s: %w", ss.Addr(), err)
+			return nil, fmt.Errorf("resolve udp address %s: %w", ss.Address(), err)
 		}
 		bindAddr.IP = udpAddr.IP
 	}
@@ -148,7 +160,7 @@ type socksPacketConn struct {
 func (pc *socksPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	var packet []byte
 	if ma, ok := addr.(*M.Addr); ok {
-		packet, err = socks5.EncodeUDPPacket(serializeSocksAddr(ma.Metadata()), b)
+		packet, err = socks5.EncodeUDPPacket(internal.SerializeSocksAddr(ma.Metadata()), b)
 	} else {
 		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddr(addr), b)
 	}
@@ -185,6 +197,6 @@ func (pc *socksPacketConn) Close() error {
 	return pc.PacketConn.Close()
 }
 
-func serializeSocksAddr(m *M.Metadata) socks5.Addr {
-	return socks5.SerializeAddr("", m.DstIP, m.DstPort)
+func init() {
+	proxy.RegisterProtocol(Protocol, Parse)
 }

@@ -1,19 +1,15 @@
 package engine
 
 import (
-	"encoding/base64"
 	"fmt"
 	"net"
 	"net/url"
 	"strings"
 
-	"github.com/gorilla/schema"
-
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )
 
 func parseRestAPI(s string) (*url.URL, error) {
@@ -70,112 +66,7 @@ func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
-	if !strings.Contains(s, "://") {
-		s = fmt.Sprintf("%s://%s", proto.Socks5 /* default protocol */, s)
-	}
-
-	u, err := url.Parse(s)
-	if err != nil {
-		return nil, err
-	}
-
-	protocol := strings.ToLower(u.Scheme)
-
-	switch protocol {
-	case proto.Direct.String():
-		return proxy.NewDirect(), nil
-	case proto.Reject.String():
-		return proxy.NewReject(), nil
-	case proto.HTTP.String():
-		return parseHTTP(u)
-	case proto.Socks4.String():
-		return parseSocks4(u)
-	case proto.Socks5.String():
-		return parseSocks5(u)
-	case proto.Shadowsocks.String():
-		return parseShadowsocks(u)
-	case proto.Relay.String():
-		return parseRelay(u)
-	default:
-		return nil, fmt.Errorf("unsupported protocol: %s", protocol)
-	}
-}
-
-func parseHTTP(u *url.URL) (proxy.Proxy, error) {
-	address, username := u.Host, u.User.Username()
-	password, _ := u.User.Password()
-	return proxy.NewHTTP(address, username, password)
-}
-
-func parseSocks4(u *url.URL) (proxy.Proxy, error) {
-	address, userID := u.Host, u.User.Username()
-	return proxy.NewSocks4(address, userID)
-}
-
-func parseSocks5(u *url.URL) (proxy.Proxy, error) {
-	address, username := u.Host, u.User.Username()
-	password, _ := u.User.Password()
-
-	// Socks5 over UDS
-	if address == "" {
-		address = u.Path
-	}
-	return proxy.NewSocks5(address, username, password)
-}
-
-func parseShadowsocks(u *url.URL) (proxy.Proxy, error) {
-	var (
-		address            = u.Host
-		method, password   string
-		obfsMode, obfsHost string
-	)
-
-	if ss := u.User.String(); ss == "" {
-		method = "dummy" // none cipher mode
-	} else if pass, set := u.User.Password(); set {
-		method = u.User.Username()
-		password = pass
-	} else {
-		data, _ := base64.RawURLEncoding.DecodeString(ss)
-		userInfo := strings.SplitN(string(data), ":", 2)
-		if len(userInfo) == 2 {
-			method = userInfo[0]
-			password = userInfo[1]
-		}
-	}
-
-	rawQuery, _ := url.QueryUnescape(u.RawQuery)
-	for _, s := range strings.Split(rawQuery, ";") {
-		data := strings.SplitN(s, "=", 2)
-		if len(data) != 2 {
-			continue
-		}
-		key := data[0]
-		value := data[1]
-
-		switch key {
-		case "obfs":
-			obfsMode = value
-		case "obfs-host":
-			obfsHost = value
-		}
-	}
-
-	return proxy.NewShadowsocks(address, method, password, obfsMode, obfsHost)
-}
-
-func parseRelay(u *url.URL) (proxy.Proxy, error) {
-	address, username := u.Host, u.User.Username()
-	password, _ := u.User.Password()
-
-	opts := struct {
-		NoDelay bool
-	}{}
-	if err := schema.NewDecoder().Decode(&opts, u.Query()); err != nil {
-		return nil, err
-	}
-
-	return proxy.NewRelay(address, username, password, opts.NoDelay)
+	return proxy.ParseFromURL(s)
 }
 
 func parseMulticastGroups(s string) (multicastGroups []net.IP, _ error) {

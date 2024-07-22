@@ -1,36 +1,30 @@
-package proxy
+package reject
 
 import (
 	"context"
 	"io"
 	"net"
+	"net/url"
 	"time"
 
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
 )
 
-var _ Proxy = (*Reject)(nil)
+var _ proxy.Proxy = (*Reject)(nil)
 
-type Reject struct {
-	*Base
-}
+const Protocol = "reject"
 
-func NewReject() *Reject {
-	return &Reject{
-		Base: &Base{
-			proto: proto.Reject,
-		},
-	}
-}
+type Reject struct{ *internal.Base }
 
-func (r *Reject) DialContext(context.Context, *M.Metadata) (net.Conn, error) {
-	return &nopConn{}, nil
-}
+func New() *Reject { return &Reject{internal.New(Protocol, "")} }
 
-func (r *Reject) DialUDP(*M.Metadata) (net.PacketConn, error) {
-	return &nopPacketConn{}, nil
-}
+func Parse(*url.URL) (proxy.Proxy, error) { return New(), nil }
+
+func (r *Reject) DialContext(context.Context, *M.Metadata) (net.Conn, error) { return &nopConn{}, nil }
+
+func (r *Reject) DialUDP(*M.Metadata) (net.PacketConn, error) { return &nopPacketConn{}, nil }
 
 type nopConn struct{}
 
@@ -52,3 +46,7 @@ func (npc *nopPacketConn) LocalAddr() net.Addr                             { ret
 func (npc *nopPacketConn) SetDeadline(time.Time) error                     { return nil }
 func (npc *nopPacketConn) SetReadDeadline(time.Time) error                 { return nil }
 func (npc *nopPacketConn) SetWriteDeadline(time.Time) error                { return nil }
+
+func init() {
+	proxy.RegisterProtocol(Protocol, Parse)
+}

@@ -1,4 +1,4 @@
-package proxy
+package http
 
 import (
 	"bufio"
@@ -13,36 +13,44 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal"
 )
 
+var _ proxy.Proxy = (*HTTP)(nil)
+
+const Protocol = "http"
+
 type HTTP struct {
-	*Base
+	*internal.Base
 
 	user string
 	pass string
 }
 
-func NewHTTP(addr, user, pass string) (*HTTP, error) {
+func New(addr, user, pass string) (*HTTP, error) {
 	return &HTTP{
-		Base: &Base{
-			addr:  addr,
-			proto: proto.HTTP,
-		},
+		Base: internal.New(Protocol, addr),
 		user: user,
 		pass: pass,
 	}, nil
 }
 
+func Parse(proxyURL *url.URL) (proxy.Proxy, error) {
+	address, username := proxyURL.Host, proxyURL.User.Username()
+	password, _ := proxyURL.User.Password()
+	return New(address, username, password)
+}
+
 func (h *HTTP) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Conn, err error) {
-	c, err = dialer.DialContext(ctx, "tcp", h.Addr())
+	c, err = dialer.DialContext(ctx, "tcp", h.Address())
 	if err != nil {
-		return nil, fmt.Errorf("connect to %s: %w", h.Addr(), err)
+		return nil, fmt.Errorf("connect to %s: %w", h.Address(), err)
 	}
-	setKeepAlive(c)
+	internal.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		safeConnClose(c, err)
+		internal.SafeConnClose(c, err)
 	}(c)
 
 	err = h.shakeHand(metadata, c)
@@ -97,4 +105,8 @@ func (h *HTTP) shakeHand(metadata *M.Metadata, rw io.ReadWriter) error {
 func basicAuth(username, password string) string {
 	auth := username + ":" + password
 	return base64.StdEncoding.EncodeToString([]byte(auth))
+}
+
+func init() {
+	proxy.RegisterProtocol(Protocol, Parse)
 }
