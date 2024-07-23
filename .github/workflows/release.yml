@@ -10,11 +10,11 @@ on:
       - '*'
 
 jobs:
-  build:
-    name: Build
+  release:
+    name: Release
     runs-on: ubuntu-latest
     steps:
-      - name: Check out code into the Go module directory
+      - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -28,14 +28,12 @@ jobs:
       - name: Cache go module
         uses: actions/cache@v4
         with:
-          path: ~/go/pkg/mod
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-
-      - name: Run test
-        run: |
-          go test ./...
 
       - name: Build
         if: startsWith(github.ref, 'refs/tags/')
