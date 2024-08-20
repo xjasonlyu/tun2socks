@@ -19,15 +19,16 @@
 ## Features
 
 - Proxy Everything: Handle all network traffic of any internet programs sent by the device through a proxy.
-- Proxy Protocols: HTTP/Socks4/Socks5/Shadowsocks/Relay with authentication support for remote connections.
-- Run Everywhere: Linux/macOS/Windows/FreeBSD/OpenBSD multi-platform support with specific optimizations.
+- Proxy Protocols: HTTP/Socks4/Socks5/Shadowsocks with authentication support for remote connections.
+- Run Everywhere: Linux/macOS/Windows/FreeBSD/OpenBSD multi-platform support with specific optimization.
 - Gateway Mode: Act as a Layer 3 gateway to handle network traffic from other devices on the same network.
 - Full IPv6 Support: All functions work in IPv6, tunnel IPv4 connections through IPv6 proxy and vice versa.
 - Network Stack: Powered by the user-space TCP/IP stack from Google container application kernel **[gVisor](https://github.com/google/gvisor)**.
 
 ## Benchmarks
 
-For all scenarios of usage, tun2socks performs best. See [benchmarks](https://github.com/xjasonlyu/tun2socks/wiki/Benchmarks) for more details.
+For all scenarios of usage, tun2socks performs best.
+See [benchmarks](https://github.com/xjasonlyu/tun2socks/wiki/Benchmarks) for more details.
 
 ![benchmark](docs/benchmark.png)
 
