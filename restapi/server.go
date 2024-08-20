@@ -14,7 +14,6 @@ import (
 	"github.com/gorilla/websocket"
 
 	V "github.com/xjasonlyu/tun2socks/v2/internal/version"
-	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
@@ -25,11 +24,11 @@ var (
 		},
 	}
 
-	_mountPoints = make(map[string]http.Handler)
+	_endpoints = make(map[string]http.Handler)
 )
 
-func registerMountPoint(pattern string, handler http.Handler) {
-	_mountPoints[pattern] = handler
+func registerEndpoint(pattern string, handler http.Handler) {
+	_endpoints[pattern] = handler
 }
 
 func Start(addr, token string) error {
@@ -46,11 +45,10 @@ func Start(addr, token string) error {
 	r.Group(func(r chi.Router) {
 		r.Use(authenticator(token))
 		r.Get("/", hello)
-		r.Get("/logs", getLogs)
 		r.Get("/traffic", traffic)
 		r.Get("/version", version)
 		// attach HTTP handlers
-		for pattern, handler := range _mountPoints {
+		for pattern, handler := range _endpoints {
 			r.Mount(pattern, handler)
 		}
 	})
@@ -100,61 +98,6 @@ func authenticator(token string) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		}
 		return http.HandlerFunc(fn)
-	}
-}
-
-func getLogs(w http.ResponseWriter, r *http.Request) {
-	lvl := r.URL.Query().Get("level")
-	if lvl == "" {
-		lvl = "info" /* default */
-	}
-
-	level, err := log.ParseLevel(lvl)
-	if err != nil {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, ErrBadRequest)
-		return
-	}
-
-	var wsConn *websocket.Conn
-	if websocket.IsWebSocketUpgrade(r) {
-		wsConn, err = _upgrader.Upgrade(w, r, nil)
-		if err != nil {
-			return
-		}
-	}
-
-	if wsConn == nil {
-		w.Header().Set("Content-Type", "application/json")
-		render.Status(r, http.StatusOK)
-	}
-
-	sub := log.Subscribe()
-	defer log.UnSubscribe(sub)
-
-	buf := &bytes.Buffer{}
-	for elm := range sub {
-		buf.Reset()
-
-		e := elm.(*log.Event)
-		if e.Level > level {
-			continue
-		}
-
-		if err = json.NewEncoder(buf).Encode(e); err != nil {
-			break
-		}
-
-		if wsConn == nil {
-			_, err = w.Write(buf.Bytes())
-			w.(http.Flusher).Flush()
-		} else {
-			err = wsConn.WriteMessage(websocket.TextMessage, buf.Bytes())
-		}
-
-		if err != nil {
-			break
-		}
 	}
 }
 

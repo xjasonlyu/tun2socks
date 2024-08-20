@@ -19,7 +19,7 @@ func SetStatsFunc(s func() tcpip.Stats) {
 }
 
 func init() {
-	registerMountPoint("/netstats", http.HandlerFunc(getNetStats))
+	registerEndpoint("/netstats", http.HandlerFunc(getNetStats))
 }
 
 func getNetStats(w http.ResponseWriter, r *http.Request) {
