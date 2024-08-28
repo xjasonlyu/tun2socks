@@ -156,7 +156,7 @@ func restAPI(k *Key) error {
 
 		go func() {
 			if err := restapi.Start(host, token); err != nil {
-				log.Warnf("[RESTAPI] failed to start: %v", err)
+				log.Errorf("[RESTAPI] failed to start: %v", err)
 			}
 		}()
 		log.Infof("[RESTAPI] serve at: %s", u)
@@ -175,7 +175,7 @@ func netstack(k *Key) (err error) {
 	if k.TUNPreUp != "" {
 		log.Infof("[TUN] pre-execute command: `%s`", k.TUNPreUp)
 		if preUpErr := execCommand(k.TUNPreUp); preUpErr != nil {
-			log.Warnf("[TUN] failed to pre-execute: %s: %v", k.TUNPreUp, preUpErr)
+			log.Errorf("[TUN] failed to pre-execute: %s: %v", k.TUNPreUp, preUpErr)
 		}
 	}
 
@@ -185,7 +185,7 @@ func netstack(k *Key) (err error) {
 		}
 		log.Infof("[TUN] post-execute command: `%s`", k.TUNPostUp)
 		if postUpErr := execCommand(k.TUNPostUp); postUpErr != nil {
-			log.Warnf("[TUN] failed to post-execute: %s: %v", k.TUNPostUp, postUpErr)
+			log.Errorf("[TUN] failed to post-execute: %s: %v", k.TUNPostUp, postUpErr)
 		}
 	}()
 
