@@ -10,9 +10,13 @@ import (
 // global Logger and SugaredLogger.
 var (
 	_globalMu sync.RWMutex
-	_globalL  = zap.Must(zap.NewProduction(pkgCallerSkip))
-	_globalS  = _globalL.Sugar()
+	_globalL  *Logger
+	_globalS  *SugaredLogger
 )
+
+func init() {
+	SetLogger(zap.Must(zap.NewProduction()))
+}
 
 func NewLeveled(l Level, options ...Option) (*Logger, error) {
 	switch l {
@@ -31,12 +35,11 @@ func NewLeveled(l Level, options ...Option) (*Logger, error) {
 
 // SetLogger sets the global Logger and SugaredLogger.
 func SetLogger(logger *Logger) {
-	// apply pkgCallerSkip to global loggers.
-	logger = logger.WithOptions(pkgCallerSkip)
 	_globalMu.Lock()
-	_globalL = logger
-	_globalS = logger.Sugar()
-	_globalMu.Unlock()
+	defer _globalMu.Unlock()
+	// apply pkgCallerSkip to global loggers.
+	_globalL = logger.WithOptions(pkgCallerSkip)
+	_globalS = _globalL.Sugar()
 }
 
 func logf(lvl Level, template string, args ...any) {
