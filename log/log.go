@@ -40,6 +40,7 @@ func SetLogger(logger *Logger) {
 	// apply pkgCallerSkip to global loggers.
 	_globalL = logger.WithOptions(pkgCallerSkip)
 	_globalS = _globalL.Sugar()
+	_globalE.setLogger(_globalS)
 }
 
 func logf(lvl Level, template string, args ...any) {

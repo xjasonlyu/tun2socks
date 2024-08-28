@@ -1,7 +1,6 @@
 package log
 
 import (
-	"io"
 	"runtime"
 	"strings"
 	"time"
@@ -9,26 +8,22 @@ import (
 	glog "gvisor.dev/gvisor/pkg/log"
 )
 
+var _globalE = &emitter{}
+
 func init() {
-	EnableStackLog(true)
+	glog.SetTarget(_globalE)
 }
 
-func EnableStackLog(v bool) {
-	if v {
-		glog.SetTarget(&emitter{}) // built-in logger
-	} else {
-		glog.SetTarget(&glog.Writer{Next: io.Discard})
-	}
+type emitter struct {
+	logger *SugaredLogger
 }
 
-type emitter struct{}
-
-func (*emitter) level(level glog.Level) Level {
-	return 1 - Level(level)
+func (e *emitter) setLogger(logger *SugaredLogger) {
+	e.logger = logger.WithOptions(pkgCallerSkip)
 }
 
-func (*emitter) prefix(format string) string {
-	return "[STACK] " + format
+func (e *emitter) logf(level glog.Level, format string, args ...any) {
+	e.logger.Logf(1-Level(level), "[STACK] "+format, args...)
 }
 
 func (e *emitter) Emit(depth int, level glog.Level, _ time.Time, format string, args ...any) {
@@ -38,5 +33,5 @@ func (e *emitter) Emit(depth int, level glog.Level, _ time.Time, format string, 
 			return
 		}
 	}
-	logf(e.level(level), e.prefix(format), args...)
+	e.logf(level, format, args...)
 }
