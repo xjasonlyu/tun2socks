@@ -1,63 +1,71 @@
 package log
 
 import (
-	"io"
-	"os"
+	"fmt"
+	"sync"
 
-	"github.com/sirupsen/logrus"
-	"go.uber.org/atomic"
+	"go.uber.org/zap"
 )
 
-// _defaultLevel is package default logging level.
-var _defaultLevel = atomic.NewUint32(uint32(InfoLevel))
+// global Logger and SugaredLogger.
+var (
+	_globalMu sync.RWMutex
+	_globalL  *Logger
+	_globalS  *SugaredLogger
+)
 
 func init() {
-	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.DebugLevel)
+	SetLogger(zap.Must(zap.NewProduction()))
 }
 
-func SetOutput(out io.Writer) {
-	logrus.SetOutput(out)
-}
-
-func SetLevel(level Level) {
-	_defaultLevel.Store(uint32(level))
-}
-
-func Debugf(format string, args ...any) {
-	logf(DebugLevel, format, args...)
-}
-
-func Infof(format string, args ...any) {
-	logf(InfoLevel, format, args...)
-}
-
-func Warnf(format string, args ...any) {
-	logf(WarnLevel, format, args...)
-}
-
-func Errorf(format string, args ...any) {
-	logf(ErrorLevel, format, args...)
-}
-
-func Fatalf(format string, args ...any) {
-	logrus.Fatalf(format, args...)
-}
-
-func logf(level Level, format string, args ...any) {
-	event := newEvent(level, format, args...)
-	if uint32(event.Level) > _defaultLevel.Load() {
-		return
-	}
-
-	switch level {
+func NewLeveled(l Level, options ...Option) (*Logger, error) {
+	switch l {
+	case SilentLevel:
+		return zap.NewNop(), nil
 	case DebugLevel:
-		logrus.WithTime(event.Time).Debugln(event.Message)
-	case InfoLevel:
-		logrus.WithTime(event.Time).Infoln(event.Message)
-	case WarnLevel:
-		logrus.WithTime(event.Time).Warnln(event.Message)
-	case ErrorLevel:
-		logrus.WithTime(event.Time).Errorln(event.Message)
+		return zap.NewDevelopment(options...)
+	case InfoLevel, WarnLevel, ErrorLevel, DPanicLevel, PanicLevel, FatalLevel:
+		cfg := zap.NewProductionConfig()
+		cfg.Level.SetLevel(l)
+		return cfg.Build(options...)
+	default:
+		return nil, fmt.Errorf("invalid level: %s", l)
 	}
+}
+
+// SetLogger sets the global Logger and SugaredLogger.
+func SetLogger(logger *Logger) {
+	_globalMu.Lock()
+	defer _globalMu.Unlock()
+	// apply pkgCallerSkip to global loggers.
+	_globalL = logger.WithOptions(pkgCallerSkip)
+	_globalS = _globalL.Sugar()
+	_globalE.setLogger(_globalS)
+}
+
+func logf(lvl Level, template string, args ...any) {
+	_globalMu.RLock()
+	s := _globalS
+	_globalMu.RUnlock()
+	s.Logf(lvl, template, args...)
+}
+
+func Debugf(template string, args ...any) {
+	logf(DebugLevel, template, args...)
+}
+
+func Infof(template string, args ...any) {
+	logf(InfoLevel, template, args...)
+}
+
+func Warnf(template string, args ...any) {
+	logf(WarnLevel, template, args...)
+}
+
+func Errorf(template string, args ...any) {
+	logf(ErrorLevel, template, args...)
+}
+
+func Fatalf(template string, args ...any) {
+	logf(FatalLevel, template, args...)
 }

@@ -1,72 +1,31 @@
 package log
 
 import (
-	"encoding/json"
-	"fmt"
-	"strings"
+	"go.uber.org/zap/zapcore"
 )
 
-type Level uint32
+// Level is an alias for zapcore.Level.
+type Level = zapcore.Level
 
+// Levels are aliases for Level.
 const (
-	SilentLevel Level = iota
-	ErrorLevel
-	WarnLevel
-	InfoLevel
-	DebugLevel
+	DebugLevel   = zapcore.DebugLevel
+	InfoLevel    = zapcore.InfoLevel
+	WarnLevel    = zapcore.WarnLevel
+	ErrorLevel   = zapcore.ErrorLevel
+	DPanicLevel  = zapcore.DPanicLevel
+	PanicLevel   = zapcore.PanicLevel
+	FatalLevel   = zapcore.FatalLevel
+	InvalidLevel = zapcore.InvalidLevel
+	SilentLevel  = InvalidLevel + 1
 )
 
-// UnmarshalJSON deserialize Level with json
-func (level *Level) UnmarshalJSON(data []byte) error {
-	var lvl string
-	if err := json.Unmarshal(data, &lvl); err != nil {
-		return err
-	}
-
-	l, err := ParseLevel(lvl)
-	if err != nil {
-		return err
-	}
-
-	*level = l
-	return nil
-}
-
-// MarshalJSON serialize Level with json
-func (level Level) MarshalJSON() ([]byte, error) {
-	return json.Marshal(level.String())
-}
-
-func (level Level) String() string {
-	switch level {
-	case DebugLevel:
-		return "debug"
-	case InfoLevel:
-		return "info"
-	case WarnLevel:
-		return "warning"
-	case ErrorLevel:
-		return "error"
-	case SilentLevel:
-		return "silent"
-	default:
-		return fmt.Sprintf("not a valid level %d", level)
-	}
-}
-
-func ParseLevel(lvl string) (Level, error) {
-	switch strings.ToLower(lvl) {
-	case "silent":
+// ParseLevel is a thin wrapper for zapcore.ParseLevel.
+func ParseLevel(text string) (Level, error) {
+	switch text {
+	case "silent", "SILENT":
 		return SilentLevel, nil
-	case "error":
-		return ErrorLevel, nil
-	case "warning":
-		return WarnLevel, nil
-	case "info":
-		return InfoLevel, nil
-	case "debug":
-		return DebugLevel, nil
 	default:
-		return Level(0), fmt.Errorf("not a valid logrus Level: %q", lvl)
+		return zapcore.ParseLevel(text)
 	}
 }

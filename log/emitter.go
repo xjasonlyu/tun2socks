@@ -1,7 +1,6 @@
 package log
 
 import (
-	"io"
 	"runtime"
 	"strings"
 	"time"
@@ -9,26 +8,30 @@ import (
 	glog "gvisor.dev/gvisor/pkg/log"
 )
 
+var _globalE = &emitter{}
+
 func init() {
-	EnableStackLog(true)
+	glog.SetTarget(_globalE)
 }
 
-func EnableStackLog(v bool) {
-	if v {
-		glog.SetTarget(&emitter{}) // built-in logger
-	} else {
-		glog.SetTarget(&glog.Writer{Next: io.Discard})
-	}
+type emitter struct {
+	logger *SugaredLogger
 }
 
-type emitter struct{}
+func (e *emitter) setLogger(logger *SugaredLogger) {
+	e.logger = logger.WithOptions(pkgCallerSkip)
+}
 
-func (emitter) Emit(depth int, level glog.Level, _ time.Time, format string, args ...any) {
+func (e *emitter) logf(level glog.Level, format string, args ...any) {
+	e.logger.Logf(1-Level(level), "[STACK] "+format, args...)
+}
+
+func (e *emitter) Emit(depth int, level glog.Level, _ time.Time, format string, args ...any) {
 	if _, file, line, ok := runtime.Caller(depth + 1); ok {
-		// Ignore (*gonet.TCPConn).RemoteAddr() warning: `ep.GetRemoteAddress() failed`.
-		if line == 457 && strings.HasSuffix(file, "/pkg/tcpip/adapters/gonet/gonet.go") {
+		// Ignore: gvisor.dev/gvisor/pkg/tcpip/adapters/gonet/gonet.go:457
+		if line == 457 && strings.HasSuffix(file, "gonet/gonet.go") {
 			return
 		}
 	}
-	logf(Level(level)+2, "[STACK] "+format, args...)
+	e.logf(level, format, args...)
 }

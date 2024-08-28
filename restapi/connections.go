@@ -17,7 +17,7 @@ import (
 const defaultInterval = 1000
 
 func init() {
-	registerMountPoint("/connections", connectionRouter())
+	registerEndpoint("/connections", connectionRouter())
 }
 
 func connectionRouter() http.Handler {

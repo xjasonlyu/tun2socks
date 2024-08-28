@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	registerMountPoint("/debug/pprof/", pprofRouter())
+	registerEndpoint("/debug/pprof/", pprofRouter())
 }
 
 func pprofRouter() http.Handler {
