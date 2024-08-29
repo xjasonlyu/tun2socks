@@ -1,6 +1,7 @@
 package tunnel
 
 import (
+	"context"
 	"io"
 	"net"
 	"sync"
@@ -10,16 +11,10 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
-const (
-	// tcpWaitTimeout implements a TCP half-close timeout.
-	tcpWaitTimeout = 60 * time.Second
-)
-
-func handleTCPConn(originConn adapter.TCPConn) {
+func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 	defer originConn.Close()
 
 	id := originConn.ID()
@@ -31,21 +26,24 @@ func handleTCPConn(originConn adapter.TCPConn) {
 		DstPort: id.LocalPort,
 	}
 
-	remoteConn, err := proxy.Dial(metadata)
+	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
+	defer cancel()
+
+	remoteConn, err := t.Dialer().DialContext(ctx, metadata)
 	if err != nil {
 		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
 	metadata.MidIP, metadata.MidPort = parseAddr(remoteConn.LocalAddr())
 
-	remoteConn = statistic.DefaultTCPTracker(remoteConn, metadata)
+	remoteConn = statistic.NewTCPTracker(remoteConn, metadata, t.manager)
 	defer remoteConn.Close()
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	pipe(originConn, remoteConn)
 }
 
-// pipe copies copy data to & from provided net.Conn(s) bidirectionally.
+// pipe copies data to & from provided net.Conn(s) bidirectionally.
 func pipe(origin, remote net.Conn) {
 	wg := sync.WaitGroup{}
 	wg.Add(2)
