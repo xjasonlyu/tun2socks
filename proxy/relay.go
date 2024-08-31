@@ -243,7 +243,7 @@ func serializeRelayAddr(m *M.Metadata) *relay.AddrFeature {
 		Host: m.DstIP.String(),
 		Port: m.DstPort,
 	}
-	if m.DstIP.To4() != nil {
+	if m.DstIP.Is4() {
 		af.AType = relay.AddrIPv4
 	} else {
 		af.AType = relay.AddrIPv6

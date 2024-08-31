@@ -20,9 +20,9 @@ func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 	id := originConn.ID()
 	metadata := &M.Metadata{
 		Network: M.TCP,
-		SrcIP:   net.IP(id.RemoteAddress.AsSlice()),
+		SrcIP:   parseTCPIPAddress(id.RemoteAddress),
 		SrcPort: id.RemotePort,
-		DstIP:   net.IP(id.LocalAddress.AsSlice()),
+		DstIP:   parseTCPIPAddress(id.LocalAddress),
 		DstPort: id.LocalPort,
 	}
 
@@ -34,7 +34,7 @@ func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
-	metadata.MidIP, metadata.MidPort = parseAddr(remoteConn.LocalAddr())
+	metadata.MidIP, metadata.MidPort = parseNetAddr(remoteConn.LocalAddr())
 
 	remoteConn = statistic.NewTCPTracker(remoteConn, metadata, t.manager)
 	defer remoteConn.Close()

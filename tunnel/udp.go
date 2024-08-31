@@ -20,9 +20,9 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 	id := uc.ID()
 	metadata := &M.Metadata{
 		Network: M.UDP,
-		SrcIP:   net.IP(id.RemoteAddress.AsSlice()),
+		SrcIP:   parseTCPIPAddress(id.RemoteAddress),
 		SrcPort: id.RemotePort,
-		DstIP:   net.IP(id.LocalAddress.AsSlice()),
+		DstIP:   parseTCPIPAddress(id.LocalAddress),
 		DstPort: id.LocalPort,
 	}
 
@@ -31,7 +31,7 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 		log.Warnf("[UDP] dial %s: %v", metadata.DestinationAddress(), err)
 		return
 	}
-	metadata.MidIP, metadata.MidPort = parseAddr(pc.LocalAddr())
+	metadata.MidIP, metadata.MidPort = parseNetAddr(pc.LocalAddr())
 
 	pc = statistic.NewUDPTracker(pc, metadata, t.manager)
 	defer pc.Close()

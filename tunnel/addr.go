@@ -2,26 +2,37 @@ package tunnel
 
 import (
 	"net"
-	"strconv"
+	"net/netip"
+
+	"gvisor.dev/gvisor/pkg/tcpip"
 )
 
-// parseAddr parses net.Addr to IP and port.
-func parseAddr(addr net.Addr) (net.IP, uint16) {
-	switch v := addr.(type) {
-	case *net.TCPAddr:
-		return v.IP, uint16(v.Port)
-	case *net.UDPAddr:
-		return v.IP, uint16(v.Port)
-	case nil:
-		return nil, 0
-	default:
-		return parseAddrString(addr.String())
+// parseNetAddr parses net.Addr to IP and port.
+func parseNetAddr(addr net.Addr) (netip.Addr, uint16) {
+	if addr == nil {
+		return netip.Addr{}, 0
 	}
+	if v, ok := addr.(interface {
+		AddrPort() netip.AddrPort
+	}); ok {
+		ap := v.AddrPort()
+		return ap.Addr(), ap.Port()
+	}
+	return parseAddrString(addr.String())
 }
 
 // parseAddrString parses address string to IP and port.
-func parseAddrString(addr string) (net.IP, uint16) {
-	host, port, _ := net.SplitHostPort(addr)
-	portInt, _ := strconv.ParseUint(port, 10, 16)
-	return net.ParseIP(host), uint16(portInt)
+// It doesn't do any name resolution.
+func parseAddrString(s string) (netip.Addr, uint16) {
+	ap, err := netip.ParseAddrPort(s)
+	if err != nil {
+		return netip.Addr{}, 0
+	}
+	return ap.Addr(), ap.Port()
+}
+
+// parseTCPIPAddress parses tcpip.Address to netip.Addr.
+func parseTCPIPAddress(addr tcpip.Address) netip.Addr {
+	ip, _ := netip.AddrFromSlice(addr.AsSlice())
+	return ip
 }
