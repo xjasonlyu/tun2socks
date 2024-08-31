@@ -2,7 +2,7 @@ package core
 
 import (
 	"fmt"
-	"net"
+	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
@@ -61,7 +61,7 @@ func withSpoofing(nicID tcpip.NICID, v bool) option.Option {
 }
 
 // withMulticastGroups adds a NIC to the given multicast groups.
-func withMulticastGroups(nicID tcpip.NICID, multicastGroups []net.IP) option.Option {
+func withMulticastGroups(nicID tcpip.NICID, multicastGroups []netip.Addr) option.Option {
 	return func(s *stack.Stack) error {
 		if len(multicastGroups) == 0 {
 			return nil
@@ -103,15 +103,15 @@ func withMulticastGroups(nicID tcpip.NICID, multicastGroups []net.IP) option.Opt
 			stack.AddressProperties{PEB: stack.CanBePrimaryEndpoint},
 		)
 		for _, multicastGroup := range multicastGroups {
-			if ip := multicastGroup.To4(); ip != nil {
-				if err := s.JoinGroup(ipv4.ProtocolNumber, nicID, tcpip.AddrFrom4Slice(ip)); err != nil {
-					return fmt.Errorf("join multicast group: %s", err)
-				}
-			} else {
-				ip := multicastGroup.To16()
-				if err := s.JoinGroup(ipv6.ProtocolNumber, nicID, tcpip.AddrFrom16Slice(ip)); err != nil {
-					return fmt.Errorf("join multicast group: %s", err)
-				}
+			var err tcpip.Error
+			switch {
+			case multicastGroup.Is4():
+				err = s.JoinGroup(ipv4.ProtocolNumber, nicID, tcpip.AddrFrom4(multicastGroup.As4()))
+			case multicastGroup.Is6():
+				err = s.JoinGroup(ipv6.ProtocolNumber, nicID, tcpip.AddrFrom16(multicastGroup.As16()))
+			}
+			if err != nil {
+				return fmt.Errorf("join multicast group: %s", err)
 			}
 		}
 		return nil
