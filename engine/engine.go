@@ -3,6 +3,7 @@ package engine
 import (
 	"errors"
 	"net"
+	"net/netip"
 	"os/exec"
 	"sync"
 	"time"
@@ -197,7 +198,7 @@ func netstack(k *Key) (err error) {
 		return
 	}
 
-	var multicastGroups []net.IP
+	var multicastGroups []netip.Addr
 	if multicastGroups, err = parseMulticastGroups(k.MulticastGroups); err != nil {
 		return err
 	}
