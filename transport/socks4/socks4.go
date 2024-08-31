@@ -32,6 +32,7 @@ const (
 var (
 	errVersionMismatched = errors.New("version code mismatched")
 	errIPv6NotSupported  = errors.New("IPv6 not supported")
+	errCmdNotSupported   = errors.New("command not supported")
 
 	ErrRequestRejected         = errors.New("request rejected or failed")
 	ErrRequestIdentdFailed     = errors.New("request rejected because SOCKS server cannot connect to identd on the client")
@@ -40,6 +41,10 @@ var (
 )
 
 func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID string) (err error) {
+	if command == CmdBind {
+		return errCmdNotSupported
+	}
+
 	var (
 		host string
 		port uint16
