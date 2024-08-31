@@ -18,7 +18,6 @@ func init() {
 		uploadTotal:   atomic.NewInt64(0),
 		downloadTotal: atomic.NewInt64(0),
 	}
-
 	go DefaultManager.handle()
 }
 
