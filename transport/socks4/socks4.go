@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"net"
+	"net/netip"
 	"strconv"
 )
 
@@ -47,24 +48,26 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 		return err
 	}
 
-	ip := net.ParseIP(host)
-	if ip == nil /* HOST */ {
-		ip = net.IPv4(0, 0, 0, 1)
-	} else if ip.To4() == nil /* IPv6 */ {
+	ip, _ := netip.ParseAddr(host)
+	switch {
+	case !ip.IsValid(): /* HOST */
+		ip = netip.AddrFrom4([4]byte{0, 0, 0, 1})
+	case ip.Is4In6(): /* IPv4-mapped IPv6 */
+		ip = netip.AddrFrom4(ip.As4())
+	case ip.Is4(): /* IPv4 */
+	case ip.Is6(): /* IPv6 */
 		return errIPv6NotSupported
 	}
-
-	dstIP := /* [4]byte */ ip.To4()
 
 	req := &bytes.Buffer{}
 	req.WriteByte(Version)
 	req.WriteByte(command)
-	binary.Write(req, binary.BigEndian, port)
-	req.Write(dstIP)
+	_ = binary.Write(req, binary.BigEndian, port)
+	req.Write(ip.AsSlice())
 	req.WriteString(userID)
 	req.WriteByte(0) /* NULL */
 
-	if isReservedIP(dstIP) /* SOCKS4A */ {
+	if isReservedIP(ip) /* SOCKS4A */ {
 		req.WriteString(host)
 		req.WriteByte(0) /* NULL */
 	}
@@ -103,13 +106,9 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 // Internet Assigned Numbers Authority -- such an address is inadmissible
 // as a destination IP address and thus should never occur if the client
 // can resolve the domain name.)
-func isReservedIP(ip net.IP) bool {
-	subnet := net.IPNet{
-		IP:   net.IPv4zero,
-		Mask: net.IPv4Mask(0xff, 0xff, 0xff, 0x00),
-	}
-
-	return !ip.IsUnspecified() && subnet.Contains(ip)
+func isReservedIP(ip netip.Addr) bool {
+	prefix := netip.PrefixFrom(netip.IPv4Unspecified(), 24)
+	return !ip.IsUnspecified() && prefix.Contains(ip)
 }
 
 func splitHostPort(addr string) (string, uint16, error) {
