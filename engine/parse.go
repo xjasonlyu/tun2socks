@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"strings"
 
@@ -178,20 +179,19 @@ func parseRelay(u *url.URL) (proxy.Proxy, error) {
 	return proxy.NewRelay(address, username, password, opts.NoDelay)
 }
 
-func parseMulticastGroups(s string) (multicastGroups []net.IP, _ error) {
-	ipStrings := strings.Split(s, ",")
-	for _, ipString := range ipStrings {
-		if strings.TrimSpace(ipString) == "" {
+func parseMulticastGroups(s string) (multicastGroups []netip.Addr, _ error) {
+	for _, ip := range strings.Split(s, ",") {
+		if ip = strings.TrimSpace(ip); ip == "" {
 			continue
 		}
-		ip := net.ParseIP(ipString)
-		if ip == nil {
-			return nil, fmt.Errorf("invalid IP format: %s", ipString)
+		addr, err := netip.ParseAddr(ip)
+		if err != nil {
+			return nil, err
 		}
-		if !ip.IsMulticast() {
-			return nil, fmt.Errorf("invalid multicast IP address: %s", ipString)
+		if !addr.IsMulticast() {
+			return nil, fmt.Errorf("invalid multicast IP: %s", addr)
 		}
-		multicastGroups = append(multicastGroups, ip)
+		multicastGroups = append(multicastGroups, addr)
 	}
 	return
 }

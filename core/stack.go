@@ -1,7 +1,7 @@
 package core
 
 import (
-	"net"
+	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv6"
@@ -26,7 +26,7 @@ type Config struct {
 
 	// MulticastGroups is used by internal stack to add
 	// nic to given groups.
-	MulticastGroups []net.IP
+	MulticastGroups []netip.Addr
 
 	// Options are supplement options to apply settings
 	// for the internal stack.
