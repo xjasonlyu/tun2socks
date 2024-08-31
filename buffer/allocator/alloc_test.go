@@ -1,4 +1,4 @@
-package pool
+package allocator
 
 import (
 	"math/rand"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestAllocGet(t *testing.T) {
-	alloc := NewAllocator()
+	alloc := New()
 	assert.Nil(t, alloc.Get(0))
 	assert.Equal(t, 1, len(alloc.Get(1)))
 	assert.Equal(t, 2, len(alloc.Get(2)))
@@ -23,7 +23,7 @@ func TestAllocGet(t *testing.T) {
 }
 
 func TestAllocPut(t *testing.T) {
-	alloc := NewAllocator()
+	alloc := New()
 	assert.NotNil(t, alloc.Put(nil), "put nil misbehavior")
 	assert.NotNil(t, alloc.Put(make([]byte, 3)), "put elem:3 []bytes misbehavior")
 	assert.Nil(t, alloc.Put(make([]byte, 4)), "put elem:4 []bytes misbehavior")
@@ -33,7 +33,7 @@ func TestAllocPut(t *testing.T) {
 }
 
 func TestAllocPutThenGet(t *testing.T) {
-	alloc := NewAllocator()
+	alloc := New()
 	data := alloc.Get(4)
 	_ = alloc.Put(data)
 	newData := alloc.Get(4)

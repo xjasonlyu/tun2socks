@@ -7,7 +7,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 )
 
 const (
@@ -29,8 +29,8 @@ func NewWriter(w io.Writer, aead cipher.AEAD) *Writer { return &Writer{Writer: w
 
 // Write encrypts p and writes to the embedded io.Writer.
 func (w *Writer) Write(p []byte) (n int, err error) {
-	buf := pool.Get(bufSize)
-	defer pool.Put(buf)
+	buf := buffer.Get(bufSize)
+	defer buffer.Put(buf)
 	nonce := w.nonce[:w.NonceSize()]
 	tag := w.Overhead()
 	off := 2 + tag
@@ -65,8 +65,8 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 // writes to the embedded io.Writer. Returns number of bytes read from r and
 // any error encountered.
 func (w *Writer) ReadFrom(r io.Reader) (n int64, err error) {
-	buf := pool.Get(bufSize)
-	defer pool.Put(buf)
+	buf := buffer.Get(bufSize)
+	defer buffer.Put(buf)
 	nonce := w.nonce[:w.NonceSize()]
 	tag := w.Overhead()
 	off := 2 + tag
@@ -142,7 +142,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 		if len(p) >= payloadSizeMask+r.Overhead() {
 			return r.read(p)
 		}
-		b := pool.Get(bufSize)
+		b := buffer.Get(bufSize)
 		n, err := r.read(b)
 		if err != nil {
 			return 0, err
@@ -154,7 +154,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 	n := copy(p, r.buf[r.off:])
 	r.off += n
 	if r.off == len(r.buf) {
-		pool.Put(r.buf[:cap(r.buf)])
+		buffer.Put(r.buf[:cap(r.buf)])
 		r.buf = nil
 	}
 	return n, nil
@@ -165,7 +165,7 @@ func (r *Reader) Read(p []byte) (int, error) {
 // bytes written to w and any error encountered.
 func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 	if r.buf == nil {
-		r.buf = pool.Get(bufSize)
+		r.buf = buffer.Get(bufSize)
 		r.off = len(r.buf)
 	}
 
@@ -176,7 +176,7 @@ func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 			n += int64(nw)
 			if ew != nil {
 				if r.off == len(r.buf) {
-					pool.Put(r.buf[:cap(r.buf)])
+					buffer.Put(r.buf[:cap(r.buf)])
 					r.buf = nil
 				}
 				err = ew

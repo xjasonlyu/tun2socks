@@ -10,6 +10,8 @@ import (
 	"net"
 	"net/netip"
 	"strconv"
+
+	"github.com/xjasonlyu/tun2socks/v2/transport/internal/bufferpool"
 )
 
 // AuthMethod is the authentication method as defined in RFC 1928 section 3.
@@ -206,10 +208,9 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 			return nil, errors.New("auth username/password too long")
 		}
 
-		authMsgLen := 1 + 1 + uLen + 1 + pLen
-
 		// password protocol version
-		authMsg := bytes.NewBuffer(make([]byte, 0, authMsgLen))
+		authMsg := bufferpool.Get()
+		defer bufferpool.Put(authMsg)
 		authMsg.WriteByte(0x01 /* VER */)
 		authMsg.WriteByte(byte(uLen) /* ULEN */)
 		authMsg.WriteString(user.Username /* UNAME */)
@@ -233,7 +234,15 @@ func ClientHandshake(rw io.ReadWriter, addr Addr, command Command, user *User) (
 	}
 
 	// VER, CMD, RSV, ADDR
-	if _, err := rw.Write(bytes.Join([][]byte{{Version, byte(command), 0x00 /* RSV */}, addr}, nil)); err != nil {
+	req := bufferpool.Get()
+	defer bufferpool.Put(req)
+	req.Grow(3 + MaxAddrLen)
+	req.WriteByte(Version)
+	req.WriteByte(byte(command))
+	req.WriteByte(0x00 /* RSV */)
+	req.Write(addr)
+
+	if _, err := rw.Write(req.Bytes()); err != nil {
 		return nil, err
 	}
 

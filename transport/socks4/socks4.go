@@ -2,13 +2,14 @@
 package socks4
 
 import (
-	"bytes"
 	"encoding/binary"
 	"errors"
 	"io"
 	"net"
 	"net/netip"
 	"strconv"
+
+	"github.com/xjasonlyu/tun2socks/v2/transport/internal/bufferpool"
 )
 
 const Version = 0x04
@@ -64,13 +65,14 @@ func ClientHandshake(rw io.ReadWriter, addr string, command Command, userID stri
 		return errIPv6NotSupported
 	}
 
-	req := &bytes.Buffer{}
+	req := bufferpool.Get()
+	defer bufferpool.Put(req)
 	req.WriteByte(Version)
 	req.WriteByte(command)
 	_ = binary.Write(req, binary.BigEndian, port)
 	req.Write(ip.AsSlice())
 	req.WriteString(userID)
-	req.WriteByte(0) /* NULL */
+	req.WriteByte(0x00) /* NULL */
 
 	if isReservedIP(ip) /* SOCKS4A */ {
 		req.WriteString(host)

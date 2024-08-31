@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
-	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
@@ -56,11 +56,11 @@ func pipe(origin, remote net.Conn) {
 
 func unidirectionalStream(dst, src net.Conn, dir string, wg *sync.WaitGroup) {
 	defer wg.Done()
-	buf := pool.Get(pool.RelayBufferSize)
+	buf := buffer.Get(buffer.RelayBufferSize)
 	if _, err := io.CopyBuffer(dst, src, buf); err != nil {
 		log.Debugf("[TCP] copy data for %s: %v", dir, err)
 	}
-	pool.Put(buf)
+	buffer.Put(buf)
 	// Do the upload/download side TCP half-close.
 	if cr, ok := src.(interface{ CloseRead() error }); ok {
 		cr.CloseRead()
