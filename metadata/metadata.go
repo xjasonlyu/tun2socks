@@ -2,26 +2,34 @@ package metadata
 
 import (
 	"net"
-	"strconv"
+	"net/netip"
 )
 
 // Metadata contains metadata of transport protocol sessions.
 type Metadata struct {
-	Network Network `json:"network"`
-	SrcIP   net.IP  `json:"sourceIP"`
-	MidIP   net.IP  `json:"dialerIP"`
-	DstIP   net.IP  `json:"destinationIP"`
-	SrcPort uint16  `json:"sourcePort"`
-	MidPort uint16  `json:"dialerPort"`
-	DstPort uint16  `json:"destinationPort"`
+	Network Network    `json:"network"`
+	SrcIP   netip.Addr `json:"sourceIP"`
+	MidIP   netip.Addr `json:"dialerIP"`
+	DstIP   netip.Addr `json:"destinationIP"`
+	SrcPort uint16     `json:"sourcePort"`
+	MidPort uint16     `json:"dialerPort"`
+	DstPort uint16     `json:"destinationPort"`
+}
+
+func (m *Metadata) DestinationAddrPort() netip.AddrPort {
+	return netip.AddrPortFrom(m.DstIP, m.DstPort)
 }
 
 func (m *Metadata) DestinationAddress() string {
-	return net.JoinHostPort(m.DstIP.String(), strconv.FormatUint(uint64(m.DstPort), 10))
+	return m.DestinationAddrPort().String()
+}
+
+func (m *Metadata) SourceAddrPort() netip.AddrPort {
+	return netip.AddrPortFrom(m.SrcIP, m.SrcPort)
 }
 
 func (m *Metadata) SourceAddress() string {
-	return net.JoinHostPort(m.SrcIP.String(), strconv.FormatUint(uint64(m.SrcPort), 10))
+	return m.SourceAddrPort().String()
 }
 
 func (m *Metadata) Addr() net.Addr {
@@ -29,23 +37,17 @@ func (m *Metadata) Addr() net.Addr {
 }
 
 func (m *Metadata) TCPAddr() *net.TCPAddr {
-	if m.Network != TCP || m.DstIP == nil {
+	if m.Network != TCP || !m.DstIP.IsValid() {
 		return nil
 	}
-	return &net.TCPAddr{
-		IP:   m.DstIP,
-		Port: int(m.DstPort),
-	}
+	return net.TCPAddrFromAddrPort(m.DestinationAddrPort())
 }
 
 func (m *Metadata) UDPAddr() *net.UDPAddr {
-	if m.Network != UDP || m.DstIP == nil {
+	if m.Network != UDP || !m.DstIP.IsValid() {
 		return nil
 	}
-	return &net.UDPAddr{
-		IP:   m.DstIP,
-		Port: int(m.DstPort),
-	}
+	return net.UDPAddrFromAddrPort(m.DestinationAddrPort())
 }
 
 // Addr implements the net.Addr interface.
