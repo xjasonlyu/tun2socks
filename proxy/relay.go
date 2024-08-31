@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-gost/relay"
 
-	"github.com/xjasonlyu/tun2socks/v2/common/pool"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
+	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )

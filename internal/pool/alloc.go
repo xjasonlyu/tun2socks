@@ -51,8 +51,7 @@ func (alloc *Allocator) Put(buf []byte) error {
 		return errors.New("allocator Put() incorrect buffer size")
 	}
 
-	//lint:ignore SA6002 ignore temporarily
-	//nolint
+	//nolint:staticcheck
 	alloc.buffers[b].Put(buf)
 	return nil
 }
