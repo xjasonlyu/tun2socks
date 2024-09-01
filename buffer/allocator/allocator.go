@@ -1,30 +1,29 @@
-package pool
+package allocator
 
 import (
 	"errors"
 	"math/bits"
-	"sync"
-)
 
-var _allocator = NewAllocator()
+	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
+)
 
 // Allocator for incoming frames, optimized to prevent overwriting
 // after zeroing.
 type Allocator struct {
-	buffers []sync.Pool
+	buffers []*pool.Pool[[]byte]
 }
 
-// NewAllocator initiates a []byte allocator for frames less than
-// 65536 bytes, the waste(memory fragmentation) of space allocation
-// is guaranteed to be no more than 50%.
-func NewAllocator() *Allocator {
+// New initiates a []byte allocator for frames less than 65536 bytes,
+// the waste(memory fragmentation) of space allocation is guaranteed
+// to be no more than 50%.
+func New() *Allocator {
 	alloc := &Allocator{}
-	alloc.buffers = make([]sync.Pool, 17) // 1B -> 64K
+	alloc.buffers = make([]*pool.Pool[[]byte], 17) // 1B -> 64K
 	for k := range alloc.buffers {
 		i := k
-		alloc.buffers[k].New = func() any {
+		alloc.buffers[k] = pool.New(func() []byte {
 			return make([]byte, 1<<uint32(i))
-		}
+		})
 	}
 	return alloc
 }
@@ -37,10 +36,10 @@ func (alloc *Allocator) Get(size int) []byte {
 
 	b := msb(size)
 	if size == 1<<b {
-		return alloc.buffers[b].Get().([]byte)[:size]
+		return alloc.buffers[b].Get()[:size]
 	}
 
-	return alloc.buffers[b+1].Get().([]byte)[:size]
+	return alloc.buffers[b+1].Get()[:size]
 }
 
 // Put returns a []byte to pool for future use,
@@ -51,7 +50,6 @@ func (alloc *Allocator) Put(buf []byte) error {
 		return errors.New("allocator Put() incorrect buffer size")
 	}
 
-	//nolint:staticcheck
 	alloc.buffers[b].Put(buf)
 	return nil
 }

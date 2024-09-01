@@ -1,23 +1,38 @@
-// Package pool provides a pool of []byte.
+// Package pool provides internal pool utilities.
 package pool
 
-const (
-	// MaxSegmentSize is the largest possible UDP datagram size.
-	MaxSegmentSize = (1 << 16) - 1
-
-	// RelayBufferSize is a buffer of 20 KiB to reduce the memory
-	// of each TCP relay as io.Copy default buffer size is 32 KiB,
-	// but the maximum packet size of vmess/shadowsocks is about
-	// 16 KiB, so define .
-	RelayBufferSize = 20 << 10
+import (
+	"sync"
 )
 
-// Get gets a []byte from default allocator with most appropriate cap.
-func Get(size int) []byte {
-	return _allocator.Get(size)
+// A Pool is a generic wrapper around [sync.Pool] to provide strongly-typed
+// object pooling.
+//
+// Note that SA6002 (ref: https://staticcheck.io/docs/checks/#SA6002) will
+// not be detected, so all internal pool use must take care to only store
+// pointer types.
+type Pool[T any] struct {
+	pool sync.Pool
 }
 
-// Put returns a []byte to default allocator for future use.
-func Put(buf []byte) error {
-	return _allocator.Put(buf)
+// New returns a new [Pool] for T, and will use fn to construct new Ts when
+// the pool is empty.
+func New[T any](fn func() T) *Pool[T] {
+	return &Pool[T]{
+		pool: sync.Pool{
+			New: func() any {
+				return fn()
+			},
+		},
+	}
+}
+
+// Get gets a T from the pool, or creates a new one if the pool is empty.
+func (p *Pool[T]) Get() T {
+	return p.pool.Get().(T)
+}
+
+// Put returns x into the pool.
+func (p *Pool[T]) Put(x T) {
+	p.pool.Put(x)
 }

@@ -6,8 +6,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
-	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
@@ -66,8 +66,8 @@ func unidirectionalPacketStream(dst, src net.PacketConn, to net.Addr, dir string
 }
 
 func copyPacketData(dst, src net.PacketConn, to net.Addr, timeout time.Duration) error {
-	buf := pool.Get(pool.MaxSegmentSize)
-	defer pool.Put(buf)
+	buf := buffer.Get(buffer.MaxSegmentSize)
+	defer buffer.Put(buf)
 
 	for {
 		src.SetReadDeadline(time.Now().Add(timeout))

@@ -13,8 +13,8 @@ import (
 
 	"github.com/go-gost/relay"
 
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
-	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
 )
@@ -169,8 +169,8 @@ func (rc *relayConn) Read(b []byte) (n int, err error) {
 		return io.ReadFull(rc.Conn, b[:dLen])
 	}
 
-	buf := pool.Get(dLen)
-	defer pool.Put(buf)
+	buf := buffer.Get(dLen)
+	defer buffer.Put(buf)
 	_, err = io.ReadFull(rc.Conn, buf)
 	n = copy(b, buf)
 

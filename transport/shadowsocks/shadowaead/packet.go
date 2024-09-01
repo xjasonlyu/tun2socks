@@ -6,7 +6,7 @@ import (
 	"io"
 	"net"
 
-	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 )
 
 // ErrShortPacket means that the packet is too short for a valid encrypted packet.
@@ -70,8 +70,8 @@ func NewPacketConn(c net.PacketConn, ciph Cipher) *PacketConn {
 
 // WriteTo encrypts b and write to addr using the embedded PacketConn.
 func (c *PacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
-	buf := pool.Get(maxPacketSize)
-	defer pool.Put(buf)
+	buf := buffer.Get(maxPacketSize)
+	defer buffer.Put(buf)
 	buf, err := Pack(buf, b, c)
 	if err != nil {
 		return 0, err

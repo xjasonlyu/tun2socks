@@ -1,14 +1,14 @@
 package obfs
 
 import (
-	"bytes"
 	"crypto/rand"
 	"encoding/binary"
 	"io"
 	"net"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
+	"github.com/xjasonlyu/tun2socks/v2/transport/internal/bufferpool"
 )
 
 const (
@@ -25,12 +25,12 @@ type TLSObfs struct {
 }
 
 func (to *TLSObfs) read(b []byte, discardN int) (int, error) {
-	buf := pool.Get(discardN)
+	buf := buffer.Get(discardN)
 	_, err := io.ReadFull(to.Conn, buf)
 	if err != nil {
 		return 0, err
 	}
-	pool.Put(buf)
+	buffer.Put(buf)
 
 	sizeBuf := make([]byte, 2)
 	_, err = io.ReadFull(to.Conn, sizeBuf)
@@ -99,8 +99,8 @@ func (to *TLSObfs) write(b []byte) (int, error) {
 		return len(b), err
 	}
 
-	buf := pool.GetBuffer()
-	defer pool.PutBuffer(buf)
+	buf := bufferpool.Get()
+	defer bufferpool.Put(buf)
 	buf.Write([]byte{0x17, 0x03, 0x03})
 	binary.Write(buf, binary.BigEndian, uint16(len(b)))
 	buf.Write(b)
@@ -124,7 +124,8 @@ func makeClientHelloMsg(data []byte, server string) []byte {
 	rand.Read(random)
 	rand.Read(sessionID)
 
-	buf := &bytes.Buffer{}
+	buf := bufferpool.Get()
+	defer bufferpool.Put(buf)
 
 	// handshake, TLS 1.0 version, length
 	buf.WriteByte(22)

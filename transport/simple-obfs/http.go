@@ -10,7 +10,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/xjasonlyu/tun2socks/v2/internal/pool"
+	"github.com/xjasonlyu/tun2socks/v2/buffer"
 )
 
 // HTTPObfs is shadowsocks http simple-obfs implementation
@@ -29,22 +29,22 @@ func (ho *HTTPObfs) Read(b []byte) (int, error) {
 		n := copy(b, ho.buf[ho.offset:])
 		ho.offset += n
 		if ho.offset == len(ho.buf) {
-			pool.Put(ho.buf)
+			buffer.Put(ho.buf)
 			ho.buf = nil
 		}
 		return n, nil
 	}
 
 	if ho.firstResponse {
-		buf := pool.Get(pool.RelayBufferSize)
+		buf := buffer.Get(buffer.RelayBufferSize)
 		n, err := ho.Conn.Read(buf)
 		if err != nil {
-			pool.Put(buf)
+			buffer.Put(buf)
 			return 0, err
 		}
 		idx := bytes.Index(buf[:n], []byte("\r\n\r\n"))
 		if idx == -1 {
-			pool.Put(buf)
+			buffer.Put(buf)
 			return 0, io.EOF
 		}
 		ho.firstResponse = false
@@ -54,7 +54,7 @@ func (ho *HTTPObfs) Read(b []byte) (int, error) {
 			ho.buf = buf[:idx+4+length]
 			ho.offset = idx + 4 + n
 		} else {
-			pool.Put(buf)
+			buffer.Put(buf)
 		}
 		return n, nil
 	}
