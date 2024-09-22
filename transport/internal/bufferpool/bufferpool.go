@@ -9,9 +9,7 @@ import (
 const _size = 1024 // by default, create 1 KiB buffers
 
 var _pool = pool.New(func() *bytes.Buffer {
-	buf := &bytes.Buffer{}
-	buf.Grow(_size)
-	return buf
+	return bytes.NewBuffer(make([]byte, 0, _size))
 })
 
 func Get() *bytes.Buffer {
