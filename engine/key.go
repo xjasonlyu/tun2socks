@@ -9,6 +9,7 @@ type Key struct {
 	RestAPI                  string        `yaml:"restapi"`
 	Device                   string        `yaml:"device"`
 	LogLevel                 string        `yaml:"loglevel"`
+	LogFile                  string        `yaml:"logfile"`
 	Interface                string        `yaml:"interface"`
 	TCPModerateReceiveBuffer bool          `yaml:"tcp-moderate-receive-buffer"`
 	TCPSendBufferSize        string        `yaml:"tcp-send-buffer-size"`
