@@ -109,7 +109,11 @@ func general(k *Key) error {
 	if err != nil {
 		return err
 	}
-	log.SetLogger(log.Must(log.NewLeveled(level)))
+	var logFile *string
+	if k.LogFile != "" {
+		logFile = &k.LogFile
+	}
+	log.SetLogger(log.Must(log.NewLeveled(level, logFile)))
 
 	if k.Interface != "" {
 		iface, err := net.InterfaceByName(k.Interface)
