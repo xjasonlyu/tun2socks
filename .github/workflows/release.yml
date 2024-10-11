@@ -46,3 +46,40 @@ jobs:
           files: build/*
           draft: true
           prerelease: false
+          
+  release-ios:
+    name: Release-ios
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          check-latest: true
+          go-version-file: 'go.mod'
+
+      - name: Cache go module
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/go/pkg/mod
+            ~/.cache/go-build
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Build
+        if: startsWith(github.ref, 'refs/tags/')
+        run: make -j releases
+
+      - name: Upload Releases
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: build/*
+          draft: true
+          prerelease: false
