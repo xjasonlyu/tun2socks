@@ -79,7 +79,7 @@ ios:
 	go get golang.org/x/mobile/cmd/gobind
 
 	gomobile init                                     
-	gomobile bind -a -v -ldflags '$(LDFLAGS)' -tags ios -target=ios -o $(BUILD_DIR)/$(BINARY)-$@.xcframework github.com/xjasonlyu/tun2socks/v2/engine                                              
+	gomobile bind -a -v -ldflags '$(LDFLAGS)' -tags ios -target=ios -o $(BUILD_DIR)/$(BINARY).xcframework github.com/xjasonlyu/tun2socks/v2/engine                                               
 
 freebsd-386:
 	GOARCH=386 GOOS=freebsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
@@ -176,7 +176,7 @@ $(windows_releases): %.zip: %
 	@zip -qmj $(BUILD_DIR)/$(BINARY)-$(basename $@).zip $(BUILD_DIR)/$(BINARY)-$(basename $@).exe
 
 $(lib_releases): %.zip: %
-	@zip -q $(BUILD_DIR)/$(BINARY)-$(basename $@).zip $(BUILD_DIR)/$(BINARY)-$(basename $@).xcframework
+	@zip -qmr $(BUILD_DIR)/$(BINARY)-$(basename $@).zip $(BUILD_DIR)/$(BINARY).xcframework
 
 
 all-arch: $(UNIX_ARCH_LIST) $(WINDOWS_ARCH_LIST)
