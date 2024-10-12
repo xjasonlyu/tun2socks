@@ -68,12 +68,13 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 }
 
 func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
+	offset := 0
 	// fd offset in ios
 	// https://stackoverflow.com/questions/69260852/ios-network-extension-packet-parsing/69487795#69487795
 	if runtime.GOOS == "ios" {
-		return fdbased.Open(u.Host, mtu, 4)
+		offset = 4
 	}
-	return fdbased.Open(u.Host, mtu, 0)
+	return fdbased.Open(u.Host, mtu, offset)
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
