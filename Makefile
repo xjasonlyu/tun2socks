@@ -53,6 +53,9 @@ WINDOWS_ARCH_LIST = \
 	windows-arm64 \
 	windows-arm32v7
 
+LIB_LIST = \
+	ios \
+
 all: linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64
 
 debug: BUILD_TAGS += debug
@@ -69,6 +72,15 @@ darwin-amd64-v3:
 
 darwin-arm64:
 	GOARCH=arm64 GOOS=darwin $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
+
+ios:
+	go install golang.org/x/mobile/cmd/gomobile@latest
+	go install golang.org/x/mobile/cmd/gobind@latest
+	go get golang.org/x/mobile/cmd/gomobile
+	go get golang.org/x/mobile/cmd/gobind
+
+	gomobile init                                     
+	gomobile bind -a -v -ldflags '$(LDFLAGS)' -tags ios -target=ios -o $(BUILD_DIR)/$(BINARY).xcframework github.com/xjasonlyu/tun2socks/v2/engine                                               
 
 freebsd-386:
 	GOARCH=386 GOOS=freebsd $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@
@@ -159,6 +171,7 @@ windows-arm32v7:
 
 unix_releases := $(addsuffix .zip, $(UNIX_ARCH_LIST))
 windows_releases := $(addsuffix .zip, $(WINDOWS_ARCH_LIST))
+lib_releases := $(addsuffix .zip, $(LIB_LIST))
 
 $(unix_releases): %.zip: %
 	@zip -qmj $(BUILD_DIR)/$(BINARY)-$(basename $@).zip $(BUILD_DIR)/$(BINARY)-$(basename $@)
@@ -166,9 +179,14 @@ $(unix_releases): %.zip: %
 $(windows_releases): %.zip: %
 	@zip -qmj $(BUILD_DIR)/$(BINARY)-$(basename $@).zip $(BUILD_DIR)/$(BINARY)-$(basename $@).exe
 
+$(lib_releases): %.zip: %
+	@zip -qmr $(BUILD_DIR)/$(BINARY)-$(basename $@).zip $(BUILD_DIR)/$(BINARY).xcframework
+
+
 all-arch: $(UNIX_ARCH_LIST) $(WINDOWS_ARCH_LIST)
 
 releases: $(unix_releases) $(windows_releases)
+releases-ios: $(lib_releases)
 
 lint:
 	GOOS=darwin  golangci-lint run ./...
