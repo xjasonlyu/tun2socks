@@ -18,7 +18,7 @@ func init() {
 	SetLogger(zap.Must(zap.NewProduction()))
 }
 
-func NewLeveled(l Level, options ...Option) (*Logger, error) {
+func NewLeveled(l Level, logFile *string, options ...Option) (*Logger, error) {
 	switch l {
 	case SilentLevel:
 		return zap.NewNop(), nil
@@ -27,6 +27,13 @@ func NewLeveled(l Level, options ...Option) (*Logger, error) {
 	case InfoLevel, WarnLevel, ErrorLevel, DPanicLevel, PanicLevel, FatalLevel:
 		cfg := zap.NewProductionConfig()
 		cfg.Level.SetLevel(l)
+		logPath := []string{"stderr"}
+		if logFile != nil {
+			logPath = []string{*logFile}
+			fmt.Println("log output :", *logFile)
+		}
+		cfg.ErrorOutputPaths = logPath
+		cfg.OutputPaths = logPath
 		return cfg.Build(options...)
 	default:
 		return nil, fmt.Errorf("invalid level: %s", l)
