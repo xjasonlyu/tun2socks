@@ -26,6 +26,13 @@ type Socks5 struct {
 }
 
 func NewSocks5(addr, user, pass string) (*Socks5, error) {
+	unix := len(addr) > 0 && addr[0] == '/'
+
+	// For support Linux abstract namespace
+	if len(addr) > 2 && addr[1] == '@' || addr[1] == 0x00 {
+		addr = addr[1:]
+	}
+
 	return &Socks5{
 		Base: &Base{
 			addr:  addr,
@@ -33,7 +40,7 @@ func NewSocks5(addr, user, pass string) (*Socks5, error) {
 		},
 		user: user,
 		pass: pass,
-		unix: len(addr) > 0 && addr[0] == '/',
+		unix: unix,
 	}, nil
 }
 
