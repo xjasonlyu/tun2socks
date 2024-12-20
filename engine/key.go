@@ -17,4 +17,5 @@ type Key struct {
 	TUNPreUp                 string        `yaml:"tun-pre-up"`
 	TUNPostUp                string        `yaml:"tun-post-up"`
 	UDPTimeout               time.Duration `yaml:"udp-timeout"`
+	UDPDisabled              bool          `yaml:"udp-disabled"`
 }

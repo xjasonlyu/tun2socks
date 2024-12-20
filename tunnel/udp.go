@@ -17,6 +17,11 @@ import (
 func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 	defer uc.Close()
 
+	if t.udpDisabled.Load() {
+		log.Warnf("[UDP] dial %s: blocked", uc.ID().RemoteAddress)
+		return
+	}
+
 	id := uc.ID()
 	metadata := &M.Metadata{
 		Network: M.UDP,
