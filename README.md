@@ -8,7 +8,7 @@
 [![Docker Pulls][6]](https://hub.docker.com/r/xjasonlyu/tun2socks)
 [![Releases][7]](https://github.com/xjasonlyu/tun2socks/releases)
 
-[1]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/release.yml?logo=github
+[1]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/docker.yml?logo=github
 [2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks?logo=go
 [3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks
 [4]: https://api.codeclimate.com/v1/badges/b5b30239174fc6603aca/maintainability
