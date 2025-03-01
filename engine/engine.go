@@ -62,6 +62,7 @@ func Insert(k *Key) {
 
 func start() error {
 	_engineMu.Lock()
+	defer _engineMu.Unlock()
 	if _defaultKey == nil {
 		return errors.New("empty key")
 	}
@@ -75,7 +76,6 @@ func start() error {
 			return err
 		}
 	}
-	_engineMu.Unlock()
 	return nil
 }
 
