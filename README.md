@@ -1,4 +1,4 @@
-![tun2socks](docs/wordmark.png)
+![tun2socks](docs/logo.png)
 
 [![GitHub Workflow][1]](https://github.com/xjasonlyu/tun2socks/actions)
 [![Go Version][2]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
@@ -8,29 +8,22 @@
 [![Docker Pulls][6]](https://hub.docker.com/r/xjasonlyu/tun2socks)
 [![Releases][7]](https://github.com/xjasonlyu/tun2socks/releases)
 
-[1]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/docker.yml?logo=github
-[2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks?logo=go
-[3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks
-[4]: https://api.codeclimate.com/v1/badges/b5b30239174fc6603aca/maintainability
-[5]: https://img.shields.io/github/license/xjasonlyu/tun2socks
-[6]: https://img.shields.io/docker/pulls/xjasonlyu/tun2socks?logo=docker
-[7]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?logo=smartthings
-
 ## Features
 
-- Proxy Everything: Handle all network traffic of any internet programs sent by the device through a proxy.
-- Proxy Protocols: HTTP/Socks4/Socks5/Shadowsocks with authentication support for remote connections.
-- Run Everywhere: Linux/macOS/Windows/FreeBSD/OpenBSD multi-platform support with specific optimization.
-- Gateway Mode: Act as a Layer 3 gateway to handle network traffic from other devices on the same network.
-- Full IPv6 Support: All functions work in IPv6, tunnel IPv4 connections through IPv6 proxy and vice versa.
-- Network Stack: Powered by the user-space TCP/IP stack from Google container application kernel **[gVisor](https://github.com/google/gvisor)**.
+- **Universal Proxying**: Transparently routes all network traffic from any application through a proxy.
+- **Multi-Protocol**: Supports HTTP/SOCKS4/SOCKS5/Shadowsocks proxies with optional authentication.
+- **Cross-Platform**: Runs on Linux/macOS/Windows/FreeBSD/OpenBSD with platform-specific optimizations.
+- **Gateway Mode**: Acts as a Layer 3 gateway to route traffic from other devices on the same network.
+- **Full IPv6 Compatibility**: Natively supports IPv6; seamlessly tunnels IPv4 over IPv6 and vice versa.
+- **User-Space Networking**: Leverages the **[gVisor](https://github.com/google/gvisor)** network stack for enhanced
+  performance and flexibility.
 
 ## Benchmarks
 
+![benchmark](docs/benchmark.png)
+
 For all scenarios of usage, tun2socks performs best.
 See [benchmarks](https://github.com/xjasonlyu/tun2socks/wiki/Benchmarks) for more details.
-
-![benchmark](docs/benchmark.png)
 
 ## Documentation
 
@@ -65,3 +58,17 @@ Welcome and feel free to ask any questions at [Discussions](https://github.com/x
     <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=xjasonlyu/tun2socks&type=Date" />
   </picture>
 </a>
+
+[1]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/docker.yml?logo=github
+
+[2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks?logo=go
+
+[3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks
+
+[4]: https://api.codeclimate.com/v1/badges/b5b30239174fc6603aca/maintainability
+
+[5]: https://img.shields.io/github/license/xjasonlyu/tun2socks
+
+[6]: https://img.shields.io/docker/pulls/xjasonlyu/tun2socks?logo=docker
+
+[7]: https://img.shields.io/github/v/release/xjasonlyu/tun2socks?logo=smartthings
