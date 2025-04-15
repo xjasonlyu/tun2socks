@@ -19,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Go
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           check-latest: true
@@ -35,6 +35,17 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Set prerelease flag
+        if: startsWith(github.ref, 'refs/tags/')
+        id: pre
+        run: |
+          TAG="$GITHUB_REF_NAME"
+          if [[ "$TAG" =~ -(beta|alpha|rc) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build
         if: startsWith(github.ref, 'refs/tags/')
         run: make -j releases
@@ -45,4 +56,4 @@ jobs:
         with:
           files: build/*
           draft: true
-          prerelease: false
+          prerelease: ${{ steps.pre.outputs.is_prerelease }}
