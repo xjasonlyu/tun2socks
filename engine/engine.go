@@ -117,13 +117,13 @@ func general(k *Key) error {
 		if err != nil {
 			return err
 		}
-		dialer.DefaultInterfaceName.Store(iface.Name)
-		dialer.DefaultInterfaceIndex.Store(int32(iface.Index))
+		dialer.DefaultDialer.InterfaceName.Store(iface.Name)
+		dialer.DefaultDialer.InterfaceIndex.Store(int32(iface.Index))
 		log.Infof("[DIALER] bind to interface: %s", k.Interface)
 	}
 
 	if k.Mark != 0 {
-		dialer.DefaultRoutingMark.Store(int32(k.Mark))
+		dialer.DefaultDialer.RoutingMark.Store(int32(k.Mark))
 		log.Infof("[DIALER] set fwmark: %#x", k.Mark)
 	}
 
