@@ -1,4 +1,4 @@
-![tun2socks](docs/wordmark.png)
+![tun2socks](docs/logo.png)
 
 [![GitHub Workflow][1]](https://github.com/xjasonlyu/tun2socks/actions)
 [![Go Version][2]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
