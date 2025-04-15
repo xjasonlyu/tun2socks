@@ -18,12 +18,12 @@
 
 ## Features
 
-- Proxy Everything: Handle all network traffic of any internet programs sent by the device through a proxy.
-- Proxy Protocols: HTTP/Socks4/Socks5/Shadowsocks with authentication support for remote connections.
-- Run Everywhere: Linux/macOS/Windows/FreeBSD/OpenBSD multi-platform support with specific optimization.
-- Gateway Mode: Act as a Layer 3 gateway to handle network traffic from other devices on the same network.
-- Full IPv6 Support: All functions work in IPv6, tunnel IPv4 connections through IPv6 proxy and vice versa.
-- Network Stack: Powered by the user-space TCP/IP stack from Google container application kernel **[gVisor](https://github.com/google/gvisor)**.
+- **Universal Proxying**: Transparently routes all network traffic from any application through a proxy.
+- **Multi-Protocol Support**: Supports HTTP/SOCKS4/SOCKS5/Shadowsocks proxies with optional authentication.
+- **Run Everywhere**: Runs on Linux/macOS/Windows/FreeBSD/OpenBSD with platform-specific optimizations.
+- **Gateway Mode**: Functions as a Layer 3 gateway to route traffic from other devices on the same network.
+- **Full IPv6 Compatibility**: Natively supports IPv6; seamlessly tunnels IPv4 over IPv6 and vice versa.
+- **User-Space Networking**: Leverages the **[gVisor](https://github.com/google/gvisor)** network stack for enhanced isolation and flexibility.
 
 ## Benchmarks
 
