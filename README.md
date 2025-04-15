@@ -45,9 +45,9 @@ Welcome and feel free to ask any questions at [Discussions](https://github.com/x
 
 ## License
 
-[GPL-3.0](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
-
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fxjasonlyu%2Ftun2socks?ref=badge_large)
+
+All versions starting from `v2.6.0` are available under the terms of the [MIT License](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE).
 
 ## Star History
 
