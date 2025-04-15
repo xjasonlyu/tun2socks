@@ -8,11 +8,18 @@ import (
 	"go.uber.org/atomic"
 )
 
-var (
-	DefaultInterfaceName  = atomic.NewString("")
-	DefaultInterfaceIndex = atomic.NewInt32(0)
-	DefaultRoutingMark    = atomic.NewInt32(0)
-)
+// DefaultDialer is the default Dialer and is used by DialContext and ListenPacket.
+var DefaultDialer = &Dialer{
+	InterfaceName:  atomic.NewString(""),
+	InterfaceIndex: atomic.NewInt32(0),
+	RoutingMark:    atomic.NewInt32(0),
+}
+
+type Dialer struct {
+	InterfaceName  *atomic.String
+	InterfaceIndex *atomic.Int32
+	RoutingMark    *atomic.Int32
+}
 
 type Options struct {
 	// InterfaceName is the name of interface/device to bind.
@@ -31,15 +38,25 @@ type Options struct {
 	RoutingMark int
 }
 
+// DialContext is a wrapper around DefaultDialer.DialContext.
 func DialContext(ctx context.Context, network, address string) (net.Conn, error) {
-	return DialContextWithOptions(ctx, network, address, &Options{
-		InterfaceName:  DefaultInterfaceName.Load(),
-		InterfaceIndex: int(DefaultInterfaceIndex.Load()),
-		RoutingMark:    int(DefaultRoutingMark.Load()),
+	return DefaultDialer.DialContext(ctx, network, address)
+}
+
+// ListenPacket is a wrapper around DefaultDialer.ListenPacket.
+func ListenPacket(network, address string) (net.PacketConn, error) {
+	return DefaultDialer.ListenPacket(network, address)
+}
+
+func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return d.DialContextWithOptions(ctx, network, address, &Options{
+		InterfaceName:  d.InterfaceName.Load(),
+		InterfaceIndex: int(d.InterfaceIndex.Load()),
+		RoutingMark:    int(d.RoutingMark.Load()),
 	})
 }
 
-func DialContextWithOptions(ctx context.Context, network, address string, opts *Options) (net.Conn, error) {
+func (_ *Dialer) DialContextWithOptions(ctx context.Context, network, address string, opts *Options) (net.Conn, error) {
 	d := &net.Dialer{
 		Control: func(network, address string, c syscall.RawConn) error {
 			return setSocketOptions(network, address, c, opts)
@@ -48,15 +65,15 @@ func DialContextWithOptions(ctx context.Context, network, address string, opts *
 	return d.DialContext(ctx, network, address)
 }
 
-func ListenPacket(network, address string) (net.PacketConn, error) {
-	return ListenPacketWithOptions(network, address, &Options{
-		InterfaceName:  DefaultInterfaceName.Load(),
-		InterfaceIndex: int(DefaultInterfaceIndex.Load()),
-		RoutingMark:    int(DefaultRoutingMark.Load()),
+func (d *Dialer) ListenPacket(network, address string) (net.PacketConn, error) {
+	return d.ListenPacketWithOptions(network, address, &Options{
+		InterfaceName:  d.InterfaceName.Load(),
+		InterfaceIndex: int(d.InterfaceIndex.Load()),
+		RoutingMark:    int(d.RoutingMark.Load()),
 	})
 }
 
-func ListenPacketWithOptions(network, address string, opts *Options) (net.PacketConn, error) {
+func (_ *Dialer) ListenPacketWithOptions(network, address string, opts *Options) (net.PacketConn, error) {
 	lc := &net.ListenConfig{
 		Control: func(network, address string, c syscall.RawConn) error {
 			return setSocketOptions(network, address, c, opts)
