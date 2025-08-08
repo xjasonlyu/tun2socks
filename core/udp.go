@@ -13,7 +13,7 @@ import (
 
 func withUDPHandler(handle func(adapter.UDPConn)) option.Option {
 	return func(s *stack.Stack) error {
-		udpForwarder := udp.NewForwarder(s, func(r *udp.ForwarderRequest) {
+		udpForwarder := udp.NewForwarder(s, func(r *udp.ForwarderRequest) bool {
 			var (
 				wq waiter.Queue
 				id = r.ID()
@@ -22,7 +22,7 @@ func withUDPHandler(handle func(adapter.UDPConn)) option.Option {
 			if err != nil {
 				glog.Debugf("forward udp request: %s:%d->%s:%d: %s",
 					id.RemoteAddress, id.RemotePort, id.LocalAddress, id.LocalPort, err)
-				return
+				return false
 			}
 
 			conn := &udpConn{
@@ -30,6 +30,7 @@ func withUDPHandler(handle func(adapter.UDPConn)) option.Option {
 				id:      id,
 			}
 			handle(conn)
+			return true
 		})
 		s.SetTransportProtocolHandler(udp.ProtocolNumber, udpForwarder.HandlePacket)
 		return nil
