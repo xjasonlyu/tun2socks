@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"go.uber.org/automaxprocs/maxprocs"
 	"gopkg.in/yaml.v3"
 
 	_ "github.com/xjasonlyu/tun2socks/v2/dns"
@@ -44,8 +43,6 @@ func init() {
 }
 
 func main() {
-	maxprocs.Set(maxprocs.Logger(func(string, ...any) {}))
-
 	if versionFlag {
 		fmt.Println(version.String())
 		fmt.Println(version.BuildString())

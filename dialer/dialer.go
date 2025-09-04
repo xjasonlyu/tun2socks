@@ -56,7 +56,7 @@ func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.
 	})
 }
 
-func (_ *Dialer) DialContextWithOptions(ctx context.Context, network, address string, opts *Options) (net.Conn, error) {
+func (*Dialer) DialContextWithOptions(ctx context.Context, network, address string, opts *Options) (net.Conn, error) {
 	d := &net.Dialer{
 		Control: func(network, address string, c syscall.RawConn) error {
 			return setSocketOptions(network, address, c, opts)
@@ -73,7 +73,7 @@ func (d *Dialer) ListenPacket(network, address string) (net.PacketConn, error) {
 	})
 }
 
-func (_ *Dialer) ListenPacketWithOptions(network, address string, opts *Options) (net.PacketConn, error) {
+func (*Dialer) ListenPacketWithOptions(network, address string, opts *Options) (net.PacketConn, error) {
 	lc := &net.ListenConfig{
 		Control: func(network, address string, c syscall.RawConn) error {
 			return setSocketOptions(network, address, c, opts)
