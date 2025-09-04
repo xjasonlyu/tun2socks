@@ -17,7 +17,7 @@ linters:
       - legacy
       - std-error-handling
     paths:
-      - transport/shadowsocks/shadowaead
+      - transport/shadowsocks
 formatters:
   enable:
     - gci
@@ -31,5 +31,4 @@ formatters:
       custom-order: true
   exclusions:
     generated: lax
-    paths:
-      - transport/shadowsocks/shadowaead
+    paths: []
