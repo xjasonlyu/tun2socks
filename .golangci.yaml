@@ -32,3 +32,4 @@ formatters:
   exclusions:
     generated: lax
     paths:
+      - transport/shadowsocks/shadowaead
