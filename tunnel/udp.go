@@ -124,21 +124,36 @@ func (pc *symmetricNATPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
 
 // handleDNSUDP handles DNS queries over UDP
 func (t *Tunnel) handleDNSUDP(uc adapter.UDPConn, metadata *M.Metadata) {
-	// Read the DNS query from the client
+	// DNS over UDP needs to handle multiple queries over the same session
+	// Each query is a single request-response cycle, but multiple queries can come
+	// over the same UDP "connection" within the session timeout
+
 	buf := buffer.Get(buffer.MaxSegmentSize)
 	defer buffer.Put(buf)
 
+	timeout := t.udpTimeout.Load()
+
 	for {
-		uc.SetReadDeadline(time.Now().Add(t.udpTimeout.Load()))
+		// Set read timeout for each DNS query
+		uc.SetReadDeadline(time.Now().Add(timeout))
+
 		n, from, err := uc.ReadFrom(buf)
 		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				log.Debugf("[DNS-UDP] session timeout, closing DNS connection")
+				return // Normal timeout, end the session
+			}
 			log.Debugf("[DNS-UDP] read from client error: %v", err)
 			return
 		}
 
-		// Forward the DNS query
+		// Forward each DNS query - this handles the complete request-response cycle
 		if err := dns.ForwardDNSOverUDP(uc, from, buf[:n]); err != nil {
 			log.Warnf("[DNS-UDP] failed to forward DNS query: %v", err)
+			// Continue to handle next query even if this one failed
 		}
+
+		// Continue listening for more DNS queries in this session
+		// The session will end when timeout is reached or connection is closed
 	}
 }
