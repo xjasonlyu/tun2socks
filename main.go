@@ -38,8 +38,7 @@ func init() {
 	flag.StringVar(&key.MulticastGroups, "multicast-groups", "", "Set multicast groups, separated by commas")
 	flag.StringVar(&key.TUNPreUp, "tun-pre-up", "", "Execute a command before TUN device setup")
 	flag.StringVar(&key.TUNPostUp, "tun-post-up", "", "Execute a command after TUN device setup")
-	flag.BoolVar(&key.DNSHijack, "dns-hijack", false, "Enable DNS traffic hijacking")
-	flag.StringVar(&key.DNSAddr, "dns-addr", "8.8.8.8:53", "DNS server address to use when hijacking")
+	flag.StringVar(&key.DNSAddr, "dns-addr", "", "DNS server address for hijacking (enables DNS hijacking when set)")
 	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
 	flag.Parse()
 }

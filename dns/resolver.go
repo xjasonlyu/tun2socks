@@ -12,26 +12,34 @@ import (
 )
 
 var (
-	dnsConfig     *Config
-	dnsConfigOnce sync.Once
+	dnsConfig   *Config
+	dnsConfigMu sync.RWMutex
 )
 
 // Config holds DNS configuration
 type Config struct {
-	Hijack  bool
-	Address string
+	Address string // DNS server address (e.g., "8.8.8.8:53")
 }
 
 // SetConfig sets the global DNS configuration
 func SetConfig(cfg *Config) {
-	dnsConfigOnce.Do(func() {
-		dnsConfig = cfg
-	})
+	dnsConfigMu.Lock()
+	defer dnsConfigMu.Unlock()
+	dnsConfig = cfg
 }
 
 // GetConfig returns the global DNS configuration
 func GetConfig() *Config {
+	dnsConfigMu.RLock()
+	defer dnsConfigMu.RUnlock()
 	return dnsConfig
+}
+
+// IsDNSEnabled returns true if DNS hijacking is enabled
+func IsDNSEnabled() bool {
+	dnsConfigMu.RLock()
+	defer dnsConfigMu.RUnlock()
+	return dnsConfig != nil && dnsConfig.Address != ""
 }
 
 // IsDNSRequest checks if the request is a DNS request (port 53)
@@ -41,7 +49,8 @@ func IsDNSRequest(port uint16) bool {
 
 // ForwardDNSOverTCP forwards DNS query over TCP to the configured DNS server
 func ForwardDNSOverTCP(clientConn net.Conn, dstAddr string) error {
-	if dnsConfig == nil || !dnsConfig.Hijack {
+	config := GetConfig()
+	if config == nil || config.Address == "" {
 		return nil // DNS hijacking is disabled
 	}
 
@@ -49,14 +58,14 @@ func ForwardDNSOverTCP(clientConn net.Conn, dstAddr string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	dnsConn, err := dialer.DefaultDialer.DialContext(ctx, "tcp", dnsConfig.Address)
+	dnsConn, err := dialer.DefaultDialer.DialContext(ctx, "tcp", config.Address)
 	if err != nil {
-		log.Warnf("[DNS-TCP] failed to connect to DNS server %s: %v", dnsConfig.Address, err)
+		log.Warnf("[DNS-TCP] failed to connect to DNS server %s: %v", config.Address, err)
 		return err
 	}
 	defer dnsConn.Close()
 
-	log.Infof("[DNS-TCP] %s <-> %s", clientConn.RemoteAddr(), dnsConfig.Address)
+	log.Infof("[DNS-TCP] %s <-> %s", clientConn.RemoteAddr(), config.Address)
 
 	// Copy data bidirectionally
 	done := make(chan error, 2)
@@ -78,19 +87,20 @@ func ForwardDNSOverTCP(clientConn net.Conn, dstAddr string) error {
 
 // ForwardDNSOverUDP forwards DNS query over UDP to the configured DNS server
 func ForwardDNSOverUDP(clientConn net.PacketConn, clientAddr net.Addr, data []byte) error {
-	if dnsConfig == nil || !dnsConfig.Hijack {
+	config := GetConfig()
+	if config == nil || config.Address == "" {
 		return nil // DNS hijacking is disabled
 	}
 
 	// Connect to the DNS server
-	dnsConn, err := net.Dial("udp", dnsConfig.Address)
+	dnsConn, err := net.Dial("udp", config.Address)
 	if err != nil {
-		log.Warnf("[DNS-UDP] failed to connect to DNS server %s: %v", dnsConfig.Address, err)
+		log.Warnf("[DNS-UDP] failed to connect to DNS server %s: %v", config.Address, err)
 		return err
 	}
 	defer dnsConn.Close()
 
-	log.Debugf("[DNS-UDP] forwarding query from %s to %s", clientAddr, dnsConfig.Address)
+	log.Debugf("[DNS-UDP] forwarding query from %s to %s", clientAddr, config.Address)
 
 	// Send query to DNS server
 	if _, err := dnsConn.Write(data); err != nil {
@@ -115,7 +125,7 @@ func ForwardDNSOverUDP(clientConn net.PacketConn, clientAddr net.Addr, data []by
 		return err
 	}
 
-	log.Debugf("[DNS-UDP] forwarded response from %s to %s", dnsConfig.Address, clientAddr)
+	log.Debugf("[DNS-UDP] forwarded response from %s to %s", config.Address, clientAddr)
 	return nil
 }
 

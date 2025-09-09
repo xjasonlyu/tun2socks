@@ -28,14 +28,21 @@ See [benchmarks](https://github.com/xjasonlyu/tun2socks/wiki/Benchmarks) for mor
 
 ## DNS Hijacking
 
-tun2socks now supports DNS traffic interception and redirection. When enabled, all DNS queries (both TCP and UDP on port 53) are automatically intercepted and forwarded to a configurable DNS server.
+tun2socks supports DNS traffic interception and redirection. Simply specify a DNS server address to automatically enable DNS hijacking for all DNS queries (both TCP and UDP on port 53).
 
 ### Usage
 
-Enable DNS hijacking with command line flags:
+Enable DNS hijacking by specifying a DNS server address:
 
 ```bash
-./tun2socks -device tun://tun0 -proxy socks5://127.0.0.1:1080 -dns-hijack -dns-addr 8.8.8.8:53
+# Enable DNS hijacking with Google DNS
+./tun2socks -device tun://tun0 -proxy socks5://127.0.0.1:1080 -dns-addr 8.8.8.8:53
+
+# Use Cloudflare DNS
+./tun2socks -device tun://tun0 -proxy socks5://127.0.0.1:1080 -dns-addr 1.1.1.1:53
+
+# Use local DNS server
+./tun2socks -device tun://tun0 -proxy socks5://127.0.0.1:1080 -dns-addr 127.0.0.1:5353
 ```
 
 Or using a configuration file:
@@ -43,9 +50,10 @@ Or using a configuration file:
 ```yaml
 device: tun://tun0
 proxy: socks5://127.0.0.1:1080
-dns-hijack: true
-dns-addr: 8.8.8.8:53
+dns-addr: 8.8.8.8:53  # Automatically enables DNS hijacking
 ```
+
+To disable DNS hijacking, simply omit the `dns-addr` field or leave it empty.
 
 ### Supported DNS Servers
 
@@ -56,6 +64,7 @@ dns-addr: 8.8.8.8:53
 
 ### Features
 
+- **Simple Configuration**: Just specify a DNS server address to enable hijacking
 - **Protocol Support**: Both TCP and UDP DNS queries are supported
 - **Automatic Interception**: No additional configuration needed for applications
 - **Configurable**: Choose any DNS server that suits your needs

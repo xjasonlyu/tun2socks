@@ -28,15 +28,12 @@ func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 	}
 
 	// Check if this is a DNS request and DNS hijacking is enabled
-	if dns.IsDNSRequest(metadata.DstPort) {
-		dnsConfig := dns.GetConfig()
-		if dnsConfig != nil && dnsConfig.Hijack {
-			log.Infof("[DNS-TCP] intercepting DNS request %s -> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-			if err := dns.ForwardDNSOverTCP(originConn, metadata.DestinationAddress()); err != nil {
-				log.Warnf("[DNS-TCP] failed to forward DNS request: %v", err)
-			}
-			return
+	if dns.IsDNSRequest(metadata.DstPort) && dns.IsDNSEnabled() {
+		log.Infof("[DNS-TCP] intercepting DNS request %s -> %s", metadata.SourceAddress(), metadata.DestinationAddress())
+		if err := dns.ForwardDNSOverTCP(originConn, metadata.DestinationAddress()); err != nil {
+			log.Warnf("[DNS-TCP] failed to forward DNS request: %v", err)
 		}
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)

@@ -168,22 +168,14 @@ func restAPI(k *Key) error {
 }
 
 func dnsConfig(k *Key) error {
-	if k.DNSHijack {
-		if k.DNSAddr == "" {
-			k.DNSAddr = "8.8.8.8:53" // Default to Google DNS
-		}
-
+	if k.DNSAddr != "" {
 		log.Infof("[DNS] hijacking enabled, using DNS server: %s", k.DNSAddr)
 		dns.SetConfig(&dns.Config{
-			Hijack:  true,
 			Address: k.DNSAddr,
 		})
 	} else {
 		log.Infof("[DNS] hijacking disabled")
-		dns.SetConfig(&dns.Config{
-			Hijack:  false,
-			Address: "",
-		})
+		dns.SetConfig(nil)
 	}
 	return nil
 }

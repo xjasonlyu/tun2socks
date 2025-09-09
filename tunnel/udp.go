@@ -28,13 +28,10 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 	}
 
 	// Check if this is a DNS request and DNS hijacking is enabled
-	if dns.IsDNSRequest(metadata.DstPort) {
-		dnsConfig := dns.GetConfig()
-		if dnsConfig != nil && dnsConfig.Hijack {
-			log.Infof("[DNS-UDP] intercepting DNS request %s -> %s", metadata.SourceAddress(), metadata.DestinationAddress())
-			t.handleDNSUDP(uc, metadata)
-			return
-		}
+	if dns.IsDNSRequest(metadata.DstPort) && dns.IsDNSEnabled() {
+		log.Infof("[DNS-UDP] intercepting DNS request %s -> %s", metadata.SourceAddress(), metadata.DestinationAddress())
+		t.handleDNSUDP(uc, metadata)
+		return
 	}
 
 	pc, err := t.Dialer().DialUDP(metadata)
