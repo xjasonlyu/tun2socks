@@ -8,6 +8,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
@@ -24,6 +25,16 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 		SrcPort: id.RemotePort,
 		DstIP:   parseTCPIPAddress(id.LocalAddress),
 		DstPort: id.LocalPort,
+	}
+
+	// Check if this is a DNS request and DNS hijacking is enabled
+	if dns.IsDNSRequest(metadata.DstPort) {
+		dnsConfig := dns.GetConfig()
+		if dnsConfig != nil && dnsConfig.Hijack {
+			log.Infof("[DNS-UDP] intercepting DNS request %s -> %s", metadata.SourceAddress(), metadata.DestinationAddress())
+			t.handleDNSUDP(uc, metadata)
+			return
+		}
 	}
 
 	pc, err := t.Dialer().DialUDP(metadata)
@@ -111,5 +122,26 @@ func (pc *symmetricNATPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
 		}
 
 		return n, from, err
+	}
+}
+
+// handleDNSUDP handles DNS queries over UDP
+func (t *Tunnel) handleDNSUDP(uc adapter.UDPConn, metadata *M.Metadata) {
+	// Read the DNS query from the client
+	buf := buffer.Get(buffer.MaxSegmentSize)
+	defer buffer.Put(buf)
+
+	for {
+		uc.SetReadDeadline(time.Now().Add(t.udpTimeout.Load()))
+		n, from, err := uc.ReadFrom(buf)
+		if err != nil {
+			log.Debugf("[DNS-UDP] read from client error: %v", err)
+			return
+		}
+
+		// Forward the DNS query
+		if err := dns.ForwardDNSOverUDP(uc, from, buf[:n]); err != nil {
+			log.Warnf("[DNS-UDP] failed to forward DNS query: %v", err)
+		}
 	}
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
@@ -24,6 +25,18 @@ func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 		SrcPort: id.RemotePort,
 		DstIP:   parseTCPIPAddress(id.LocalAddress),
 		DstPort: id.LocalPort,
+	}
+
+	// Check if this is a DNS request and DNS hijacking is enabled
+	if dns.IsDNSRequest(metadata.DstPort) {
+		dnsConfig := dns.GetConfig()
+		if dnsConfig != nil && dnsConfig.Hijack {
+			log.Infof("[DNS-TCP] intercepting DNS request %s -> %s", metadata.SourceAddress(), metadata.DestinationAddress())
+			if err := dns.ForwardDNSOverTCP(originConn, metadata.DestinationAddress()); err != nil {
+				log.Warnf("[DNS-TCP] failed to forward DNS request: %v", err)
+			}
+			return
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
