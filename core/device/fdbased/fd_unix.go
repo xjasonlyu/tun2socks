@@ -17,8 +17,9 @@ const defaultMTU = 1500
 type FD struct {
 	stack.LinkEndpoint
 
-	fd  int
-	mtu uint32
+	fd     int
+	mtu    uint32
+	closed bool
 }
 
 func Open(name string, mtu uint32, offset int) (device.Device, error) {
@@ -41,8 +42,11 @@ func (f *FD) Name() string {
 }
 
 func (f *FD) Close() {
-	defer f.LinkEndpoint.Close()
-	_ = unix.Close(f.fd)
+	if !f.closed {
+		defer f.LinkEndpoint.Close()
+		_ = unix.Close(f.fd)
+		f.closed = true
+	}
 }
 
 var _ device.Device = (*FD)(nil)
