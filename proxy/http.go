@@ -46,7 +46,7 @@ func (h *HTTP) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Con
 	}(c)
 
 	err = h.shakeHand(metadata, c)
-	return
+	return c, err
 }
 
 func (h *HTTP) shakeHand(metadata *M.Metadata, rw io.ReadWriter) error {

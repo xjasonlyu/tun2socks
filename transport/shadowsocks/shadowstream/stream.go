@@ -28,7 +28,7 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 		w.XORKeyStream(buf, p[n:end])
 		nw, err = w.Writer.Write(buf[:end-n])
 	}
-	return
+	return n, err
 }
 
 func (w *Writer) ReadFrom(r io.Reader) (n int64, err error) {
@@ -39,13 +39,13 @@ func (w *Writer) ReadFrom(r io.Reader) (n int64, err error) {
 		b := buf[:nr]
 		w.XORKeyStream(b, b)
 		if _, err = w.Writer.Write(b); err != nil {
-			return
+			return n, err
 		}
 		if er != nil {
 			if er != io.EOF { // ignore EOF as per io.ReaderFrom contract
 				err = er
 			}
-			return
+			return n, err
 		}
 	}
 }
@@ -65,7 +65,7 @@ func (r *Reader) Read(p []byte) (n int, err error) {
 		return 0, err
 	}
 	r.XORKeyStream(p, p[:n])
-	return
+	return n, err
 }
 
 func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
@@ -78,14 +78,14 @@ func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 			n += int64(nw)
 			if ew != nil {
 				err = ew
-				return
+				return n, err
 			}
 		}
 		if er != nil {
 			if er != io.EOF { // ignore EOF as per io.Copy contract (using src.WriteTo shortcut)
 				err = er
 			}
-			return
+			return n, err
 		}
 	}
 }

@@ -16,7 +16,7 @@ const (
 
 func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
 	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) {
-		return
+		return err
 	}
 
 	var innerErr error
@@ -51,7 +51,7 @@ func setSocketOptions(network, address string, c syscall.RawConn, opts *Options)
 	if innerErr != nil {
 		err = innerErr
 	}
-	return
+	return err
 }
 
 func bindSocketToInterface4(handle windows.Handle, index uint32) error {

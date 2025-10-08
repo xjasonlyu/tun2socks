@@ -42,7 +42,7 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 		w.Seal(buf[:0], nonce, buf[:2], nil)
 		increment(nonce)
 		_, err = w.Writer.Write(buf)
-		return
+		return n, err
 	}
 
 	for nr := 0; n < len(p) && err == nil; n += nr {
@@ -58,7 +58,7 @@ func (w *Writer) Write(p []byte) (n int, err error) {
 		increment(nonce)
 		_, err = w.Writer.Write(buf)
 	}
-	return
+	return n, err
 }
 
 // ReadFrom reads from the given io.Reader until EOF or error, encrypts and
@@ -80,13 +80,13 @@ func (w *Writer) ReadFrom(r io.Reader) (n int64, err error) {
 		increment(nonce)
 		if _, ew := w.Writer.Write(buf[:off+nr+tag]); ew != nil {
 			err = ew
-			return
+			return n, err
 		}
 		if er != nil {
 			if er != io.EOF { // ignore EOF as per io.ReaderFrom contract
 				err = er
 			}
-			return
+			return n, err
 		}
 	}
 }
@@ -180,7 +180,7 @@ func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 					r.buf = nil
 				}
 				err = ew
-				return
+				return n, err
 			}
 		}
 
@@ -189,7 +189,7 @@ func (r *Reader) WriteTo(w io.Writer) (n int64, err error) {
 			if er != io.EOF {
 				err = er
 			}
-			return
+			return n, err
 		}
 		r.buf = r.buf[:nr]
 		r.off = 0
