@@ -191,12 +191,12 @@ func netstack(k *Key) (err error) {
 	}()
 
 	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
-		return
+		return err
 	}
 	tunnel.T().SetDialer(_defaultProxy)
 
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
-		return
+		return err
 	}
 
 	var multicastGroups []netip.Addr
@@ -231,7 +231,7 @@ func netstack(k *Key) (err error) {
 		MulticastGroups:  multicastGroups,
 		Options:          opts,
 	}); err != nil {
-		return
+		return err
 	}
 
 	log.Infof(

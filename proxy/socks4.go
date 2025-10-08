@@ -41,5 +41,5 @@ func (ss *Socks4) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 	}(c)
 
 	err = socks4.ClientHandshake(c, metadata.DestinationAddress(), socks4.CmdConnect, ss.userID)
-	return
+	return c, err
 }

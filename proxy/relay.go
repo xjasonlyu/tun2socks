@@ -89,10 +89,10 @@ func (rl *Relay) dialContext(ctx context.Context, metadata *M.Metadata) (rc *rel
 
 	if rl.noDelay {
 		if _, err = req.WriteTo(c); err != nil {
-			return
+			return rc, err
 		}
 		if err = readRelayResponse(c); err != nil {
-			return
+			return rc, err
 		}
 	}
 
@@ -101,22 +101,22 @@ func (rl *Relay) dialContext(ctx context.Context, metadata *M.Metadata) (rc *rel
 		rc = newRelayConn(c, metadata.Addr(), rl.noDelay, false)
 		if !rl.noDelay {
 			if _, err = req.WriteTo(rc.wbuf); err != nil {
-				return
+				return rc, err
 			}
 		}
 	case M.UDP:
 		rc = newRelayConn(c, metadata.Addr(), rl.noDelay, true)
 		if !rl.noDelay {
 			if _, err = req.WriteTo(rc.wbuf); err != nil {
-				return
+				return rc, err
 			}
 		}
 	default:
 		err = fmt.Errorf("network %s is unsupported", metadata.Network)
-		return
+		return rc, err
 	}
 
-	return
+	return rc, err
 }
 
 type relayConn struct {
@@ -151,7 +151,7 @@ func (rc *relayConn) Read(b []byte) (n int, err error) {
 		}
 	})
 	if err != nil {
-		return
+		return n, err
 	}
 
 	if !rc.udp {
@@ -161,7 +161,7 @@ func (rc *relayConn) Read(b []byte) (n int, err error) {
 	var bb [2]byte
 	_, err = io.ReadFull(rc.Conn, bb[:])
 	if err != nil {
-		return
+		return n, err
 	}
 
 	dLen := int(binary.BigEndian.Uint16(bb[:]))
@@ -174,7 +174,7 @@ func (rc *relayConn) Read(b []byte) (n int, err error) {
 	_, err = io.ReadFull(rc.Conn, buf)
 	n = copy(b, buf)
 
-	return
+	return n, err
 }
 
 func (rc *relayConn) WriteTo(b []byte, _ net.Addr) (int, error) {
@@ -194,7 +194,7 @@ func (rc *relayConn) tcpWrite(b []byte) (n int, err error) {
 		rc.wbuf.Write(b)
 		_, err = rc.Conn.Write(rc.wbuf.Bytes())
 		rc.wbuf.Reset()
-		return
+		return n, err
 	}
 	return rc.Conn.Write(b)
 }
@@ -202,7 +202,7 @@ func (rc *relayConn) tcpWrite(b []byte) (n int, err error) {
 func (rc *relayConn) udpWrite(b []byte) (n int, err error) {
 	if len(b) > math.MaxUint16 {
 		err = errors.New("write: data maximum exceeded")
-		return
+		return n, err
 	}
 
 	n = len(b)
@@ -212,14 +212,14 @@ func (rc *relayConn) udpWrite(b []byte) (n int, err error) {
 		rc.wbuf.Write(bb[:])
 		rc.wbuf.Write(b)
 		_, err = rc.wbuf.WriteTo(rc.Conn)
-		return
+		return n, err
 	}
 
 	var bb [2]byte
 	binary.BigEndian.PutUint16(bb[:], uint16(len(b)))
 	_, err = rc.Conn.Write(bb[:])
 	if err != nil {
-		return
+		return n, err
 	}
 	return rc.Conn.Write(b)
 }

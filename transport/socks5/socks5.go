@@ -370,13 +370,13 @@ func ParseAddrString(s string) Addr {
 func DecodeUDPPacket(packet []byte) (addr Addr, payload []byte, err error) {
 	if len(packet) < 5 {
 		err = errors.New("insufficient length of packet")
-		return
+		return addr, payload, err
 	}
 
 	// packet[0] and packet[1] are reserved
 	if !bytes.Equal(packet[:2], []byte{0x00, 0x00}) {
 		err = errors.New("reserved fields should be zero")
-		return
+		return addr, payload, err
 	}
 
 	// The FRAG field indicates whether or not this datagram is one of a
@@ -396,7 +396,7 @@ func DecodeUDPPacket(packet []byte) (addr Addr, payload []byte, err error) {
 	// Ref: https://datatracker.ietf.org/doc/html/rfc1928#section-7
 	if packet[2] != 0x00 /* fragments */ {
 		err = errors.New("discarding fragmented payload")
-		return
+		return addr, payload, err
 	}
 
 	addr = SplitAddr(packet[3:])
@@ -405,7 +405,7 @@ func DecodeUDPPacket(packet []byte) (addr Addr, payload []byte, err error) {
 	}
 
 	payload = packet[3+len(addr):]
-	return
+	return addr, payload, err
 }
 
 func EncodeUDPPacket(addr Addr, payload []byte) (packet []byte, err error) {
@@ -413,5 +413,5 @@ func EncodeUDPPacket(addr Addr, payload []byte) (packet []byte, err error) {
 		return nil, errors.New("address is invalid")
 	}
 	packet = bytes.Join([][]byte{{0x00, 0x00, 0x00}, addr, payload}, nil)
-	return
+	return packet, err
 }

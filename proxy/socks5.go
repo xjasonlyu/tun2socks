@@ -69,7 +69,7 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 	}
 
 	_, err = socks5.ClientHandshake(c, serializeSocksAddr(metadata), socks5.CmdConnect, user)
-	return
+	return c, err
 }
 
 func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
@@ -161,7 +161,7 @@ func (pc *socksPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	}
 
 	if err != nil {
-		return
+		return n, err
 	}
 	return pc.PacketConn.WriteTo(packet, pc.rAddr)
 }

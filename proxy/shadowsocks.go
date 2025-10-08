@@ -63,7 +63,7 @@ func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *M.Metadata) (c
 
 	c = ss.cipher.StreamConn(c)
 	_, err = c.Write(serializeSocksAddr(metadata))
-	return
+	return c, err
 }
 
 func (ss *Shadowsocks) DialUDP(*M.Metadata) (net.PacketConn, error) {
@@ -96,7 +96,7 @@ func (pc *ssPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	}
 
 	if err != nil {
-		return
+		return n, err
 	}
 	return pc.PacketConn.WriteTo(packet[3:], pc.rAddr)
 }
