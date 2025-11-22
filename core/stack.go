@@ -31,6 +31,9 @@ type Config struct {
 	// Options are supplement options to apply settings
 	// for the internal stack.
 	Options []option.Option
+
+	// TCPSocketOptions are TCP socket-level options to apply to each TCP endpoint.
+	TCPSocketOptions []option.TCPSocketOption
 }
 
 // CreateStack creates *stack.Stack with given config.
@@ -39,6 +42,11 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 	if len(opts) > 0 {
 		opts = append(opts, cfg.Options...)
 	}
+
+	tcpSockOpts := append(
+		option.DefaultTCPSocketOptions(),
+		cfg.TCPSocketOptions...,
+	)
 
 	s := stack.New(stack.Options{
 		NetworkProtocols: []stack.NetworkProtocolFactory{
@@ -61,7 +69,7 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// before creating NIC, otherwise NIC would dispatch packets
 		// to stack and cause race condition.
 		// Initiate transport protocol (TCP/UDP) with given handler.
-		withTCPHandler(cfg.TransportHandler.HandleTCP),
+		withTCPHandler(cfg.TransportHandler.HandleTCP, tcpSockOpts),
 		withUDPHandler(cfg.TransportHandler.HandleUDP),
 
 		// Create stack NIC and then bind link endpoint to it.

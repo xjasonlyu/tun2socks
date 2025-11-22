@@ -10,6 +10,9 @@ type Key struct {
 	Device                   string        `yaml:"device"`
 	LogLevel                 string        `yaml:"loglevel"`
 	Interface                string        `yaml:"interface"`
+	TCPKeepaliveCount        int           `yaml:"tcp-keepalive-count"`
+	TCPKeepaliveIdleTime     time.Duration `yaml:"tcp-keepalive-idle-time"`
+	TCPKeepaliveInterval     time.Duration `yaml:"tcp-keepalive-interval"`
 	TCPModerateReceiveBuffer bool          `yaml:"tcp-moderate-receive-buffer"`
 	TCPSendBufferSize        string        `yaml:"tcp-send-buffer-size"`
 	TCPReceiveBufferSize     string        `yaml:"tcp-receive-buffer-size"`

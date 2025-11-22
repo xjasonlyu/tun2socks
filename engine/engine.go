@@ -205,6 +205,7 @@ func netstack(k *Key) (err error) {
 	}
 
 	var opts []option.Option
+	var tcpSocketOpts []option.TCPSocketOption
 	if k.TCPModerateReceiveBuffer {
 		opts = append(opts, option.WithTCPModerateReceiveBuffer(true))
 	}
@@ -225,11 +226,27 @@ func netstack(k *Key) (err error) {
 		opts = append(opts, option.WithTCPReceiveBufferSize(int(size)))
 	}
 
+	if k.TCPKeepaliveIdleTime > 0 {
+		tcpSocketOpts = append(tcpSocketOpts, option.WithTCPKeepaliveIdleTime(k.TCPKeepaliveIdleTime))
+		log.Infof("[TCP] keepalive idle time: %v", k.TCPKeepaliveIdleTime)
+	}
+
+	if k.TCPKeepaliveInterval > 0 {
+		tcpSocketOpts = append(tcpSocketOpts, option.WithTCPKeepaliveInterval(k.TCPKeepaliveInterval))
+		log.Infof("[TCP] keepalive interval: %v", k.TCPKeepaliveInterval)
+	}
+
+	if k.TCPKeepaliveCount > 0 {
+		tcpSocketOpts = append(tcpSocketOpts, option.WithTCPKeepaliveCount(k.TCPKeepaliveCount))
+		log.Infof("[TCP] keepalive count: %d", k.TCPKeepaliveCount)
+	}
+
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: tunnel.T(),
 		MulticastGroups:  multicastGroups,
 		Options:          opts,
+		TCPSocketOptions: tcpSocketOpts,
 	}); err != nil {
 		return err
 	}
