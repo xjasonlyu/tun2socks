@@ -38,6 +38,11 @@ func init() {
 	flag.StringVar(&key.MulticastGroups, "multicast-groups", "", "Set multicast groups, separated by commas")
 	flag.StringVar(&key.TUNPreUp, "tun-pre-up", "", "Execute a command before TUN device setup")
 	flag.StringVar(&key.TUNPostUp, "tun-post-up", "", "Execute a command after TUN device setup")
+
+	flag.DurationVar(&key.TCPKeepaliveIdleTime, "tcp-keepalive-idle-time", 0, "TCP keepalive idle time before first probe (e.g., 60s, 2m)")
+	flag.DurationVar(&key.TCPKeepaliveInterval, "tcp-keepalive-interval", 0, "TCP keepalive probe interval (e.g., 30s, 1m)")
+	flag.IntVar(&key.TCPKeepaliveCount, "tcp-keepalive-count", 0, "TCP keepalive probe count before giving up")
+
 	flag.BoolVar(&versionFlag, "version", false, "Show version and then quit")
 	flag.Parse()
 }
