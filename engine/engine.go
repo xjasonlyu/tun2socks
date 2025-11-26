@@ -229,16 +229,22 @@ func netstack(k *Key) (err error) {
 	if k.TCPKeepaliveIdleTime > 0 {
 		tcpSocketOpts = append(tcpSocketOpts, option.WithTCPKeepaliveIdleTime(k.TCPKeepaliveIdleTime))
 		log.Infof("[STACK] keepalive idle time: %v", k.TCPKeepaliveIdleTime)
+	} else {
+		tcpSocketOpts = append(tcpSocketOpts, option.WithDefaultTCPKeepaliveIdleTime())
 	}
 
 	if k.TCPKeepaliveInterval > 0 {
 		tcpSocketOpts = append(tcpSocketOpts, option.WithTCPKeepaliveInterval(k.TCPKeepaliveInterval))
 		log.Infof("[STACK] keepalive interval: %v", k.TCPKeepaliveInterval)
+	} else {
+		tcpSocketOpts = append(tcpSocketOpts, option.WithDefaultTCPKeepaliveInterval())
 	}
 
 	if k.TCPKeepaliveCount > 0 {
 		tcpSocketOpts = append(tcpSocketOpts, option.WithTCPKeepaliveCount(k.TCPKeepaliveCount))
 		log.Infof("[STACK] keepalive count: %d", k.TCPKeepaliveCount)
+	} else {
+		tcpSocketOpts = append(tcpSocketOpts, option.WithDefaultTCPKeepaliveCount())
 	}
 
 	if _defaultStack, err = core.CreateStack(&core.Config{

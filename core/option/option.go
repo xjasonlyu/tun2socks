@@ -138,10 +138,7 @@ func WithDefault() Option {
 // DefaultTCPSocketOptions returns the default TCP socket options.
 func DefaultTCPSocketOptions() []TCPSocketOption {
 	return []TCPSocketOption{
-		WithKeepAlivesEnabled(tcpKeepAliveEnabled),
-		WithTCPKeepaliveIdleTime(tcpDefaultKeepaliveIdle),
-		WithTCPKeepaliveInterval(tcpDefaultKeepaliveInterval),
-		WithTCPKeepaliveCount(tcpDefaultKeepaliveCount),
+		WithKeepAliveEnabled(tcpKeepAliveEnabled),
 	}
 }
 
@@ -317,4 +314,19 @@ func WithTCPKeepaliveCount(count int) TCPSocketOption {
 	return func(ep tcpip.Endpoint) tcpip.Error {
 		return ep.SetSockOptInt(tcpip.KeepaliveCountOption, count)
 	}
+}
+
+// WithDefaultTCPKeepaliveIdleTime sets the default TCP keepalive idle time.
+func WithDefaultTCPKeepaliveIdleTime() TCPSocketOption {
+	return WithTCPKeepaliveIdleTime(tcpDefaultKeepaliveIdle)
+}
+
+// WithDefaultTCPKeepaliveInterval sets the default TCP keepalive interval.
+func WithDefaultTCPKeepaliveInterval() TCPSocketOption {
+	return WithTCPKeepaliveInterval(tcpDefaultKeepaliveInterval)
+}
+
+// WithDefaultTCPKeepaliveCount sets the default TCP keepalive count.
+func WithDefaultTCPKeepaliveCount() TCPSocketOption {
+	return WithTCPKeepaliveCount(tcpDefaultKeepaliveCount)
 }
