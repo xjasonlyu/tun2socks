@@ -61,9 +61,9 @@ const (
 	// for a transport endpoint.
 	tcpDefaultReceiveBufferSize = tcp.DefaultReceiveBufferSize
 
-	// tcpKeepAlivesEnabled is the value used to enable or disable keepalives on
+	// tcpKeepAliveEnabled is the value used to enable or disable keepalives on
 	// the socket.
-	tcpKeepAlivesEnabled = true
+	tcpKeepAliveEnabled = true
 
 	// tcpDefaultKeepaliveCount is the maximum number of TCP keep-alive probes to
 	// send before giving up and killing the connection if no response is
@@ -138,7 +138,7 @@ func WithDefault() Option {
 // DefaultTCPSocketOptions returns the default TCP socket options.
 func DefaultTCPSocketOptions() []TCPSocketOption {
 	return []TCPSocketOption{
-		WithKeepAlivesEnabled(tcpKeepAlivesEnabled),
+		WithKeepAlivesEnabled(tcpKeepAliveEnabled),
 		WithTCPKeepaliveIdleTime(tcpDefaultKeepaliveIdle),
 		WithTCPKeepaliveInterval(tcpDefaultKeepaliveInterval),
 		WithTCPKeepaliveCount(tcpDefaultKeepaliveCount),
@@ -288,8 +288,8 @@ func WithTCPRecovery(v tcpip.TCPRecovery) Option {
 	}
 }
 
-// WithKeepAlivesEnabled sets the keep-alive enabled setting
-func WithKeepAlivesEnabled(enabled bool) TCPSocketOption {
+// WithKeepAliveEnabled sets the keep-alive enabled setting
+func WithKeepAliveEnabled(enabled bool) TCPSocketOption {
 	return func(ep tcpip.Endpoint) tcpip.Error {
 		ep.SocketOptions().SetKeepAlive(enabled)
 		return nil
