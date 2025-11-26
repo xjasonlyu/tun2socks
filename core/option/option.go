@@ -135,13 +135,6 @@ func WithDefault() Option {
 	}
 }
 
-// DefaultTCPSocketOptions returns the default TCP socket options.
-func DefaultTCPSocketOptions() []TCPSocketOption {
-	return []TCPSocketOption{
-		WithKeepAliveEnabled(tcpKeepAliveEnabled),
-	}
-}
-
 // WithDefaultTTL sets the default TTL used by stack.
 func WithDefaultTTL(ttl uint8) Option {
 	return func(s *stack.Stack) error {
@@ -314,6 +307,11 @@ func WithTCPKeepaliveCount(count int) TCPSocketOption {
 	return func(ep tcpip.Endpoint) tcpip.Error {
 		return ep.SetSockOptInt(tcpip.KeepaliveCountOption, count)
 	}
+}
+
+// WithDefaultTCPKeepaliveEnabled sets the default TCP keepalive enabled setting.
+func WithDefaultTCPKeepaliveEnabled() TCPSocketOption {
+	return WithKeepAliveEnabled(tcpKeepAliveEnabled)
 }
 
 // WithDefaultTCPKeepaliveIdleTime sets the default TCP keepalive idle time.

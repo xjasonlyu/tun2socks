@@ -43,11 +43,6 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		opts = append(opts, cfg.Options...)
 	}
 
-	tcpSockOpts := append(
-		option.DefaultTCPSocketOptions(),
-		cfg.TCPSocketOptions...,
-	)
-
 	s := stack.New(stack.Options{
 		NetworkProtocols: []stack.NetworkProtocolFactory{
 			ipv4.NewProtocol,
@@ -69,7 +64,7 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// before creating NIC, otherwise NIC would dispatch packets
 		// to stack and cause race condition.
 		// Initiate transport protocol (TCP/UDP) with given handler.
-		withTCPHandler(cfg.TransportHandler.HandleTCP, tcpSockOpts),
+		withTCPHandler(cfg.TransportHandler.HandleTCP, cfg.TCPSocketOptions),
 		withUDPHandler(cfg.TransportHandler.HandleUDP),
 
 		// Create stack NIC and then bind link endpoint to it.

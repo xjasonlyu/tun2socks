@@ -205,7 +205,9 @@ func netstack(k *Key) (err error) {
 	}
 
 	var opts []option.Option
-	var tcpSocketOpts []option.TCPSocketOption
+	tcpSocketOpts := []option.TCPSocketOption{
+		option.WithDefaultTCPKeepaliveEnabled(),
+	}
 	if k.TCPModerateReceiveBuffer {
 		opts = append(opts, option.WithTCPModerateReceiveBuffer(true))
 	}
