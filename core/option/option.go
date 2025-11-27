@@ -2,6 +2,7 @@ package option
 
 import (
 	"fmt"
+	"time"
 
 	"golang.org/x/time/rate"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -59,9 +60,29 @@ const (
 	// tcpDefaultReceiveBufferSize is the default size of the receive buffer
 	// for a transport endpoint.
 	tcpDefaultReceiveBufferSize = tcp.DefaultReceiveBufferSize
+
+	// tcpKeepAliveEnabled is the value used to enable or disable keepalives on
+	// the socket.
+	tcpKeepAliveEnabled = true
+
+	// tcpDefaultKeepaliveCount is the maximum number of TCP keep-alive probes to
+	// send before giving up and killing the connection if no response is
+	// obtained from the other end.
+	tcpDefaultKeepaliveCount = 9
+
+	// tcpDefaultKeepaliveIdle specifies the time a connection must remain idle
+	// before the first TCP keepalive packet is sent.
+	tcpDefaultKeepaliveIdle = 60 * time.Second
+
+	// tcpDefaultKeepaliveInterval specifies the interval time between sending
+	// TCP keepalive packets.
+	tcpDefaultKeepaliveInterval = 30 * time.Second
 )
 
 type Option func(*stack.Stack) error
+
+// TCPSocketOption is a function that applies TCP socket-level options to an endpoint.
+type TCPSocketOption func(tcpip.Endpoint) tcpip.Error
 
 // WithDefault sets all default values for stack.
 func WithDefault() Option {
@@ -255,4 +276,55 @@ func WithTCPRecovery(v tcpip.TCPRecovery) Option {
 		}
 		return nil
 	}
+}
+
+// WithKeepAliveEnabled sets the keep-alive enabled setting
+func WithKeepAliveEnabled(enabled bool) TCPSocketOption {
+	return func(ep tcpip.Endpoint) tcpip.Error {
+		ep.SocketOptions().SetKeepAlive(enabled)
+		return nil
+	}
+}
+
+// WithTCPKeepaliveIdleTime sets the TCP keepalive idle time.
+func WithTCPKeepaliveIdleTime(idle time.Duration) TCPSocketOption {
+	return func(ep tcpip.Endpoint) tcpip.Error {
+		opt := tcpip.KeepaliveIdleOption(idle)
+		return ep.SetSockOpt(&opt)
+	}
+}
+
+// WithTCPKeepaliveInterval sets the TCP keepalive interval.
+func WithTCPKeepaliveInterval(interval time.Duration) TCPSocketOption {
+	return func(ep tcpip.Endpoint) tcpip.Error {
+		opt := tcpip.KeepaliveIntervalOption(interval)
+		return ep.SetSockOpt(&opt)
+	}
+}
+
+// WithTCPKeepaliveCount sets the TCP keepalive count.
+func WithTCPKeepaliveCount(count int) TCPSocketOption {
+	return func(ep tcpip.Endpoint) tcpip.Error {
+		return ep.SetSockOptInt(tcpip.KeepaliveCountOption, count)
+	}
+}
+
+// WithDefaultTCPKeepaliveEnabled sets the default TCP keepalive enabled setting.
+func WithDefaultTCPKeepaliveEnabled() TCPSocketOption {
+	return WithKeepAliveEnabled(tcpKeepAliveEnabled)
+}
+
+// WithDefaultTCPKeepaliveIdleTime sets the default TCP keepalive idle time.
+func WithDefaultTCPKeepaliveIdleTime() TCPSocketOption {
+	return WithTCPKeepaliveIdleTime(tcpDefaultKeepaliveIdle)
+}
+
+// WithDefaultTCPKeepaliveInterval sets the default TCP keepalive interval.
+func WithDefaultTCPKeepaliveInterval() TCPSocketOption {
+	return WithTCPKeepaliveInterval(tcpDefaultKeepaliveInterval)
+}
+
+// WithDefaultTCPKeepaliveCount sets the default TCP keepalive count.
+func WithDefaultTCPKeepaliveCount() TCPSocketOption {
+	return WithTCPKeepaliveCount(tcpDefaultKeepaliveCount)
 }
