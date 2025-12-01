@@ -31,6 +31,9 @@ type Tunnel struct {
 	// UDP session timeout.
 	udpTimeout *atomic.Duration
 
+	// UDP disabled flag.
+	udpDisabled *atomic.Bool
+
 	// Internal proxy.Dialer for Tunnel.
 	dialerMu sync.RWMutex
 	dialer   proxy.Dialer
@@ -44,12 +47,13 @@ type Tunnel struct {
 
 func New(dialer proxy.Dialer, manager *statistic.Manager) *Tunnel {
 	return &Tunnel{
-		tcpQueue:   make(chan adapter.TCPConn),
-		udpQueue:   make(chan adapter.UDPConn),
-		udpTimeout: atomic.NewDuration(udpSessionTimeout),
-		dialer:     dialer,
-		manager:    manager,
-		procCancel: func() { /* nop */ },
+		tcpQueue:    make(chan adapter.TCPConn),
+		udpQueue:    make(chan adapter.UDPConn),
+		udpTimeout:  atomic.NewDuration(udpSessionTimeout),
+		udpDisabled: atomic.NewBool(false),
+		dialer:      dialer,
+		manager:     manager,
+		procCancel:  func() { /* nop */ },
 	}
 }
 
@@ -113,4 +117,8 @@ func (t *Tunnel) SetDialer(dialer proxy.Dialer) {
 
 func (t *Tunnel) SetUDPTimeout(timeout time.Duration) {
 	t.udpTimeout.Store(timeout)
+}
+
+func (t *Tunnel) SetUDPDisabled(disabled bool) {
+	t.udpDisabled.Store(disabled)
 }
