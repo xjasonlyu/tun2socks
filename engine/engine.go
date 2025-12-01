@@ -17,6 +17,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
@@ -70,6 +71,7 @@ func start() error {
 
 	for _, f := range []func(*Key) error{
 		general,
+		dnsConfig,
 		restAPI,
 		netstack,
 	} {
@@ -161,6 +163,19 @@ func restAPI(k *Key) error {
 			}
 		}()
 		log.Infof("[RESTAPI] serve at: %s", u)
+	}
+	return nil
+}
+
+func dnsConfig(k *Key) error {
+	if k.DNSAddr != "" {
+		log.Infof("[DNS] hijacking enabled, using DNS server: %s", k.DNSAddr)
+		dns.SetConfig(&dns.Config{
+			Address: k.DNSAddr,
+		})
+	} else {
+		log.Infof("[DNS] hijacking disabled")
+		dns.SetConfig(nil)
 	}
 	return nil
 }
