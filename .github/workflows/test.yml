@@ -12,7 +12,7 @@ on:
 
 jobs:
   unit:
-    name: Unit Tests
+    name: Unit Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -24,46 +24,194 @@ jobs:
           check-latest: true
           go-version-file: 'go.mod'
 
-      - name: Run unit tests
+      - name: Run unit test
         run: |
           go test ./...
 
-  e2e:
-    name: E2E Tests
+  build:
+    name: Build Test
+    needs: unit
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v6
+        with:
+          check-latest: true
+          go-version-file: 'go.mod'
+
+      - name: Run build test
+        run: make -j all
+
+  e2e:
+    name: E2E Test (${{ matrix.protocol }})
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - protocol: HTTP
+            image: gogost/gost:latest
+            args: -L "http://:8080"
+            proxy: http://192.168.1.2:8080
+            udp: false
+          - protocol: SOCKSv4
+            image: gogost/gost:latest
+            args: -L "socks4://:1080"
+            proxy: socks4://192.168.1.2:1080
+            udp: false
+          - protocol: SOCKSv5
+            image: gogost/gost:latest
+            args: -L "socks5://:1080?udp=true"
+            proxy: socks5://192.168.1.2:1080
+            udp: true
+          - protocol: Relay
+            image: gogost/gost:latest
+            args: -L "relay://:8420"
+            proxy: relay://192.168.1.2:8420
+            udp: true
+          - protocol: Shadowsocks
+            image: ghcr.io/shadowsocks/ssserver-rust:latest
+            args: ssserver -s 0.0.0.0:8388 -k pass -m aes-128-gcm -U -v
+            proxy: ss://aes-128-gcm:pass@192.168.1.2:8388
+            udp: true
+    env:
+      TUN_IF: tun0
+      RESTAPI_PORT: 8080
+      SUBNET_NAME: e2e-net
+      SUBNET_PREFIX: 192.168.1
+      APP_IPERF: iperf
+      APP_PROXY: proxy
+      APP_TESTER: tester
+      APP_TUN2SOCKS: tun2socks
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Create CI Dockerfile
+        run: |
+          cp Dockerfile Dockerfile.ci
+          cat >> Dockerfile.ci <<EOF
+          RUN apk add --update --no-cache \
+            bind-tools curl iperf3
+          EOF
 
       - name: Build CI image
-        run: |
-          docker build -f docker/ci/Dockerfile -t tun2socks:ci .
+        run: docker build -f Dockerfile.ci -t tun2socks:ci .
 
-      - name: Spin up tun2socks
+      - name: Create test network
+        run: |
+          docker network create \
+            --driver bridge \
+            --subnet "${SUBNET_PREFIX}.0/24" \
+            "${SUBNET_NAME}"
+
+      - name: Start proxy
+        run: |
+          docker run -d \
+            --name "${APP_PROXY}" \
+            --network "${SUBNET_NAME}" \
+            --ip "${SUBNET_PREFIX}.2" \
+            ${{ matrix.image }} ${{ matrix.args }}
+
+      - name: Start iperf
+        run: |
+          docker run -d \
+            --name "${APP_IPERF}" \
+            --network "${SUBNET_NAME}" \
+            --ip "${SUBNET_PREFIX}.3" \
+            networkstatic/iperf3:latest \
+            -s --logfile /dev/null
+
+      - name: Start tun2socks
         env:
-          DNS: 223.5.5.5
-          TUN: tun0
-          ADDR: 198.18.0.1/15
-          PROXY: direct://
+          PROXY: ${{ matrix.proxy }}
         run: |
-          docker run -d --privileged \
-          --dns "${DNS}" \
-          --name t2s \
-          tun2socks:ci \
-          sh -eu -c '
-            ip tuntap add mode tun dev "${TUN}";
-            ip addr add "${ADDR}" dev "${TUN}";
-            ip link set dev "${TUN}" up;
+          docker run -d \
+            --name "${APP_TUN2SOCKS}" \
+            --cap-add=NET_ADMIN \
+            --device /dev/net/tun:/dev/net/tun \
+            --network "${SUBNET_NAME}" \
+            --ip "${SUBNET_PREFIX}.4" \
+            -e TUN="${TUN_IF}" \
+            -e PROXY="${PROXY}" \
+            -e RESTAPI=":${RESTAPI_PORT}" \
+            -p "${RESTAPI_PORT}:${RESTAPI_PORT}" \
+            tun2socks:ci
 
-            sysctl -w net.ipv4.conf.all.rp_filter=0;
-            sysctl -w net.ipv4.conf.default.rp_filter=0;
-
-            ip route add 0.0.0.0/1 dev "${TUN}";
-            ip route add 128.0.0.0/1 dev "${TUN}";
-
-            exec /usr/bin/tun2socks --device "tun://${TUN}" --proxy "${PROXY}"
-          '
-
-      - name: Run E2E tests
+      - name: Start tester
         run: |
-          docker exec t2s curl -fsS --max-time 10 ip.sb
+          docker run -d \
+            --name "${APP_TESTER}" \
+            --cap-add=NET_ADMIN \
+            --network "${SUBNET_NAME}" \
+            --entrypoint sh \
+            tun2socks:ci \
+            -c "sleep infinite"
+
+      - name: Set up tester
+        run: docker exec "${APP_TESTER}" ip route add 1.1.1.1 via "${SUBNET_PREFIX}.4"
+
+      - name: Check readiness
+        run: |
+          for i in $(seq 1 10); do
+            if curl -fsS --max-time 2 -o /dev/null "http://localhost:${RESTAPI_PORT}"; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Test TCP via HTTP
+        run: docker exec "${APP_TUN2SOCKS}" curl -fsS -v --max-time 10 ipinfo.io
+
+      - name: Test UDP via DNS
+        if: ${{ matrix.udp }}
+        run: docker exec "${APP_TUN2SOCKS}" dig @8.8.8.8 www.google.com +tries=2
+
+      - name: Test UDP via QUIC
+        if: ${{ matrix.udp }}
+        run: |
+          docker exec "${APP_TUN2SOCKS}" curl -fsS -v --max-time 10 -o /dev/null \
+            --http3-only https://cloudflare-quic.com
+
+      - name: Test upload speed via iPerf
+        run: |
+          docker exec "${APP_TUN2SOCKS}" iperf3 --bind-dev "${TUN_IF}" \
+            --connect-timeout 2000 -c "${SUBNET_PREFIX}.3"
+
+      - name: Test download speed via iPerf
+        run: |
+          docker exec "${APP_TUN2SOCKS}" iperf3 --bind-dev "${TUN_IF}" \
+            --connect-timeout 2000 -c "${SUBNET_PREFIX}.3" -R
+
+      - name: Test routing (TCP)
+        run: docker exec "${APP_TESTER}" curl -fsS -v --max-time 10 -o /dev/null 1.1.1.1
+
+      - name: Test routing (UDP)
+        if: ${{ matrix.udp }}
+        run: docker exec "${APP_TESTER}" dig @1.1.1.1 www.cloudflare.com +tries=2
+
+      - name: Dump proxy logs
+        if: always()
+        run: |
+          docker logs "${APP_PROXY}" || true
+
+      - name: Dump tun2socks logs
+        if: always()
+        run: |
+          docker logs "${APP_TUN2SOCKS}" || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker rm -f "${APP_TUN2SOCKS}" || true
+          docker rm -f "${APP_TESTER}" || true
+          docker rm -f "${APP_IPERF}" || true
+          docker rm -f "${APP_PROXY}" || true
+          docker network rm "${SUBNET_NAME}" || true
