@@ -15,6 +15,7 @@
 - **Cross-Platform**: Runs on Linux/macOS/Windows/FreeBSD/OpenBSD with platform-specific optimizations.
 - **Gateway Mode**: Acts as a Layer 3 gateway to route traffic from other devices on the same network.
 - **Full IPv6 Compatibility**: Natively supports IPv6; seamlessly tunnels IPv4 over IPv6 and vice versa.
+- **DNS Hijacking**: Intercepts and redirects DNS traffic to a configurable DNS server for both TCP and UDP protocols.
 - **User-Space Networking**: Leverages the **[gVisor](https://github.com/google/gvisor)** network stack for enhanced
   performance and flexibility.
 
@@ -24,6 +25,50 @@
 
 For all scenarios of usage, tun2socks performs best.
 See [benchmarks](https://github.com/xjasonlyu/tun2socks/wiki/Benchmarks) for more details.
+
+## DNS Hijacking
+
+tun2socks supports DNS traffic interception and redirection. Simply specify a DNS server address to automatically enable DNS hijacking for all DNS queries (both TCP and UDP on port 53).
+
+### Usage
+
+Enable DNS hijacking by specifying a DNS server address:
+
+```bash
+# Enable DNS hijacking with Google DNS
+./tun2socks -device tun://tun0 -proxy socks5://127.0.0.1:1080 -dns-addr 8.8.8.8:53
+
+# Use Cloudflare DNS
+./tun2socks -device tun://tun0 -proxy socks5://127.0.0.1:1080 -dns-addr 1.1.1.1:53
+
+# Use local DNS server
+./tun2socks -device tun://tun0 -proxy socks5://127.0.0.1:1080 -dns-addr 127.0.0.1:5353
+```
+
+Or using a configuration file:
+
+```yaml
+device: tun://tun0
+proxy: socks5://127.0.0.1:1080
+dns-addr: 8.8.8.8:53  # Automatically enables DNS hijacking
+```
+
+To disable DNS hijacking, simply omit the `dns-addr` field or leave it empty.
+
+### Supported DNS Servers
+
+- Google DNS: `8.8.8.8:53`, `8.8.4.4:53`
+- Cloudflare DNS: `1.1.1.1:53`, `1.0.0.1:53`
+- OpenDNS: `208.67.222.222:53`, `208.67.220.220:53`
+- Custom DNS: Any IP:port combination
+
+### Features
+
+- **Simple Configuration**: Just specify a DNS server address to enable hijacking
+- **Protocol Support**: Both TCP and UDP DNS queries are supported
+- **Automatic Interception**: No additional configuration needed for applications
+- **Configurable**: Choose any DNS server that suits your needs
+- **Logging**: DNS query forwarding is logged for debugging purposes
 
 ## Documentation
 
