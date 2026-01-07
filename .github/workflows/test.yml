@@ -11,14 +11,12 @@ on:
   pull_request:
 
 jobs:
-  build-test:
-    name: Build Test
+  unit:
+    name: Unit Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
-        with:
-          fetch-depth: 0
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -26,6 +24,46 @@ jobs:
           check-latest: true
           go-version-file: 'go.mod'
 
-      - name: Run test
+      - name: Run unit tests
         run: |
           go test ./...
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Build CI image
+        run: |
+          docker build -f docker/ci/Dockerfile -t tun2socks:ci .
+
+      - name: Spin up tun2socks
+        env:
+          DNS: 223.5.5.5
+          TUN: tun0
+          ADDR: 198.18.0.1/15
+          PROXY: direct://
+        run: |
+          docker run -d --privileged \
+          --dns "${DNS}" \
+          --name t2s \
+          tun2socks:ci \
+          sh -eu -c '
+            ip tuntap add mode tun dev "${TUN}";
+            ip addr add "${ADDR}" dev "${TUN}";
+            ip link set dev "${TUN}" up;
+
+            sysctl -w net.ipv4.conf.all.rp_filter=0;
+            sysctl -w net.ipv4.conf.default.rp_filter=0;
+
+            ip route add 0.0.0.0/1 dev "${TUN}";
+            ip route add 128.0.0.0/1 dev "${TUN}";
+
+            exec /usr/bin/tun2socks --device "tun://${TUN}" --proxy "${PROXY}"
+          '
+
+      - name: Run E2E tests
+        run: |
+          docker exec t2s curl -fsS --max-time 10 ip.sb
