@@ -1,8 +1,6 @@
 package core
 
 import (
-	"time"
-
 	glog "gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
@@ -23,25 +21,9 @@ const (
 	// maxConnAttempts specifies the maximum number
 	// of in-flight tcp connection attempts.
 	maxConnAttempts = 2 << 10
-
-	// tcpKeepaliveCount is the maximum number of
-	// TCP keep-alive probes to send before giving up
-	// and killing the connection if no response is
-	// obtained from the other end.
-	tcpKeepaliveCount = 9
-
-	// tcpKeepaliveIdle specifies the time a connection
-	// must remain idle before the first TCP keepalive
-	// packet is sent. Once this time is reached,
-	// tcpKeepaliveInterval option is used instead.
-	tcpKeepaliveIdle = 60 * time.Second
-
-	// tcpKeepaliveInterval specifies the interval
-	// time between sending TCP keepalive packets.
-	tcpKeepaliveInterval = 30 * time.Second
 )
 
-func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
+func withTCPHandler(handle func(adapter.TCPConn), tcpSockOpts []option.TCPSocketOption) option.Option {
 	return func(s *stack.Stack) error {
 		tcpForwarder := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
 			var (
@@ -67,7 +49,7 @@ func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
 			}
 			defer r.Complete(false)
 
-			err = setSocketOptions(s, ep)
+			err = setSocketOptions(s, ep, tcpSockOpts)
 
 			conn := &tcpConn{
 				TCPConn: gonet.NewTCPConn(&wq, ep),
@@ -80,22 +62,12 @@ func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
 	}
 }
 
-func setSocketOptions(s *stack.Stack, ep tcpip.Endpoint) tcpip.Error {
-	{ /* TCP keepalive options */
-		ep.SocketOptions().SetKeepAlive(true)
-
-		idle := tcpip.KeepaliveIdleOption(tcpKeepaliveIdle)
-		if err := ep.SetSockOpt(&idle); err != nil {
-			return err
-		}
-
-		interval := tcpip.KeepaliveIntervalOption(tcpKeepaliveInterval)
-		if err := ep.SetSockOpt(&interval); err != nil {
-			return err
-		}
-
-		if err := ep.SetSockOptInt(tcpip.KeepaliveCountOption, tcpKeepaliveCount); err != nil {
-			return err
+func setSocketOptions(s *stack.Stack, ep tcpip.Endpoint, tcpSockOpts []option.TCPSocketOption) tcpip.Error {
+	{ /* Apply socket options (defaults + custom overrides)*/
+		for _, opt := range tcpSockOpts {
+			if err := opt(ep); err != nil {
+				return err
+			}
 		}
 	}
 	{ /* TCP recv/send buffer size */
