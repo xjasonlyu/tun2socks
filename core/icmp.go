@@ -73,7 +73,7 @@ func (f *icmpForwarder) handlePacket(id stack.TransportEndpointID, pkt *stack.Pa
 
 	replyICMPHdr := header.ICMPv4(replyData.AsSlice())
 	replyICMPHdr.SetType(header.ICMPv4EchoReply)
-	replyICMPHdr.SetCode(0) // EchoReply must have Code=0.
+	replyICMPHdr.SetCode(0) // RFC 792: EchoReply must have Code=0.
 	replyICMPHdr.SetChecksum(0)
 	replyICMPHdr.SetChecksum(^checksum.Checksum(replyData.AsSlice(), 0))
 
