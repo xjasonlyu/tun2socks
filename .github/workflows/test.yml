@@ -140,6 +140,7 @@ jobs:
             --ip "${SUBNET_PREFIX}.4" \
             -e TUN="${TUN_IF}" \
             -e PROXY="${PROXY}" \
+            -e LOGLEVEL=debug \
             -e RESTAPI=":${RESTAPI_PORT}" \
             -p "${RESTAPI_PORT}:${RESTAPI_PORT}" \
             tun2socks:ci
@@ -193,7 +194,7 @@ jobs:
             --connect-timeout 2000 -c "${SUBNET_PREFIX}.3" -R
 
       - name: Test routing (ICMP)
-        run: docker exec "${APP_TESTER}" ping -c 5 1.1.1.1
+        run: docker exec "${APP_TESTER}" ping -c 5 -W 5 1.1.1.1
 
       - name: Test routing (TCP)
         run: docker exec "${APP_TESTER}" curl -4 -fsS -v --max-time 10 -o /dev/null 1.1.1.1
