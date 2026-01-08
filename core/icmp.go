@@ -49,7 +49,7 @@ func (f *icmpForwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.Pa
 }
 
 // Ref: https://github.com/google/gvisor/blob/c58cb637/pkg/tcpip/network/ipv4/icmp.go#L345-L461
-func (f *icmpForwarder) handlePacket(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
+func (f *icmpForwarder) handlePacket(_ stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 	ipHdr := header.IPv4(pkt.NetworkHeader().Slice())
 	localAddressBroadcast := pkt.NetworkPacketInfo.LocalAddressBroadcast
 

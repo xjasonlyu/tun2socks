@@ -169,7 +169,7 @@ jobs:
           exit 1
 
       - name: Test ICMP via Ping
-        run: docker exec "${APP_TUN2SOCKS}" ping -c 5 -W 5 123.45.67.89
+        run: docker exec "${APP_TUN2SOCKS}" ping -c 5 -W 5 12.34.56.78
 
       - name: Test TCP via HTTP
         run: |
