@@ -2,11 +2,11 @@ package core
 
 import (
 	"gvisor.dev/gvisor/pkg/buffer"
-	glog "gvisor.dev/gvisor/pkg/log"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
+	"gvisor.dev/gvisor/pkg/tcpip/network/ipv6"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/icmp"
 
@@ -29,27 +29,23 @@ func newICMPForwarder(s *stack.Stack) *icmpForwarder {
 	return &icmpForwarder{s: s}
 }
 
-func (f *icmpForwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.PacketBuffer) (handled bool) {
-	glog.Debugf("icmp echo: %s -> %s",
-		id.RemoteAddress, id.LocalAddress)
-	defer func() {
-		if handled {
-			glog.Debugf("icmp echo reply: %s -> %s",
-				id.LocalAddress, id.RemoteAddress)
-		}
-	}()
-
-	h := header.ICMPv4(pkt.TransportHeader().Slice())
-	switch h.Type() {
-	case header.ICMPv4Echo:
-		return f.handlePacket(id, pkt)
+func (f *icmpForwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
+	switch pkt.NetworkProtocolNumber {
+	case ipv4.ProtocolNumber:
+		return f.handlePacket4(id, pkt)
+	case ipv6.ProtocolNumber:
+		return f.handlePacket6(id, pkt)
 	default:
 		return false
 	}
 }
 
 // Ref: https://github.com/google/gvisor/blob/c58cb637/pkg/tcpip/network/ipv4/icmp.go#L345-L461
-func (f *icmpForwarder) handlePacket(_ stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
+func (f *icmpForwarder) handlePacket4(_ stack.TransportEndpointID, pkt *stack.PacketBuffer) (handled bool) {
+	if h := header.ICMPv4(pkt.TransportHeader().Slice()); h.Type() != header.ICMPv4Echo {
+		return false
+	}
+
 	ipHdr := header.IPv4(pkt.NetworkHeader().Slice())
 	localAddressBroadcast := pkt.NetworkPacketInfo.LocalAddressBroadcast
 
@@ -94,4 +90,8 @@ func (f *icmpForwarder) handlePacket(_ stack.TransportEndpointID, pkt *stack.Pac
 	}
 	sent.EchoReply.Increment()
 	return true
+}
+
+func (f *icmpForwarder) handlePacket6(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
+	return false // not implemented
 }
