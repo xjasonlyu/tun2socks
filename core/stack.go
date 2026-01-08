@@ -64,6 +64,17 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		withTCPHandler(cfg.TransportHandler.HandleTCP),
 		withUDPHandler(cfg.TransportHandler.HandleUDP),
 
+		// gVisor added NetworkPacketInfo.LocalAddressTemporary to
+		// identify packets received with temporary addresses due
+		// to promiscuous mode, and it skips the direct ICMP reply
+		// for these. A custom ICMP handler is needed to respond to
+		// these ICMP packets instead.
+		//
+		// Ref:
+		//  - https://github.com/google/gvisor/issues/8657
+		//  - https://github.com/google/gvisor/pull/11681
+		withICMPHandler(),
+
 		// Create stack NIC and then bind link endpoint to it.
 		withCreatingNIC(nicID, cfg.LinkEndpoint),
 
