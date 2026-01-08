@@ -168,6 +168,9 @@ jobs:
           done
           exit 1
 
+      - name: Test ICMP via Ping
+        run: docker exec "${APP_TUN2SOCKS}" ping -c 5 -W 5 123.45.67.89
+
       - name: Test TCP via HTTP
         run: |
           docker exec "${APP_TUN2SOCKS}" curl -4 -fsS -v --max-time 10 -o /dev/null \
