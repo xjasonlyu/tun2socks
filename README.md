@@ -3,7 +3,7 @@
 [![GitHub Workflow][1]](https://github.com/xjasonlyu/tun2socks/actions)
 [![Go Version][2]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
 [![Go Report][3]](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks)
-[![Maintainability][4]](https://codeclimate.com/github/xjasonlyu/tun2socks/maintainability)
+[![Maintainability][4]](https://qlty.sh/gh/xjasonlyu/projects/tun2socks)
 [![GitHub License][5]](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
 [![Docker Pulls][6]](https://hub.docker.com/r/xjasonlyu/tun2socks)
 [![Releases][7]](https://github.com/xjasonlyu/tun2socks/releases)
@@ -65,7 +65,7 @@ All versions starting from `v2.6.0` are available under the terms of the [MIT Li
 
 [3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks
 
-[4]: https://api.codeclimate.com/v1/badges/b5b30239174fc6603aca/maintainability
+[4]: https://qlty.sh/gh/xjasonlyu/projects/tun2socks/maintainability.svg
 
 [5]: https://img.shields.io/github/license/xjasonlyu/tun2socks
 
