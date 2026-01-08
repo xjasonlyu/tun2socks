@@ -168,7 +168,9 @@ jobs:
           exit 1
 
       - name: Test TCP via HTTP
-        run: docker exec "${APP_TUN2SOCKS}" curl -fsS -v --max-time 10 ipinfo.io
+        run: |
+          docker exec "${APP_TUN2SOCKS}" curl -fsS -v --max-time 10 -o /dev/null \
+            http://connectivitycheck.gstatic.com/generate_204
 
       - name: Test UDP via DNS
         if: ${{ matrix.udp }}
