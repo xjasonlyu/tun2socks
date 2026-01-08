@@ -169,7 +169,7 @@ jobs:
 
       - name: Test TCP via HTTP
         run: |
-          docker exec "${APP_TUN2SOCKS}" curl -fsS -v --max-time 10 -o /dev/null \
+          docker exec "${APP_TUN2SOCKS}" curl -4 -fsS -v --max-time 10 -o /dev/null \
             http://connectivitycheck.gstatic.com/generate_204
 
       - name: Test UDP via DNS
@@ -179,7 +179,7 @@ jobs:
       - name: Test UDP via QUIC
         if: ${{ matrix.udp }}
         run: |
-          docker exec "${APP_TUN2SOCKS}" curl -fsS -v --max-time 10 -o /dev/null \
+          docker exec "${APP_TUN2SOCKS}" curl -4 -fsS -v --max-time 10 -o /dev/null \
             --http3-only https://cloudflare-quic.com
 
       - name: Test upload speed via iPerf
@@ -192,8 +192,11 @@ jobs:
           docker exec "${APP_TUN2SOCKS}" iperf3 --bind-dev "${TUN_IF}" \
             --connect-timeout 2000 -c "${SUBNET_PREFIX}.3" -R
 
+      - name: Test routing (ICMP)
+        run: docker exec "${APP_TESTER}" ping -c 5 1.1.1.1
+
       - name: Test routing (TCP)
-        run: docker exec "${APP_TESTER}" curl -fsS -v --max-time 10 -o /dev/null 1.1.1.1
+        run: docker exec "${APP_TESTER}" curl -4 -fsS -v --max-time 10 -o /dev/null 1.1.1.1
 
       - name: Test routing (UDP)
         if: ${{ matrix.udp }}
