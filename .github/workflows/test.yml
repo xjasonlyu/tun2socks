@@ -44,8 +44,21 @@ jobs:
           check-latest: true
           go-version-file: 'go.mod'
 
-      - name: Run build test
+      - name: Run Go build
         run: make -j all
+
+      - name: Run docker build
+        run: docker build -t tun2socks:build .
+
+      - name: Save image tarball
+        run: docker save -o tun2socks-build.tar tun2socks:build
+
+      - name: Upload image tarball
+        uses: actions/upload-artifact@v6
+        with:
+          name: tun2socks-build-image
+          path: tun2socks-build.tar
+          retention-days: 1
 
   e2e:
     name: E2E Test (${{ matrix.protocol }})
@@ -96,16 +109,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
-      - name: Create CI Dockerfile
+      - name: Download image tarball
+        uses: actions/download-artifact@v7
+        with:
+          name: tun2socks-build-image
+
+      - name: Load image tarball
+        run: docker load -i tun2socks-build.tar
+
+      - name: Create E2E Dockerfile
         run: |
-          cp Dockerfile Dockerfile.ci
-          cat >> Dockerfile.ci <<EOF
+          cat > Dockerfile.e2e <<EOF
+          FROM tun2socks:build
           RUN apk add --update --no-cache \
             bind-tools curl iperf3
           EOF
 
-      - name: Build CI image
-        run: docker build -f Dockerfile.ci -t tun2socks:ci .
+      - name: Build E2E image
+        run: docker build -f Dockerfile.e2e -t tun2socks:e2e .
 
       - name: Create test network
         run: |
@@ -147,7 +168,7 @@ jobs:
             -e LOGLEVEL=debug \
             -e RESTAPI=":${RESTAPI_PORT}" \
             -p "${RESTAPI_PORT}:${RESTAPI_PORT}" \
-            tun2socks:ci
+            tun2socks:e2e
 
       - name: Start tester
         run: |
@@ -156,7 +177,7 @@ jobs:
             --cap-add=NET_ADMIN \
             --network "${SUBNET_NAME}" \
             --entrypoint sh \
-            tun2socks:ci \
+            tun2socks:e2e \
             -c "sleep infinite"
 
       - name: Set up tester
