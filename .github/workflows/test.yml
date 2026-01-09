@@ -55,6 +55,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - protocol: Direct
+            proxy: direct://
+            udp: true
           - protocol: HTTP
             image: gogost/gost:latest
             args: -L "http://:8080"
@@ -112,6 +115,7 @@ jobs:
             "${SUBNET_NAME}"
 
       - name: Start proxy
+        if: ${{ matrix.image }}
         run: |
           docker run -d \
             --name "${APP_PROXY}" \
