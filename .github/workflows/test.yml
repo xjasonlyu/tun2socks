@@ -47,6 +47,19 @@ jobs:
       - name: Run build test
         run: make -j all
 
+      - name: Run docker build
+        run: docker build -t tun2socks:base .
+
+      - name: Save image tarball
+        run: docker save -o tun2socks-base.tar tun2socks:base
+
+      - name: Upload image tarball
+        uses: actions/upload-artifact@v4
+        with:
+          name: tun2socks
+          path: tun2socks.tar
+          retention-days: 1
+
   e2e:
     name: E2E Test (${{ matrix.protocol }})
     needs: build
@@ -96,10 +109,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Download base image tarball
+        uses: actions/download-artifact@v5
+        with:
+          name: tun2socks
+
+      - name: Load base image
+        run: docker load -i tun2socks.tar
+
       - name: Create CI Dockerfile
         run: |
-          cp Dockerfile Dockerfile.ci
           cat >> Dockerfile.ci <<EOF
+          FROM tun2socks:base
           RUN apk add --update --no-cache \
             bind-tools curl iperf3
           EOF
