@@ -100,9 +100,9 @@ func (t *Tunnel) Close() {
 
 func (t *Tunnel) Proxy() proxy.Proxy {
 	t.proxyMu.RLock()
-	d := t.proxy
+	p := t.proxy
 	t.proxyMu.RUnlock()
-	return d
+	return p
 }
 
 func (t *Tunnel) SetProxy(proxy proxy.Proxy) {

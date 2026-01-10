@@ -14,11 +14,6 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 )
 
-const (
-	defaultDeviceType = "tun"
-	defaultProxyType  = "socks5"
-)
-
 func parseRestAPI(s string) (*url.URL, error) {
 	if !strings.Contains(s, "://") {
 		s = fmt.Sprintf("%s://%s", "http", s)
@@ -48,7 +43,7 @@ func parseRestAPI(s string) (*url.URL, error) {
 
 func parseDevice(s string, mtu uint32) (device.Device, error) {
 	if !strings.Contains(s, "://") {
-		s = fmt.Sprintf("%s://%s", defaultDeviceType, s)
+		s = fmt.Sprintf("%s://%s", tun.Driver, s)
 	}
 
 	u, err := url.Parse(s)
@@ -80,7 +75,7 @@ func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
 
 func parseProxy(s string) (proxy.Proxy, error) {
 	if !strings.Contains(s, "://") {
-		s = fmt.Sprintf("%s://%s", defaultProxyType, s)
+		s = fmt.Sprintf("%s://%s", "socks5" /* default */, s)
 	}
 
 	u, err := url.Parse(s)
@@ -90,8 +85,9 @@ func parseProxy(s string) (proxy.Proxy, error) {
 	return proxy.Parse(u)
 }
 
-func parseMulticastGroups(s string) (multicastGroups []netip.Addr, _ error) {
-	for _, ip := range strings.Split(s, ",") {
+func parseMulticastGroups(v []string) ([]netip.Addr, error) {
+	groups := make([]netip.Addr, 0, len(v))
+	for _, ip := range v {
 		if ip = strings.TrimSpace(ip); ip == "" {
 			continue
 		}
@@ -102,7 +98,7 @@ func parseMulticastGroups(s string) (multicastGroups []netip.Addr, _ error) {
 		if !addr.IsMulticast() {
 			return nil, fmt.Errorf("invalid multicast IP: %s", addr)
 		}
-		multicastGroups = append(multicastGroups, addr)
+		groups = append(groups, addr)
 	}
-	return
+	return groups, nil
 }
