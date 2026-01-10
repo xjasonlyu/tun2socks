@@ -14,7 +14,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/proxyutil"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/utils"
 )
 
 var _ proxy.Proxy = (*HTTP)(nil)
@@ -38,10 +38,10 @@ func (h *HTTP) DialContext(ctx context.Context, metadata *M.Metadata) (c net.Con
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", h.addr, err)
 	}
-	proxyutil.SetKeepAlive(c)
+	utils.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		proxyutil.SafeConnClose(c, err)
+		utils.SafeConnClose(c, err)
 	}(c)
 
 	err = h.shakeHand(metadata, c)

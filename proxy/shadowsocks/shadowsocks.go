@@ -12,7 +12,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/proxyutil"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/utils"
 	"github.com/xjasonlyu/tun2socks/v2/transport/shadowsocks/core"
 	obfs "github.com/xjasonlyu/tun2socks/v2/transport/simple-obfs"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
@@ -47,10 +47,10 @@ func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *M.Metadata) (c
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", ss.addr, err)
 	}
-	proxyutil.SetKeepAlive(c)
+	utils.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		proxyutil.SafeConnClose(c, err)
+		utils.SafeConnClose(c, err)
 	}(c)
 
 	switch ss.obfsMode {
@@ -62,7 +62,7 @@ func (ss *Shadowsocks) DialContext(ctx context.Context, metadata *M.Metadata) (c
 	}
 
 	c = ss.cipher.StreamConn(c)
-	_, err = c.Write(proxyutil.SerializeSocksAddr(metadata))
+	_, err = c.Write(utils.SerializeSocksAddr(metadata))
 	return c, err
 }
 
@@ -90,7 +90,7 @@ type ssPacketConn struct {
 func (pc *ssPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	var packet []byte
 	if ma, ok := addr.(*M.Addr); ok {
-		packet, err = socks5.EncodeUDPPacket(proxyutil.SerializeSocksAddr(ma.Metadata()), b)
+		packet, err = socks5.EncodeUDPPacket(utils.SerializeSocksAddr(ma.Metadata()), b)
 	} else {
 		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddr(addr), b)
 	}

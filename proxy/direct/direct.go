@@ -8,7 +8,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/proxyutil"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/utils"
 )
 
 var _ proxy.Proxy = (*Direct)(nil)
@@ -22,7 +22,7 @@ func (d *Direct) DialContext(ctx context.Context, metadata *M.Metadata) (net.Con
 	if err != nil {
 		return nil, err
 	}
-	proxyutil.SetKeepAlive(c)
+	utils.SetKeepAlive(c)
 	return c, nil
 }
 

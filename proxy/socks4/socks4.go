@@ -10,7 +10,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/proxyutil"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/utils"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks4"
 )
 
@@ -33,10 +33,10 @@ func (ss *Socks4) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", ss.addr, err)
 	}
-	proxyutil.SetKeepAlive(c)
+	utils.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		proxyutil.SafeConnClose(c, err)
+		utils.SafeConnClose(c, err)
 	}(c)
 
 	err = socks4.ClientHandshake(c, metadata.DestinationAddress(), socks4.CmdConnect, ss.userID)

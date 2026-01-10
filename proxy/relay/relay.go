@@ -19,7 +19,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/proxyutil"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/utils"
 )
 
 var _ proxy.Proxy = (*Relay)(nil)
@@ -46,10 +46,7 @@ func (rl *Relay) DialContext(ctx context.Context, metadata *M.Metadata) (c net.C
 }
 
 func (rl *Relay) DialUDP(metadata *M.Metadata) (net.PacketConn, error) {
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		proxy.DefaultConnectTimeout,
-	)
+	ctx, cancel := utils.WithTCPConnectTimeout(context.Background())
 	defer cancel()
 
 	return rl.dialContext(ctx, metadata)
@@ -62,10 +59,10 @@ func (rl *Relay) dialContext(ctx context.Context, metadata *M.Metadata) (rc *rel
 	if err != nil {
 		return nil, fmt.Errorf("connect to %s: %w", rl.addr, err)
 	}
-	proxyutil.SetKeepAlive(c)
+	utils.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		proxyutil.SafeConnClose(c, err)
+		utils.SafeConnClose(c, err)
 	}(c)
 
 	req := relay.Request{
