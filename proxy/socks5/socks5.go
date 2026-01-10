@@ -1,4 +1,4 @@
-package proxy
+package socks5
 
 import (
 	"context"
@@ -6,17 +6,19 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/url"
 
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/proxyutil"
 	"github.com/xjasonlyu/tun2socks/v2/transport/socks5"
 )
 
-var _ Proxy = (*Socks5)(nil)
+var _ proxy.Proxy = (*Socks5)(nil)
 
 type Socks5 struct {
-	*Base
+	addr string
 
 	user string
 	pass string
@@ -25,7 +27,7 @@ type Socks5 struct {
 	unix bool
 }
 
-func NewSocks5(addr, user, pass string) (*Socks5, error) {
+func New(addr, user, pass string) (*Socks5, error) {
 	unix := len(addr) > 0 && addr[0] == '/'
 
 	// For support Linux abstract namespace
@@ -34,10 +36,7 @@ func NewSocks5(addr, user, pass string) (*Socks5, error) {
 	}
 
 	return &Socks5{
-		Base: &Base{
-			addr:  addr,
-			proto: proto.Socks5,
-		},
+		addr: addr,
 		user: user,
 		pass: pass,
 		unix: unix,
@@ -50,14 +49,14 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 		network = "unix"
 	}
 
-	c, err = dialer.DialContext(ctx, network, ss.Addr())
+	c, err = dialer.DialContext(ctx, network, ss.addr)
 	if err != nil {
-		return nil, fmt.Errorf("connect to %s: %w", ss.Addr(), err)
+		return nil, fmt.Errorf("connect to %s: %w", ss.addr, err)
 	}
-	setKeepAlive(c)
+	proxyutil.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		safeConnClose(c, err)
+		proxyutil.SafeConnClose(c, err)
 	}(c)
 
 	var user *socks5.User
@@ -68,7 +67,7 @@ func (ss *Socks5) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 		}
 	}
 
-	_, err = socks5.ClientHandshake(c, serializeSocksAddr(metadata), socks5.CmdConnect, user)
+	_, err = socks5.ClientHandshake(c, proxyutil.SerializeSocksAddr(metadata), socks5.CmdConnect, user)
 	return c, err
 }
 
@@ -77,15 +76,18 @@ func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 		return nil, fmt.Errorf("%w when unix domain socket is enabled", errors.ErrUnsupported)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		proxy.DefaultConnectTimeout,
+	)
 	defer cancel()
 
-	c, err := dialer.DialContext(ctx, "tcp", ss.Addr())
+	c, err := dialer.DialContext(ctx, "tcp", ss.addr)
 	if err != nil {
-		err = fmt.Errorf("connect to %s: %w", ss.Addr(), err)
+		err = fmt.Errorf("connect to %s: %w", ss.addr, err)
 		return
 	}
-	setKeepAlive(c)
+	proxyutil.SetKeepAlive(c)
 
 	defer func() {
 		if err != nil && c != nil {
@@ -135,9 +137,9 @@ func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 	}
 
 	if bindAddr.IP.IsUnspecified() { /* e.g. "0.0.0.0" or "::" */
-		udpAddr, err := net.ResolveUDPAddr("udp", ss.Addr())
+		udpAddr, err := net.ResolveUDPAddr("udp", ss.addr)
 		if err != nil {
-			return nil, fmt.Errorf("resolve udp address %s: %w", ss.Addr(), err)
+			return nil, fmt.Errorf("resolve udp address %s: %w", ss.addr, err)
 		}
 		bindAddr.IP = udpAddr.IP
 	}
@@ -155,7 +157,7 @@ type socksPacketConn struct {
 func (pc *socksPacketConn) WriteTo(b []byte, addr net.Addr) (n int, err error) {
 	var packet []byte
 	if ma, ok := addr.(*M.Addr); ok {
-		packet, err = socks5.EncodeUDPPacket(serializeSocksAddr(ma.Metadata()), b)
+		packet, err = socks5.EncodeUDPPacket(proxyutil.SerializeSocksAddr(ma.Metadata()), b)
 	} else {
 		packet, err = socks5.EncodeUDPPacket(socks5.ParseAddr(addr), b)
 	}
@@ -192,6 +194,17 @@ func (pc *socksPacketConn) Close() error {
 	return pc.PacketConn.Close()
 }
 
-func serializeSocksAddr(m *M.Metadata) socks5.Addr {
-	return socks5.SerializeAddr("", m.DstIP, m.DstPort)
+func Parse(u *url.URL) (proxy.Proxy, error) {
+	address, username := u.Host, u.User.Username()
+	password, _ := u.User.Password()
+
+	// Socks5 over UDS
+	if address == "" {
+		address = u.Path
+	}
+	return New(address, username, password)
+}
+
+func init() {
+	proxy.RegisterProtocol("socks5", Parse)
 }

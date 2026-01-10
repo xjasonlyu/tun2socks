@@ -235,9 +235,9 @@ func netstack(k *Key) (err error) {
 	}
 
 	log.Infof(
-		"[STACK] %s://%s <-> %s://%s",
+		"[STACK] %s://%s <-> %s",
 		_defaultDevice.Type(), _defaultDevice.Name(),
-		_defaultProxy.Proto(), _defaultProxy.Addr(),
+		k.Proxy,
 	)
 	return nil
 }

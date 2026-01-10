@@ -3,7 +3,7 @@ package tunnel
 import (
 	"sync"
 
-	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/reject"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
@@ -13,7 +13,7 @@ var (
 )
 
 func init() {
-	ReplaceGlobal(New(&proxy.Base{}, statistic.DefaultManager))
+	ReplaceGlobal(New(&reject.Reject{}, statistic.DefaultManager))
 	T().ProcessAsync()
 }
 
