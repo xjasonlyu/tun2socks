@@ -29,7 +29,7 @@ func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
 	defer cancel()
 
-	remoteConn, err := t.Dialer().DialContext(ctx, metadata)
+	remoteConn, err := t.Proxy().DialContext(ctx, metadata)
 	if err != nil {
 		log.Warnf("[TCP] dial %s: %v", metadata.DestinationAddress(), err)
 		return

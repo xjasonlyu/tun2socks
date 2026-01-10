@@ -1,34 +1,28 @@
-package proxy
+package direct
 
 import (
 	"context"
 	"net"
+	"net/url"
 
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/utils"
 )
 
-var _ Proxy = (*Direct)(nil)
+var _ proxy.Proxy = (*Direct)(nil)
 
-type Direct struct {
-	*Base
-}
+type Direct struct{}
 
-func NewDirect() *Direct {
-	return &Direct{
-		Base: &Base{
-			proto: proto.Direct,
-		},
-	}
-}
+func New() (*Direct, error) { return &Direct{}, nil }
 
 func (d *Direct) DialContext(ctx context.Context, metadata *M.Metadata) (net.Conn, error) {
 	c, err := dialer.DialContext(ctx, "tcp", metadata.DestinationAddress())
 	if err != nil {
 		return nil, err
 	}
-	setKeepAlive(c)
+	utils.SetKeepAlive(c)
 	return c, nil
 }
 
@@ -54,4 +48,10 @@ func (pc *directPacketConn) WriteTo(b []byte, addr net.Addr) (int, error) {
 		return 0, err
 	}
 	return pc.PacketConn.WriteTo(b, udpAddr)
+}
+
+func Parse(*url.URL) (proxy.Proxy, error) { return New() }
+
+func init() {
+	proxy.RegisterProtocol("direct", Parse)
 }

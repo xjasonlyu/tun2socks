@@ -26,7 +26,7 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 		DstPort: id.LocalPort,
 	}
 
-	pc, err := t.Dialer().DialUDP(metadata)
+	pc, err := t.Proxy().DialUDP(metadata)
 	if err != nil {
 		log.Warnf("[UDP] dial %s: %v", metadata.DestinationAddress(), err)
 		return

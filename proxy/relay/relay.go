@@ -1,4 +1,4 @@
-package proxy
+package relay
 
 import (
 	"bytes"
@@ -9,33 +9,32 @@ import (
 	"io"
 	"math"
 	"net"
+	"net/url"
 	"sync"
 
 	"github.com/go-gost/relay"
+	"github.com/gorilla/schema"
 
 	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+	"github.com/xjasonlyu/tun2socks/v2/proxy/internal/utils"
 )
 
-var _ Proxy = (*Relay)(nil)
+var _ proxy.Proxy = (*Relay)(nil)
 
 type Relay struct {
-	*Base
-
+	addr string
 	user string
 	pass string
 
 	noDelay bool
 }
 
-func NewRelay(addr, user, pass string, noDelay bool) (*Relay, error) {
+func New(addr, user, pass string, noDelay bool) (*Relay, error) {
 	return &Relay{
-		Base: &Base{
-			addr:  addr,
-			proto: proto.Relay,
-		},
+		addr:    addr,
 		user:    user,
 		pass:    pass,
 		noDelay: noDelay,
@@ -47,7 +46,7 @@ func (rl *Relay) DialContext(ctx context.Context, metadata *M.Metadata) (c net.C
 }
 
 func (rl *Relay) DialUDP(metadata *M.Metadata) (net.PacketConn, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
+	ctx, cancel := utils.WithTCPConnectTimeout(context.Background())
 	defer cancel()
 
 	return rl.dialContext(ctx, metadata)
@@ -56,14 +55,14 @@ func (rl *Relay) DialUDP(metadata *M.Metadata) (net.PacketConn, error) {
 func (rl *Relay) dialContext(ctx context.Context, metadata *M.Metadata) (rc *relayConn, err error) {
 	var c net.Conn
 
-	c, err = dialer.DialContext(ctx, "tcp", rl.Addr())
+	c, err = dialer.DialContext(ctx, "tcp", rl.addr)
 	if err != nil {
-		return nil, fmt.Errorf("connect to %s: %w", rl.Addr(), err)
+		return nil, fmt.Errorf("connect to %s: %w", rl.addr, err)
 	}
-	setKeepAlive(c)
+	utils.SetKeepAlive(c)
 
 	defer func(c net.Conn) {
-		safeConnClose(c, err)
+		utils.SafeConnClose(c, err)
 	}(c)
 
 	req := relay.Request{
@@ -249,4 +248,21 @@ func serializeRelayAddr(m *M.Metadata) *relay.AddrFeature {
 		af.AType = relay.AddrIPv6
 	}
 	return af
+}
+
+func Parse(u *url.URL) (proxy.Proxy, error) {
+	address, username := u.Host, u.User.Username()
+	password, _ := u.User.Password()
+
+	opts := struct{ NoDelay bool }{}
+	if err := schema.NewDecoder().
+		Decode(&opts, u.Query()); err != nil {
+		return nil, err
+	}
+
+	return New(address, username, password, opts.NoDelay)
+}
+
+func init() {
+	proxy.RegisterProtocol("relay", Parse)
 }

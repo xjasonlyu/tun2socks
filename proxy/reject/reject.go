@@ -1,28 +1,21 @@
-package proxy
+package reject
 
 import (
 	"context"
 	"io"
 	"net"
+	"net/url"
 	"time"
 
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/proxy/proto"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
 )
 
-var _ Proxy = (*Reject)(nil)
+var _ proxy.Proxy = (*Reject)(nil)
 
-type Reject struct {
-	*Base
-}
+type Reject struct{}
 
-func NewReject() *Reject {
-	return &Reject{
-		Base: &Base{
-			proto: proto.Reject,
-		},
-	}
-}
+func New() (*Reject, error) { return &Reject{}, nil }
 
 func (r *Reject) DialContext(context.Context, *M.Metadata) (net.Conn, error) {
 	return &nopConn{}, nil
@@ -52,3 +45,9 @@ func (npc *nopPacketConn) LocalAddr() net.Addr                             { ret
 func (npc *nopPacketConn) SetDeadline(time.Time) error                     { return nil }
 func (npc *nopPacketConn) SetReadDeadline(time.Time) error                 { return nil }
 func (npc *nopPacketConn) SetWriteDeadline(time.Time) error                { return nil }
+
+func Parse(*url.URL) (proxy.Proxy, error) { return New() }
+
+func init() {
+	proxy.RegisterProtocol("reject", Parse)
+}
