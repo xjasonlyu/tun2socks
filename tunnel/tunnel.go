@@ -31,9 +31,9 @@ type Tunnel struct {
 	// UDP session timeout.
 	udpTimeout *atomic.Duration
 
-	// Internal proxy.Dialer for Tunnel.
-	dialerMu sync.RWMutex
-	dialer   proxy.Dialer
+	// Internal proxy.Proxy for Tunnel.
+	proxyMu sync.RWMutex
+	proxy   proxy.Proxy
 
 	// Where the Tunnel statistics are sent to.
 	manager *statistic.Manager
@@ -42,12 +42,12 @@ type Tunnel struct {
 	procCancel context.CancelFunc
 }
 
-func New(dialer proxy.Dialer, manager *statistic.Manager) *Tunnel {
+func New(proxy proxy.Proxy, manager *statistic.Manager) *Tunnel {
 	return &Tunnel{
 		tcpQueue:   make(chan adapter.TCPConn),
 		udpQueue:   make(chan adapter.UDPConn),
 		udpTimeout: atomic.NewDuration(udpSessionTimeout),
-		dialer:     dialer,
+		proxy:      proxy,
 		manager:    manager,
 		procCancel: func() { /* nop */ },
 	}
@@ -98,17 +98,17 @@ func (t *Tunnel) Close() {
 	t.procCancel()
 }
 
-func (t *Tunnel) Dialer() proxy.Dialer {
-	t.dialerMu.RLock()
-	d := t.dialer
-	t.dialerMu.RUnlock()
+func (t *Tunnel) Proxy() proxy.Proxy {
+	t.proxyMu.RLock()
+	d := t.proxy
+	t.proxyMu.RUnlock()
 	return d
 }
 
-func (t *Tunnel) SetDialer(dialer proxy.Dialer) {
-	t.dialerMu.Lock()
-	t.dialer = dialer
-	t.dialerMu.Unlock()
+func (t *Tunnel) SetProxy(proxy proxy.Proxy) {
+	t.proxyMu.Lock()
+	t.proxy = proxy
+	t.proxyMu.Unlock()
 }
 
 func (t *Tunnel) SetUDPTimeout(timeout time.Duration) {

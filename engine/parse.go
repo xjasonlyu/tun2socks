@@ -11,6 +11,12 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/fdbased"
 	"github.com/xjasonlyu/tun2socks/v2/core/device/tun"
+	"github.com/xjasonlyu/tun2socks/v2/proxy"
+)
+
+const (
+	defaultDeviceType = "tun"
+	defaultProxyType  = "socks5"
 )
 
 func parseRestAPI(s string) (*url.URL, error) {
@@ -42,7 +48,7 @@ func parseRestAPI(s string) (*url.URL, error) {
 
 func parseDevice(s string, mtu uint32) (device.Device, error) {
 	if !strings.Contains(s, "://") {
-		s = fmt.Sprintf("%s://%s", tun.Driver /* default driver */, s)
+		s = fmt.Sprintf("%s://%s", defaultDeviceType, s)
 	}
 
 	u, err := url.Parse(s)
@@ -70,6 +76,18 @@ func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
 		offset = 4
 	}
 	return fdbased.Open(u.Host, mtu, offset)
+}
+
+func parseProxy(s string) (proxy.Proxy, error) {
+	if !strings.Contains(s, "://") {
+		s = fmt.Sprintf("%s://%s", defaultProxyType, s)
+	}
+
+	u, err := url.Parse(s)
+	if err != nil {
+		return nil, err
+	}
+	return proxy.Parse(u)
 }
 
 func parseMulticastGroups(s string) (multicastGroups []netip.Addr, _ error) {

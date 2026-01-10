@@ -13,7 +13,11 @@ var (
 )
 
 func init() {
-	ReplaceGlobal(New(&reject.Reject{}, statistic.DefaultManager))
+	t := New(
+		&reject.Reject{}, /* default: reject */
+		statistic.DefaultManager,
+	)
+	ReplaceGlobal(t)
 	T().ProcessAsync()
 }
 

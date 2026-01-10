@@ -48,12 +48,6 @@ func pick(name string) protocol {
 // Protocol registration is typically done by an init function in the
 // proxy-specific package.
 func Parse(proxyURL *url.URL) (Proxy, error) {
-	if proxyURL == nil {
-		return nil, errors.New("proxy: nil url")
-	}
-	if proxyURL.Scheme == "" {
-		return nil, errors.New("proxy: protocol not specified")
-	}
 	p := pick(proxyURL.Scheme)
 	if p.parse == nil {
 		return nil, ErrProtocol
