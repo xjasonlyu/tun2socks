@@ -3,7 +3,6 @@ package engine
 import (
 	"errors"
 	"net"
-	"net/netip"
 	"os/exec"
 	"sync"
 	"time"
@@ -190,17 +189,17 @@ func netstack(k *Key) (err error) {
 		}
 	}()
 
+	multicastGroups, err := parseMulticastGroups(k.MulticastGroups)
+	if err != nil {
+		return err
+	}
+
 	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
 		return err
 	}
 	tunnel.T().SetProxy(_defaultProxy)
 
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
-		return err
-	}
-
-	var multicastGroups []netip.Addr
-	if multicastGroups, err = parseMulticastGroups(k.MulticastGroups); err != nil {
 		return err
 	}
 
