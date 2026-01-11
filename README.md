@@ -11,7 +11,7 @@
 ## Features
 
 - **Universal Proxying**: Transparently routes all network traffic from any application through a proxy.
-- **Multi-Protocol**: Supports HTTP/SSH/SOCKS/Shadowsocks/Relay proxies with optional authentication.
+- **Multi-Protocol**: Supports HTTP/SOCKS/Shadowsocks/SSH/Relay proxies with optional authentication.
 - **Cross-Platform**: Runs on Linux/macOS/Windows/FreeBSD/OpenBSD with platform-specific optimizations.
 - **Gateway Mode**: Acts as a Layer 3 gateway to route traffic from other devices on the same network.
 - **Full IPv6 Compatibility**: Natively supports IPv6; seamlessly tunnels IPv4 over IPv6 and vice versa.

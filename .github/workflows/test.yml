@@ -96,6 +96,11 @@ jobs:
             args: ssserver -s 0.0.0.0:8388 -k pass -m aes-128-gcm -U -v
             proxy: ss://aes-128-gcm:pass@192.168.1.2:8388
             udp: true
+          - protocol: SSH
+            image: gogost/gost:3.0.0-nightly.20241002
+            args: -L "sshd://user:pass@:2222"
+            proxy: ssh://user:pass@192.168.1.2:2222
+            udp: false
     env:
       TUN_IF: tun0
       RESTAPI_PORT: 8080
