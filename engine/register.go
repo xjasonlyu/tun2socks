@@ -8,4 +8,5 @@ import (
 	_ "github.com/xjasonlyu/tun2socks/v2/proxy/shadowsocks"
 	_ "github.com/xjasonlyu/tun2socks/v2/proxy/socks4"
 	_ "github.com/xjasonlyu/tun2socks/v2/proxy/socks5"
+	_ "github.com/xjasonlyu/tun2socks/v2/proxy/ssh"
 )
