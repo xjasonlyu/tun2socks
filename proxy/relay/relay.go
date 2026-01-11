@@ -46,7 +46,10 @@ func (rl *Relay) DialContext(ctx context.Context, metadata *M.Metadata) (c net.C
 }
 
 func (rl *Relay) DialUDP(metadata *M.Metadata) (net.PacketConn, error) {
-	ctx, cancel := utils.WithTCPConnectTimeout(context.Background())
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		utils.TCPConnectTimeout,
+	)
 	defer cancel()
 
 	return rl.dialContext(ctx, metadata)

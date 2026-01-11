@@ -76,7 +76,10 @@ func (ss *Socks5) DialUDP(*M.Metadata) (_ net.PacketConn, err error) {
 		return nil, fmt.Errorf("%w when unix domain socket is enabled", errors.ErrUnsupported)
 	}
 
-	ctx, cancel := utils.WithTCPConnectTimeout(context.Background())
+	ctx, cancel := context.WithTimeout(
+		context.Background(),
+		utils.TCPConnectTimeout,
+	)
 	defer cancel()
 
 	c, err := dialer.DialContext(ctx, "tcp", ss.addr)
