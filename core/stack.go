@@ -28,6 +28,10 @@ type Config struct {
 	// nic to given groups.
 	MulticastGroups []netip.Addr
 
+	// ICMPHandler is used to customize ICMP packet handling.
+	// If nil, the default icmpForwarder will be used.
+	ICMPHandler ICMPHandler
+
 	// Options are supplement options to apply settings
 	// for the internal stack.
 	Options []option.Option
@@ -73,7 +77,7 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// Ref:
 		//  - https://github.com/google/gvisor/issues/8657
 		//  - https://github.com/google/gvisor/pull/11681
-		withICMPHandler(),
+		withICMPHandler(cfg.ICMPHandler),
 
 		// Create stack NIC and then bind link endpoint to it.
 		withCreatingNIC(nicID, cfg.LinkEndpoint),

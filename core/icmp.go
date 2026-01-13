@@ -13,8 +13,16 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-func withICMPHandler() option.Option {
+// ICMPHandler is a function that accepts *stack.Stack and returns a callback function to handle ICMP packets.
+// If the returned function handles the packet, it should return true.
+type ICMPHandler func(s *stack.Stack) func(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool
+
+func withICMPHandler(handler ICMPHandler) option.Option {
 	return func(s *stack.Stack) error {
+		if handler != nil {
+			s.SetTransportProtocolHandler(icmp.ProtocolNumber4, handler(s))
+			return nil
+		}
 		f := newICMPForwarder(s)
 		s.SetTransportProtocolHandler(icmp.ProtocolNumber4, f.HandlePacket)
 		return nil
