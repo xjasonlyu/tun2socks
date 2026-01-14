@@ -36,6 +36,9 @@ var (
 
 	// _defaultStack holds the default stack for the engine.
 	_defaultStack *stack.Stack
+
+	// _icmpHandler holds the custom ICMP handler for the engine.
+	_icmpHandler core.ICMPHandler
 )
 
 // Start starts the default engine up.
@@ -56,6 +59,13 @@ func Stop() {
 func Insert(k *Key) {
 	_engineMu.Lock()
 	_defaultKey = k
+	_engineMu.Unlock()
+}
+
+// SetICMPHandler sets the custom ICMP handler for the default engine.
+func SetICMPHandler(h core.ICMPHandler) {
+	_engineMu.Lock()
+	_icmpHandler = h
 	_engineMu.Unlock()
 }
 
@@ -229,6 +239,7 @@ func netstack(k *Key) (err error) {
 		TransportHandler: tunnel.T(),
 		MulticastGroups:  multicastGroups,
 		Options:          opts,
+		ICMPHandler:      _icmpHandler,
 	}); err != nil {
 		return err
 	}
