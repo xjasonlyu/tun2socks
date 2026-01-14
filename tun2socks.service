@@ -1,0 +1,17 @@
+[Unit]
+Description=tun2socks - A clean and fast VPN to SOCKS5 proxy
+After=network.target
+
+[Service]
+Type=simple
+User=root
+# Change the path to your tun2socks binary
+ExecStart=/usr/local/bin/tun2socks --config=/etc/tun2socks/config.yaml
+Restart=on-failure
+RestartSec=5s
+
+# Increase file descriptor limit for high concurrency
+LimitNOFILE=1048576
+
+[Install]
+WantedBy=multi-user.target

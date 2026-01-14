@@ -2,7 +2,9 @@ package restapi
 
 import (
 	"bytes"
+	"embed"
 	"encoding/json"
+	"io/fs"
 	"net"
 	"net/http"
 	"strings"
@@ -12,10 +14,14 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
 	"github.com/gorilla/websocket"
+	"golang.org/x/time/rate"
 
 	V "github.com/xjasonlyu/tun2socks/v2/internal/version"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
+
+//go:embed dist/*
+var distFS embed.FS
 
 var (
 	_upgrader = websocket.Upgrader{
@@ -24,14 +30,33 @@ var (
 		},
 	}
 
-	_endpoints = make(map[string]http.Handler)
+	_endpoints       = make(map[string]http.Handler)
+	_publicEndpoints = make(map[string]http.Handler)
+	_token           string
+	_limiter         = rate.NewLimiter(10, 20)
 )
 
 func registerEndpoint(pattern string, handler http.Handler) {
 	_endpoints[pattern] = handler
 }
 
+func registerPublicEndpoint(pattern string, handler http.Handler) {
+	_publicEndpoints[pattern] = handler
+}
+
+func rateLimitMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !_limiter.Allow() {
+			render.Status(r, http.StatusTooManyRequests)
+			render.JSON(w, r, newError("Too many requests"))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
 func Start(addr, token string) error {
+	_token = token
 	r := chi.NewRouter()
 
 	c := cors.New(cors.Options{
@@ -42,16 +67,28 @@ func Start(addr, token string) error {
 	})
 
 	r.Use(c.Handler)
+
+	// attach public HTTP handlers
+	for pattern, handler := range _publicEndpoints {
+		r.Mount(pattern, handler)
+	}
+
 	r.Group(func(r chi.Router) {
 		r.Use(authenticator(token))
-		r.Get("/", hello)
-		r.Get("/traffic", traffic)
-		r.Get("/version", version)
+		r.Use(rateLimitMiddleware)
+		r.Get("/api", hello)
+		r.Get("/api/traffic", traffic)
+		r.Get("/api/version", version)
 		// attach HTTP handlers
 		for pattern, handler := range _endpoints {
 			r.Mount(pattern, handler)
 		}
 	})
+
+	// Use embedded filesystem
+	if fsys, err := fs.Sub(distFS, "dist"); err == nil {
+		FileServer(r, "/", http.FS(fsys))
+	}
 
 	listener, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -73,8 +110,8 @@ func authenticator(token string) func(http.Handler) http.Handler {
 				return
 			}
 
-			// Browser websocket not support custom header
-			if websocket.IsWebSocketUpgrade(r) && r.URL.Query().Get("token") != "" {
+			// Browser websocket/SSE not support custom header
+			if (websocket.IsWebSocketUpgrade(r) || r.Header.Get("Accept") == "text/event-stream") && r.URL.Query().Get("token") != "" {
 				t := r.URL.Query().Get("token")
 				if t != token {
 					render.Status(r, http.StatusUnauthorized)

@@ -30,3 +30,18 @@ build/
 
 # Misc
 .DS_Store
+
+# Node modules
+node_modules/
+
+
+AGENTS.md
+
+.opencode/
+
+.specify/
+
+dist/
+
+specs/
+

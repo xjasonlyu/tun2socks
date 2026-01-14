@@ -49,6 +49,20 @@ func main() {
 		os.Exit(0)
 	}
 
+	if configFile == "" {
+		home, _ := os.UserHomeDir()
+		paths := []string{
+			"config.yaml",
+			home + "/.config/tun2socks/config.yaml",
+		}
+		for _, p := range paths {
+			if _, err := os.Stat(p); err == nil {
+				configFile = p
+				break
+			}
+		}
+	}
+
 	if configFile != "" {
 		data, err := os.ReadFile(configFile)
 		if err != nil {

@@ -1,0 +1,35 @@
+# tun2socks configuration file example
+
+# TUN device name (e.g., tun://tunsocks)
+# On Linux, if the device does not exist, it will be created.
+device: tun://tunsocks
+
+# Proxy server URL (e.g., socks5://127.0.0.1:1080)
+# Supports: socks5://, socks4://, http://
+# Auth: socks5://user:pass@host:port
+proxy: socks5://127.0.0.1:1080
+
+# Web API and Dashboard address
+# Format: http://[token]@[ip]:[port]
+restapi: http://mysecret@0.0.0.0:7777
+
+# Log level [debug|info|warn|error|silent]
+loglevel: info
+
+# MTU (Maximum Transmission Unit) for the TUN device
+mtu: 1500
+
+# Network interface to bind to (optional)
+# interface: eth0
+
+# UDP session timeout (default: 1m)
+udp-timeout: 1m
+
+# TCP buffer settings (optional)
+# tcp-moderate-receive-buffer: true
+# tcp-send-buffer-size: "128kb"
+# tcp-receive-buffer-size: "128kb"
+
+# Hooks (optional)
+# tun-pre-up: "echo 'Pre-up command'"
+# tun-post-up: "ip route add 1.1.1.1/32 dev tunsocks"

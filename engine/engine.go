@@ -4,11 +4,13 @@ import (
 	"errors"
 	"net"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/docker/go-units"
 	"github.com/google/shlex"
+	"github.com/vishvananda/netlink"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
@@ -25,38 +27,60 @@ import (
 var (
 	_engineMu sync.Mutex
 
-	// _defaultKey holds the default key for the engine.
+	// _defaultKey holds default key for engine.
 	_defaultKey *Key
 
-	// _defaultProxy holds the default proxy for the engine.
+	// _defaultProxy holds default proxy for engine.
 	_defaultProxy proxy.Proxy
 
-	// _defaultDevice holds the default device for the engine.
+	// _defaultDevice holds default device for engine.
 	_defaultDevice device.Device
 
-	// _defaultStack holds the default stack for the engine.
+	// _defaultStack holds default stack for engine.
 	_defaultStack *stack.Stack
 )
 
-// Start starts the default engine up.
+// Start starts default engine up.
 func Start() {
 	if err := start(); err != nil {
 		log.Fatalf("[ENGINE] failed to start: %v", err)
 	}
 }
 
-// Stop shuts the default engine down.
+// Stop shuts down default engine.
 func Stop() {
 	if err := stop(); err != nil {
 		log.Fatalf("[ENGINE] failed to stop: %v", err)
 	}
 }
 
-// Insert loads *Key to the default engine.
+// Insert loads *Key to default engine.
 func Insert(k *Key) {
 	_engineMu.Lock()
 	_defaultKey = k
 	_engineMu.Unlock()
+}
+
+// UpdateProxy updates the proxy configuration dynamically.
+func UpdateProxy(proxyStr, user, pass string) error {
+	_engineMu.Lock()
+	defer _engineMu.Unlock()
+
+	p, err := parseProxy(proxyStr)
+	if err != nil {
+		return err
+	}
+
+	// Update tunnel proxy
+	tunnel.T().SetProxy(p)
+	_defaultProxy = p
+
+	if _defaultKey != nil {
+		_defaultKey.Proxy = proxyStr
+	}
+
+	log.Infof("[PROXY] Updated proxy to: %s", proxyStr)
+	return nil
 }
 
 func start() error {
@@ -76,11 +100,20 @@ func start() error {
 			return err
 		}
 	}
+
+	// Set engine running flag for Web API
+	restapi.SetEngineRunning(true)
+
 	return nil
 }
 
-func stop() (err error) {
+func stop() error {
 	_engineMu.Lock()
+	defer _engineMu.Unlock()
+
+	// Set engine stopped flag for Web API
+	restapi.SetEngineRunning(false)
+
 	if _defaultDevice != nil {
 		_defaultDevice.Close()
 	}
@@ -88,7 +121,6 @@ func stop() (err error) {
 		_defaultStack.Close()
 		_defaultStack.Wait()
 	}
-	_engineMu.Unlock()
 	return nil
 }
 
@@ -143,6 +175,12 @@ func restAPI(k *Key) error {
 		}
 		host, token := u.Host, u.User.String()
 
+		// Set initial proxy config from config file
+		restapi.SetProxyConfig(k.Proxy)
+
+		// Register callbacks
+		restapi.UpdateProxyFunc = UpdateProxy
+
 		restapi.SetStatsFunc(func() tcpip.Stats {
 			_engineMu.Lock()
 			defer _engineMu.Unlock()
@@ -166,10 +204,28 @@ func restAPI(k *Key) error {
 
 func netstack(k *Key) (err error) {
 	if k.Proxy == "" {
-		return errors.New("empty proxy")
+		log.Warnf("[STACK] No proxy configured. Setting dummy proxy. Please configure proxy via Web API.")
+		k.Proxy = "socks5://127.0.0.1:0"
 	}
 	if k.Device == "" {
 		return errors.New("empty device")
+	}
+
+	// Parse device name from URL format (e.g., "tun://tunsocks" -> "tunsocks")
+	deviceName := k.Device
+	if strings.Contains(k.Device, "://") {
+		parts := strings.SplitN(k.Device, "://", 2)
+		if len(parts) == 2 {
+			deviceName = parts[1]
+		}
+	}
+
+	// Delete existing device if present (to allow tun.Open() to create fresh device)
+	if link, err := netlink.LinkByName(deviceName); err == nil {
+		log.Infof("[TUN] Deleting existing device: %s", deviceName)
+		if err := netlink.LinkDel(link); err != nil {
+			log.Warnf("[TUN] Failed to delete existing device: %v", err)
+		}
 	}
 
 	if k.TUNPreUp != "" {
@@ -201,6 +257,31 @@ func netstack(k *Key) (err error) {
 
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
 		return err
+	}
+
+	// Add IP address and set device UP
+	if deviceName != "" {
+		link, linkErr := netlink.LinkByName(deviceName)
+		if linkErr == nil {
+			// Add default IP address (198.18.0.1/15)
+			addr, addrErr := netlink.ParseAddr("198.18.0.1/15")
+			if addrErr != nil {
+				log.Warnf("[TUN] Failed to parse IP address: %v", addrErr)
+			} else {
+				if addErr := netlink.AddrAdd(link, addr); addErr != nil {
+					log.Warnf("[TUN] Failed to add IP address: %v", addErr)
+				} else {
+					log.Infof("[TUN] Added IP address: 198.18.0.1/15 to %s", deviceName)
+				}
+			}
+
+			// Set device UP
+			if upErr := netlink.LinkSetUp(link); upErr != nil {
+				log.Warnf("[TUN] Failed to set device UP: %v", upErr)
+			} else {
+				log.Infof("[TUN] Device %s is now UP", deviceName)
+			}
+		}
 	}
 
 	var opts []option.Option
