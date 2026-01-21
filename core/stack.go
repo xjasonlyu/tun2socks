@@ -14,18 +14,6 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-type TransportProtocolHandler interface {
-	HandlePacket(stack.TransportEndpointID, *stack.PacketBuffer) bool
-}
-
-type TransportProtocolHandlerFunc func(stack.TransportEndpointID, *stack.PacketBuffer) bool
-
-func (f TransportProtocolHandlerFunc) HandlePacket(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
-	return f(id, pkt)
-}
-
-type TransportProtocolHandlerFactory func(s *stack.Stack) TransportProtocolHandler
-
 // Config is the configuration to create *stack.Stack.
 type Config struct {
 	// LinkEndpoints is the interface implemented by
@@ -40,9 +28,9 @@ type Config struct {
 	// nic to given groups.
 	MulticastGroups []netip.Addr
 
-	// ICMPHandlerFactory is used to customize ICMP packet handling.
+	// ICMPHandler is used to customize ICMP packet handling.
 	// If nil, the default icmpForwarder will be used.
-	ICMPHandlerFactory TransportProtocolHandlerFactory
+	ICMPHandler adapter.NetworkHandler
 
 	// Options are supplement options to apply settings
 	// for the internal stack.
@@ -89,7 +77,7 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// Ref:
 		//  - https://github.com/google/gvisor/issues/8657
 		//  - https://github.com/google/gvisor/pull/11681
-		withICMPHandler(cfg.ICMPHandlerFactory),
+		withICMPHandler(cfg.ICMPHandler),
 
 		// Create stack NIC and then bind link endpoint to it.
 		withCreatingNIC(nicID, cfg.LinkEndpoint),

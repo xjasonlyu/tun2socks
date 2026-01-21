@@ -13,6 +13,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
 	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
@@ -37,8 +38,8 @@ var (
 	// _defaultStack holds the default stack for the engine.
 	_defaultStack *stack.Stack
 
-	// _icmpHandlerFactory holds the custom ICMP handler factory for the engine.
-	_icmpHandlerFactory core.TransportProtocolHandlerFactory
+	// _icmpHandler holds the custom ICMP handler for the engine.
+	_icmpHandler adapter.NetworkHandler
 )
 
 // Start starts the default engine up.
@@ -62,10 +63,10 @@ func Insert(k *Key) {
 	_engineMu.Unlock()
 }
 
-// SetICMPHandlerFactory sets the custom ICMP handler factory for the default engine.
-func SetICMPHandlerFactory(h core.TransportProtocolHandlerFactory) {
+// SetICMPHandler sets the custom ICMP handler factory for the default engine.
+func SetICMPHandler(h adapter.NetworkHandler) {
 	_engineMu.Lock()
-	_icmpHandlerFactory = h
+	_icmpHandler = h
 	_engineMu.Unlock()
 }
 
@@ -235,11 +236,11 @@ func netstack(k *Key) (err error) {
 	}
 
 	if _defaultStack, err = core.CreateStack(&core.Config{
-		LinkEndpoint:       _defaultDevice,
-		TransportHandler:   tunnel.T(),
-		MulticastGroups:    multicastGroups,
-		Options:            opts,
-		ICMPHandlerFactory: _icmpHandlerFactory,
+		LinkEndpoint:     _defaultDevice,
+		TransportHandler: tunnel.T(),
+		MulticastGroups:  multicastGroups,
+		Options:          opts,
+		ICMPHandler:      _icmpHandler,
 	}); err != nil {
 		return err
 	}

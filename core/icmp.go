@@ -10,33 +10,50 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/icmp"
 
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-func withICMPHandler(factory TransportProtocolHandlerFactory) option.Option {
+func withICMPHandler(h adapter.NetworkHandler) option.Option {
 	return func(s *stack.Stack) error {
-		if factory != nil {
-			handler := factory(s)
-			if handler != nil {
-				s.SetTransportProtocolHandler(icmp.ProtocolNumber4, handler.HandlePacket)
-				return nil
-			}
-		}
-		f := newICMPForwarder(s)
+		f := newICMPForwarder(s, h)
 		s.SetTransportProtocolHandler(icmp.ProtocolNumber4, f.HandlePacket)
 		return nil
 	}
 }
 
-type icmpForwarder struct {
-	s *stack.Stack
+type icmpPacket struct {
+	data  *stack.PacketBuffer
+	stack *stack.Stack
+	id    *stack.TransportEndpointID
 }
 
-func newICMPForwarder(s *stack.Stack) *icmpForwarder {
-	return &icmpForwarder{s: s}
+func (p *icmpPacket) Data() *stack.PacketBuffer {
+	return p.data
+}
+
+func (p *icmpPacket) Stack() *stack.Stack {
+	return p.stack
+}
+
+// ID returns the transport endpoint id of Packet.
+func (p *icmpPacket) ID() *stack.TransportEndpointID {
+	return p.id
+}
+
+type icmpForwarder struct {
+	s *stack.Stack
+	h adapter.NetworkHandler
+}
+
+func newICMPForwarder(s *stack.Stack, h adapter.NetworkHandler) *icmpForwarder {
+	return &icmpForwarder{s: s, h: h}
 }
 
 func (f *icmpForwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
+	if f.h != nil {
+		return f.h.HandlePacket(&icmpPacket{data: pkt, stack: f.s, id: &id})
+	}
 	switch pkt.NetworkProtocolNumber {
 	case ipv4.ProtocolNumber:
 		return f.handlePacket4(id, pkt)

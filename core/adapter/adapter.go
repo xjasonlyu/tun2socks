@@ -24,3 +24,14 @@ type UDPConn interface {
 	// ID returns the transport endpoint id.
 	ID() stack.TransportEndpointID
 }
+
+type Packet interface {
+	// Data holds the packet buffer of Packet.
+	Data() *stack.PacketBuffer
+
+	// Stack returns the network stack that handles Packet.
+	Stack() *stack.Stack
+
+	// ID returns the transport endpoint id of Packet.
+	ID() *stack.TransportEndpointID
+}
