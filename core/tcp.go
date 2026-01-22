@@ -117,6 +117,6 @@ type tcpConn struct {
 	id stack.TransportEndpointID
 }
 
-func (c *tcpConn) ID() *stack.TransportEndpointID {
-	return &c.id
+func (c *tcpConn) ID() stack.TransportEndpointID {
+	return c.id
 }
