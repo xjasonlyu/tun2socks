@@ -42,6 +42,6 @@ type udpConn struct {
 	id stack.TransportEndpointID
 }
 
-func (c *udpConn) ID() *stack.TransportEndpointID {
-	return &c.id
+func (c *udpConn) ID() stack.TransportEndpointID {
+	return c.id
 }
