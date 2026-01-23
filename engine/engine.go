@@ -238,9 +238,9 @@ func netstack(k *Key) (err error) {
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: tunnel.T(),
+		ICMPHandler:      _icmpHandler,
 		MulticastGroups:  multicastGroups,
 		Options:          opts,
-		ICMPHandler:      _icmpHandler,
 	}); err != nil {
 		return err
 	}
