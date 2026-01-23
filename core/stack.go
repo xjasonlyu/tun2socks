@@ -65,8 +65,8 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// before creating NIC, otherwise NIC would dispatch packets
 		// to stack and cause race condition.
 		// Initiate transport protocol (TCP/UDP) with given handler.
-		withTCPHandler(cfg.TransportHandler.HandleTCP),
-		withUDPHandler(cfg.TransportHandler.HandleUDP),
+		withTCPHandler(cfg.TransportHandler),
+		withUDPHandler(cfg.TransportHandler),
 
 		// gVisor added NetworkPacketInfo.LocalAddressTemporary to
 		// identify packets received with temporary addresses due
