@@ -24,13 +24,13 @@ type Config struct {
 	// stack to set transport handlers.
 	TransportHandler adapter.TransportHandler
 
+	// ICMPHandler is used to customize ICMP packet handling.
+	// If nil, the default icmpForwarder is used.
+	ICMPHandler adapter.NetworkHandler
+
 	// MulticastGroups is used by internal stack to add
 	// nic to given groups.
 	MulticastGroups []netip.Addr
-
-	// ICMPHandler is used to customize ICMP packet handling.
-	// If nil, the default icmpForwarder will be used.
-	ICMPHandler adapter.NetworkHandler
 
 	// Options are supplement options to apply settings
 	// for the internal stack.

@@ -63,7 +63,7 @@ func Insert(k *Key) {
 	_engineMu.Unlock()
 }
 
-// SetICMPHandler sets the custom ICMP handler factory for the default engine.
+// SetICMPHandler sets the custom ICMP handler for the default engine.
 func SetICMPHandler(h adapter.NetworkHandler) {
 	_engineMu.Lock()
 	_icmpHandler = h

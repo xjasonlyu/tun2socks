@@ -7,7 +7,8 @@ type TransportHandler interface {
 	HandleUDP(UDPConn)
 }
 
-// NetworkHandler is a L3/network handler that implements HandlePacket method.
+// NetworkHandler is a L3/network packet handler that implements
+// HandlePacket method.
 type NetworkHandler interface {
 	HandlePacket(Packet) bool
 }
