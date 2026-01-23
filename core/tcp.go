@@ -43,7 +43,7 @@ const (
 
 func withTCPHandler(h adapter.TransportHandler) option.Option {
 	return func(s *stack.Stack) error {
-		tcpForwarder := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
+		f := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
 			var (
 				wq  waiter.Queue
 				ep  tcpip.Endpoint
@@ -75,7 +75,7 @@ func withTCPHandler(h adapter.TransportHandler) option.Option {
 			}
 			h.HandleTCP(conn)
 		})
-		s.SetTransportProtocolHandler(tcp.ProtocolNumber, tcpForwarder.HandlePacket)
+		s.SetTransportProtocolHandler(tcp.ProtocolNumber, f.HandlePacket)
 		return nil
 	}
 }

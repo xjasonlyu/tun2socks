@@ -16,24 +16,31 @@ import (
 
 func withICMPHandler(h adapter.NetworkHandler) option.Option {
 	return func(s *stack.Stack) error {
-		f := newICMPForwarder(s, h)
+		f := newICMPForwarder(s, func(r *icmpForwarderRequest) bool {
+			if h != nil {
+				return h.HandlePacket(r)
+			}
+			return false
+		})
 		s.SetTransportProtocolHandler(icmp.ProtocolNumber4, f.HandlePacket)
 		return nil
 	}
 }
 
+type icmpForwarderHandler func(*icmpForwarderRequest) bool
+
 type icmpForwarder struct {
 	s *stack.Stack
-	h adapter.NetworkHandler
+	h icmpForwarderHandler
 }
 
-func newICMPForwarder(s *stack.Stack, h adapter.NetworkHandler) *icmpForwarder {
+func newICMPForwarder(s *stack.Stack, h icmpForwarderHandler) *icmpForwarder {
 	return &icmpForwarder{s: s, h: h}
 }
 
 func (f *icmpForwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
-	if f.h != nil {
-		return f.h.HandlePacket(&icmpPacket{data: pkt, stack: f.s, id: id})
+	if f.h(&icmpForwarderRequest{pkt: pkt.Clone(), id: id, stack: f.s}) {
+		return true /* handled */
 	}
 	switch pkt.NetworkProtocolNumber {
 	case ipv4.ProtocolNumber:
@@ -101,14 +108,16 @@ func (f *icmpForwarder) handlePacket6(id stack.TransportEndpointID, pkt *stack.P
 	return false // not implemented
 }
 
-type icmpPacket struct {
-	data  *stack.PacketBuffer
+type icmpForwarderRequest struct {
 	stack *stack.Stack
 	id    stack.TransportEndpointID
+	pkt   *stack.PacketBuffer
 }
 
-func (p *icmpPacket) Buffer() *stack.PacketBuffer { return p.data }
+func (r *icmpForwarderRequest) Stack() *stack.Stack { return r.stack }
 
-func (p *icmpPacket) Stack() *stack.Stack { return p.stack }
+func (r *icmpForwarderRequest) ID() stack.TransportEndpointID { return r.id }
 
-func (p *icmpPacket) ID() stack.TransportEndpointID { return p.id }
+func (r *icmpForwarderRequest) Buffer() *stack.PacketBuffer { return r.pkt }
+
+var _ adapter.Packet = (*icmpForwarderRequest)(nil)
