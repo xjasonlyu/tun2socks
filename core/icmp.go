@@ -10,26 +10,38 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/icmp"
 
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-func withICMPHandler() option.Option {
+func withICMPHandler(h adapter.NetworkHandler) option.Option {
 	return func(s *stack.Stack) error {
-		f := newICMPForwarder(s)
+		f := newICMPForwarder(s, func(r *icmpForwarderRequest) bool {
+			if h != nil {
+				return h.HandlePacket(r)
+			}
+			return false
+		})
 		s.SetTransportProtocolHandler(icmp.ProtocolNumber4, f.HandlePacket)
 		return nil
 	}
 }
 
+type icmpForwarderHandler func(*icmpForwarderRequest) bool
+
 type icmpForwarder struct {
 	s *stack.Stack
+	h icmpForwarderHandler
 }
 
-func newICMPForwarder(s *stack.Stack) *icmpForwarder {
-	return &icmpForwarder{s: s}
+func newICMPForwarder(s *stack.Stack, h icmpForwarderHandler) *icmpForwarder {
+	return &icmpForwarder{s: s, h: h}
 }
 
 func (f *icmpForwarder) HandlePacket(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
+	if f.h(&icmpForwarderRequest{pkt: pkt.Clone(), id: id, stack: f.s}) {
+		return true /* handled */
+	}
 	switch pkt.NetworkProtocolNumber {
 	case ipv4.ProtocolNumber:
 		return f.handlePacket4(id, pkt)
@@ -95,3 +107,17 @@ func (f *icmpForwarder) handlePacket4(_ stack.TransportEndpointID, pkt *stack.Pa
 func (f *icmpForwarder) handlePacket6(id stack.TransportEndpointID, pkt *stack.PacketBuffer) bool {
 	return false // not implemented
 }
+
+type icmpForwarderRequest struct {
+	stack *stack.Stack
+	id    stack.TransportEndpointID
+	pkt   *stack.PacketBuffer
+}
+
+func (r *icmpForwarderRequest) Stack() *stack.Stack { return r.stack }
+
+func (r *icmpForwarderRequest) ID() stack.TransportEndpointID { return r.id }
+
+func (r *icmpForwarderRequest) Buffer() *stack.PacketBuffer { return r.pkt }
+
+var _ adapter.Packet = (*icmpForwarderRequest)(nil)

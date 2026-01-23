@@ -13,6 +13,7 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
 	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
@@ -36,6 +37,9 @@ var (
 
 	// _defaultStack holds the default stack for the engine.
 	_defaultStack *stack.Stack
+
+	// _icmpHandler holds the custom ICMP handler for the engine.
+	_icmpHandler adapter.NetworkHandler
 )
 
 // Start starts the default engine up.
@@ -56,6 +60,13 @@ func Stop() {
 func Insert(k *Key) {
 	_engineMu.Lock()
 	_defaultKey = k
+	_engineMu.Unlock()
+}
+
+// SetICMPHandler sets the custom ICMP handler for the default engine.
+func SetICMPHandler(h adapter.NetworkHandler) {
+	_engineMu.Lock()
+	_icmpHandler = h
 	_engineMu.Unlock()
 }
 
@@ -227,6 +238,7 @@ func netstack(k *Key) (err error) {
 	if _defaultStack, err = core.CreateStack(&core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: tunnel.T(),
+		ICMPHandler:      _icmpHandler,
 		MulticastGroups:  multicastGroups,
 		Options:          opts,
 	}); err != nil {
