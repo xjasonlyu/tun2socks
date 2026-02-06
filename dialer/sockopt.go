@@ -17,3 +17,14 @@ func isUDPSocket(network string) bool {
 		return false
 	}
 }
+
+func isICMPSocket(network string) bool {
+	switch network {
+	case "ip:icmp", "ip4:icmp", "ip6:ipv6-icmp":
+		return true
+	case "ip4", "ip6":
+		return true
+	default:
+		return false
+	}
+}
