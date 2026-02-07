@@ -1,30 +1,30 @@
 package dialer
 
-func isTCPSocket(network string) bool {
-	switch network {
-	case "tcp", "tcp4", "tcp6":
-		return true
-	default:
-		return false
-	}
+import (
+	"syscall"
+)
+
+var _ SocketOption = SocketOptionFunc(nil)
+
+type SocketOption interface {
+	Apply(network, address string, c syscall.RawConn) error
 }
 
-func isUDPSocket(network string) bool {
-	switch network {
-	case "udp", "udp4", "udp6":
-		return true
-	default:
-		return false
-	}
+type SocketOptionFunc func(network, address string, c syscall.RawConn) error
+
+func (f SocketOptionFunc) Apply(network, address string, c syscall.RawConn) error {
+	return f(network, address, c)
 }
 
-func isICMPSocket(network string) bool {
-	switch network {
-	case "ip:icmp", "ip4:icmp", "ip6:ipv6-icmp":
-		return true
-	case "ip4", "ip6":
-		return true
-	default:
-		return false
+var NopSocketOption = SocketOptionFunc(func(_, _ string, _ syscall.RawConn) error { return nil })
+
+func control(c syscall.RawConn, f func(uintptr) error) error {
+	var innerErr error
+	err := c.Control(func(fd uintptr) {
+		innerErr = f(fd)
+	})
+	if innerErr != nil {
+		err = innerErr
 	}
+	return err
 }

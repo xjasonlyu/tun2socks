@@ -3,39 +3,18 @@ package dialer
 import (
 	"context"
 	"net"
+	"sync"
 	"syscall"
 
 	"go.uber.org/atomic"
 )
 
 // DefaultDialer is the default Dialer and is used by DialContext and ListenPacket.
-var DefaultDialer = &Dialer{
-	InterfaceName:  atomic.NewString(""),
-	InterfaceIndex: atomic.NewInt32(0),
-	RoutingMark:    atomic.NewInt32(0),
-}
+var DefaultDialer = New()
 
-type Dialer struct {
-	InterfaceName  *atomic.String
-	InterfaceIndex *atomic.Int32
-	RoutingMark    *atomic.Int32
-}
-
-type Options struct {
-	// InterfaceName is the name of interface/device to bind.
-	// If a socket is bound to an interface, only packets received
-	// from that particular interface are processed by the socket.
-	InterfaceName string
-
-	// InterfaceIndex is the index of interface/device to bind.
-	// It is almost the same as InterfaceName except it uses the
-	// index of the interface instead of the name.
-	InterfaceIndex int
-
-	// RoutingMark is the mark for each packet sent through this
-	// socket. Changing the mark can be used for mark-based routing
-	// without netfilter or for packet filtering.
-	RoutingMark int
+// RegisterSockOpt registers the given socket option to DefaultDialer.
+func RegisterSockOpt(opt SocketOption) {
+	DefaultDialer.RegisterSockOpt(opt)
 }
 
 // DialContext is a wrapper around DefaultDialer.DialContext.
@@ -48,36 +27,48 @@ func ListenPacket(network, address string) (net.PacketConn, error) {
 	return DefaultDialer.ListenPacket(network, address)
 }
 
-func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
-	return d.DialContextWithOptions(ctx, network, address, &Options{
-		InterfaceName:  d.InterfaceName.Load(),
-		InterfaceIndex: int(d.InterfaceIndex.Load()),
-		RoutingMark:    int(d.RoutingMark.Load()),
-	})
+type Dialer struct {
+	optsMu     sync.Mutex
+	atomicOpts atomic.Value
 }
 
-func (*Dialer) DialContextWithOptions(ctx context.Context, network, address string, opts *Options) (net.Conn, error) {
-	d := &net.Dialer{
-		Control: func(network, address string, c syscall.RawConn) error {
-			return setSocketOptions(network, address, c, opts)
-		},
+func New(opts ...SocketOption) *Dialer {
+	d := &Dialer{}
+	for _, opt := range opts {
+		d.RegisterSockOpt(opt)
 	}
-	return d.DialContext(ctx, network, address)
+	return d
+}
+
+func (d *Dialer) RegisterSockOpt(opt SocketOption) {
+	d.optsMu.Lock()
+	opts, _ := d.atomicOpts.Load().([]SocketOption)
+	d.atomicOpts.Store(append(opts, opt))
+	d.optsMu.Unlock()
+}
+
+func (d *Dialer) applySockOpt(network string, address string, c syscall.RawConn) error {
+	host, _, _ := net.SplitHostPort(address)
+	if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
+		return nil
+	}
+	opts, _ := d.atomicOpts.Load().([]SocketOption)
+	for _, opt := range opts {
+		if err := opt.Apply(network, address, c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
+	return (&net.Dialer{
+		Control: d.applySockOpt,
+	}).DialContext(ctx, network, address)
 }
 
 func (d *Dialer) ListenPacket(network, address string) (net.PacketConn, error) {
-	return d.ListenPacketWithOptions(network, address, &Options{
-		InterfaceName:  d.InterfaceName.Load(),
-		InterfaceIndex: int(d.InterfaceIndex.Load()),
-		RoutingMark:    int(d.RoutingMark.Load()),
-	})
-}
-
-func (*Dialer) ListenPacketWithOptions(network, address string, opts *Options) (net.PacketConn, error) {
-	lc := &net.ListenConfig{
-		Control: func(network, address string, c syscall.RawConn) error {
-			return setSocketOptions(network, address, c, opts)
-		},
-	}
-	return lc.ListenPacket(context.Background(), network, address)
+	return (&net.ListenConfig{
+		Control: d.applySockOpt,
+	}).ListenPacket(context.Background(), network, address)
 }

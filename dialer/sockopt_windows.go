@@ -14,45 +14,26 @@ const (
 	IPV6_UNICAST_IF = 31
 )
 
-func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
-	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) && !isICMPSocket(network) {
-		return err
-	}
-
-	var innerErr error
-	err = c.Control(func(fd uintptr) {
-		host, _, _ := net.SplitHostPort(address)
-		ip := net.ParseIP(host)
-		if ip != nil && !ip.IsGlobalUnicast() {
-			return
-		}
-
-		if opts.InterfaceIndex == 0 && opts.InterfaceName != "" {
-			if iface, err := net.InterfaceByName(opts.InterfaceName); err == nil {
-				opts.InterfaceIndex = iface.Index
-			}
-		}
-
-		if opts.InterfaceIndex != 0 {
+func WithBindToInterface(iface *net.Interface) SocketOption {
+	return SocketOptionFunc(func(network, address string, c syscall.RawConn) error {
+		return control(c, func(fd uintptr) (err error) {
 			switch network {
-			case "tcp4", "udp4":
-				innerErr = bindSocketToInterface4(windows.Handle(fd), uint32(opts.InterfaceIndex))
-			case "tcp6", "udp6":
-				innerErr = bindSocketToInterface6(windows.Handle(fd), uint32(opts.InterfaceIndex))
-				if network == "udp6" && ip == nil {
-					// The underlying IP net maybe IPv4 even if the `network` param is `udp6`,
-					// so we should bind socket to interface4 at the same time.
-					innerErr = bindSocketToInterface4(windows.Handle(fd), uint32(opts.InterfaceIndex))
-				}
+			case "ip4", "tcp4", "udp4":
+				err = bindSocketToInterface4(windows.Handle(fd), uint32(iface.Index))
+			case "ip6", "tcp6", "udp6":
+				err = bindSocketToInterface6(windows.Handle(fd), uint32(iface.Index))
 			}
-		}
+			if network == "udp6" {
+				// The underlying IP net maybe IPv4 even if the `network` param is `udp6`,
+				// so we should bind socket to interface4 at the same time.
+				_ = bindSocketToInterface4(windows.Handle(fd), uint32(iface.Index))
+			}
+			return
+		})
 	})
-
-	if innerErr != nil {
-		err = innerErr
-	}
-	return err
 }
+
+func WithRoutingMark(_ int) SocketOption { return NopSocketOption }
 
 func bindSocketToInterface4(handle windows.Handle, index uint32) error {
 	// For IPv4, this parameter must be an interface index in network byte order.
