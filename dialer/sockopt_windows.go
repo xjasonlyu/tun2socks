@@ -15,21 +15,21 @@ const (
 )
 
 func WithBindToInterface(iface *net.Interface) SocketOption {
-	index := iface.Index
+	index := uint32(iface.Index)
 	return SocketOptionFunc(func(network, address string, c syscall.RawConn) error {
 		return rawConnControl(c, func(fd uintptr) (err error) {
 			switch network {
 			case "ip4", "tcp4", "udp4":
-				err = bindSocketToInterface4(windows.Handle(fd), uint32(index))
+				err = bindSocketToInterface4(windows.Handle(fd), index)
 			case "ip6", "tcp6", "udp6":
-				err = bindSocketToInterface6(windows.Handle(fd), uint32(index))
-			}
-			if network == "udp6" {
-				host, _, _ := net.SplitHostPort(address)
-				if ip := net.ParseIP(host); ip == nil || ip.IsUnspecified() {
-					// The underlying IP net maybe IPv4 even if the `network` param is
-					// `udp6`, so we should bind socket to interface4 at the same time.
-					_ = bindSocketToInterface4(windows.Handle(fd), uint32(index))
+				err = bindSocketToInterface6(windows.Handle(fd), index)
+				// UDPv6 may still use an IPv4 underlying socket if the destination
+				// address is unspecified (e.g. ":0").
+				if network == "udp6" {
+					host, _, _ := net.SplitHostPort(address)
+					if ip := net.ParseIP(host); ip == nil || ip.IsUnspecified() {
+						_ = bindSocketToInterface4(windows.Handle(fd), index)
+					}
 				}
 			}
 			return
