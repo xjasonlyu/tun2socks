@@ -25,9 +25,12 @@ func WithInterface(iface *net.Interface) SocketOption {
 				err = bindSocketToInterface6(windows.Handle(fd), uint32(index))
 			}
 			if network == "udp6" {
-				// The underlying IP net maybe IPv4 even if the `network` param is `udp6`,
-				// so we should bind socket to interface4 at the same time.
-				_ = bindSocketToInterface4(windows.Handle(fd), uint32(index))
+				host, _, _ := net.SplitHostPort(address)
+				if ip := net.ParseIP(host); ip == nil || ip.IsUnspecified() {
+					// The underlying IP net maybe IPv4 even if the `network` param is
+					// `udp6`, so we should bind socket to interface4 at the same time.
+					_ = bindSocketToInterface4(windows.Handle(fd), uint32(index))
+				}
 			}
 			return
 		})
