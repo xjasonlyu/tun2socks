@@ -10,7 +10,7 @@ import (
 )
 
 // DefaultDialer is the default Dialer and is used by DialContext and ListenPacket.
-var DefaultDialer = New()
+var DefaultDialer = &Dialer{}
 
 // RegisterSockOpt registers the given socket option to DefaultDialer.
 func RegisterSockOpt(opt SocketOption) {

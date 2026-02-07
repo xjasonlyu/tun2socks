@@ -127,7 +127,7 @@ func general(k *Key) error {
 		if err != nil {
 			return err
 		}
-		dialer.RegisterSockOpt(dialer.WithBindToInterface(iface))
+		dialer.RegisterSockOpt(dialer.WithInterface(iface))
 		log.Infof("[DIALER] bind to interface: %s", k.Interface)
 	}
 

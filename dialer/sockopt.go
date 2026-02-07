@@ -1,10 +1,11 @@
 package dialer
 
 import (
+	"errors"
 	"syscall"
 )
 
-var _ SocketOption = SocketOptionFunc(nil)
+var _ SocketOption = (SocketOptionFunc)(nil)
 
 type SocketOption interface {
 	Apply(network, address string, c syscall.RawConn) error
@@ -16,9 +17,11 @@ func (f SocketOptionFunc) Apply(network, address string, c syscall.RawConn) erro
 	return f(network, address, c)
 }
 
-var NopSocketOption = SocketOptionFunc(func(_, _ string, _ syscall.RawConn) error { return nil })
+var UnsupportedSocketOption = SocketOptionFunc(func(_, _ string, _ syscall.RawConn) error {
+	return errors.ErrUnsupported
+})
 
-func control(c syscall.RawConn, f func(uintptr) error) error {
+func rawConnControl(c syscall.RawConn, f func(uintptr) error) error {
 	var innerErr error
 	err := c.Control(func(fd uintptr) {
 		innerErr = f(fd)
