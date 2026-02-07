@@ -7,7 +7,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func WithInterface(_ *net.Interface) SocketOption { return UnsupportedSocketOption }
+func WithBindToInterface(_ *net.Interface) SocketOption { return UnsupportedSocketOption }
 
 func WithRoutingMark(mark int) SocketOption {
 	return SocketOptionFunc(func(network, address string, c syscall.RawConn) error {

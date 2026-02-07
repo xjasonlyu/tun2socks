@@ -14,7 +14,7 @@ const (
 	IPV6_UNICAST_IF = 31
 )
 
-func WithInterface(iface *net.Interface) SocketOption {
+func WithBindToInterface(iface *net.Interface) SocketOption {
 	index := iface.Index
 	return SocketOptionFunc(func(network, address string, c syscall.RawConn) error {
 		return rawConnControl(c, func(fd uintptr) (err error) {

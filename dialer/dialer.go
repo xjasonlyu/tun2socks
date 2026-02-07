@@ -47,12 +47,17 @@ func (d *Dialer) RegisterSockOpt(opt SocketOption) {
 	d.optsMu.Unlock()
 }
 
-func (d *Dialer) applySockOpt(network string, address string, c syscall.RawConn) error {
-	host, _, _ := net.SplitHostPort(address)
-	if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
+func (d *Dialer) applySockOpts(network string, address string, c syscall.RawConn) error {
+	opts, _ := d.atomicOpts.Load().([]SocketOption)
+	if len(opts) == 0 {
 		return nil
 	}
-	opts, _ := d.atomicOpts.Load().([]SocketOption)
+	// Skip non-global-unicast IPs (e.g. loopback, link-local).
+	if host, _, err := net.SplitHostPort(address); err == nil {
+		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
+			return nil
+		}
+	}
 	for _, opt := range opts {
 		if err := opt.Apply(network, address, c); err != nil {
 			return err
@@ -63,12 +68,12 @@ func (d *Dialer) applySockOpt(network string, address string, c syscall.RawConn)
 
 func (d *Dialer) DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	return (&net.Dialer{
-		Control: d.applySockOpt,
+		Control: d.applySockOpts,
 	}).DialContext(ctx, network, address)
 }
 
 func (d *Dialer) ListenPacket(network, address string) (net.PacketConn, error) {
 	return (&net.ListenConfig{
-		Control: d.applySockOpt,
+		Control: d.applySockOpts,
 	}).ListenPacket(context.Background(), network, address)
 }
