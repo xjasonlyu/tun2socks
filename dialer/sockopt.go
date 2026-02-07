@@ -7,6 +7,8 @@ import (
 
 var _ SocketOption = SocketOptionFunc(nil)
 
+// SocketOption applies a socket-level configuration to a network connection
+// during dialing or listening, via syscall.RawConn.
 type SocketOption interface {
 	Apply(network, address string, c syscall.RawConn) error
 }
