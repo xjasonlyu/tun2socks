@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	IP_UNICAST_IF   = 31
-	IPV6_UNICAST_IF = 31
+	IP_UNICAST_IF   = 0x1f
+	IPV6_UNICAST_IF = 0x1f
 )
 
 func WithBindToInterface(iface *net.Interface) SocketOption {
