@@ -1,7 +1,7 @@
 package dialer
 
 import (
-	"encoding/binary"
+	"math/bits"
 	"net"
 	"syscall"
 
@@ -39,9 +39,7 @@ func WithBindToInterface(iface *net.Interface) SocketOption {
 func bindSocketToInterface4(handle windows.Handle, index uint32) error {
 	// For IPv4, this parameter must be an interface index in network byte order.
 	// Ref: https://learn.microsoft.com/en-us/windows/win32/winsock/ipproto-ip-socket-options
-	var bytes [4]byte
-	binary.BigEndian.PutUint32(bytes[:], index)
-	index = binary.BigEndian.Uint32(bytes[:])
+	index = bits.ReverseBytes32(index)
 	return windows.SetsockoptInt(handle, windows.IPPROTO_IP, IP_UNICAST_IF, int(index))
 }
 
