@@ -123,7 +123,7 @@ func general(k *Key) error {
 	log.SetLogger(log.Must(log.NewLeveled(level)))
 
 	// Reset default dialer before registering options.
-	dialer.DefaultDialer = dialer.New()
+	dialer.Reset()
 
 	if k.Interface != "" {
 		iface, err := net.InterfaceByName(k.Interface)

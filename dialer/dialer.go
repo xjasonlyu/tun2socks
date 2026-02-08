@@ -18,6 +18,11 @@ func RegisterSockOpt(opt SocketOption) {
 	DefaultDialer.RegisterSockOpt(opt)
 }
 
+// Reset removes all registered socket options from the DefaultDialer.
+func Reset() {
+	DefaultDialer.Reset()
+}
+
 // DialContext dials using the DefaultDialer.
 func DialContext(ctx context.Context, network, address string) (net.Conn, error) {
 	return DefaultDialer.DialContext(ctx, network, address)
@@ -48,6 +53,13 @@ func (d *Dialer) RegisterSockOpt(opt SocketOption) {
 	d.optsMu.Lock()
 	opts, _ := d.atomicOpts.Load().([]SocketOption)
 	d.atomicOpts.Store(append(opts, opt))
+	d.optsMu.Unlock()
+}
+
+// Reset removes all registered socket options from the Dialer.
+func (d *Dialer) Reset() {
+	d.optsMu.Lock()
+	d.atomicOpts.Store([]SocketOption(nil))
 	d.optsMu.Unlock()
 }
 
