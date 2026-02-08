@@ -7,38 +7,19 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
-	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) && !isICMPSocket(network) {
-		return err
-	}
-
-	var innerErr error
-	err = c.Control(func(fd uintptr) {
-		host, _, _ := net.SplitHostPort(address)
-		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
-			return
-		}
-
-		if opts.InterfaceName == "" && opts.InterfaceIndex != 0 {
-			if iface, err := net.InterfaceByIndex(opts.InterfaceIndex); err == nil {
-				opts.InterfaceName = iface.Name
-			}
-		}
-
-		if opts.InterfaceName != "" {
-			if innerErr = unix.BindToDevice(int(fd), opts.InterfaceName); innerErr != nil {
-				return
-			}
-		}
-		if opts.RoutingMark != 0 {
-			if innerErr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_MARK, opts.RoutingMark); innerErr != nil {
-				return
-			}
-		}
+func WithBindToInterface(iface *net.Interface) SocketOption {
+	device := iface.Name
+	return SocketOptionFunc(func(_, _ string, c syscall.RawConn) error {
+		return rawConnControl(c, func(fd uintptr) error {
+			return unix.BindToDevice(int(fd), device)
+		})
 	})
+}
 
-	if innerErr != nil {
-		err = innerErr
-	}
-	return err
+func WithRoutingMark(mark int) SocketOption {
+	return SocketOptionFunc(func(_, _ string, c syscall.RawConn) error {
+		return rawConnControl(c, func(fd uintptr) error {
+			return unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_MARK, mark)
+		})
+	})
 }

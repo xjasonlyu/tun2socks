@@ -2,8 +2,10 @@
 
 package dialer
 
-import "syscall"
+import (
+	"net"
+)
 
-func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) error {
-	return nil
-}
+func WithBindToInterface(_ *net.Interface) SocketOption { return UnsupportedSocketOption }
+
+func WithRoutingMark(_ int) SocketOption { return UnsupportedSocketOption }

@@ -7,27 +7,12 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
-	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) && !isICMPSocket(network) {
-		return err
-	}
+func WithBindToInterface(_ *net.Interface) SocketOption { return UnsupportedSocketOption }
 
-	var innerErr error
-	err = c.Control(func(fd uintptr) {
-		host, _, _ := net.SplitHostPort(address)
-		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
-			return
-		}
-
-		if opts.RoutingMark != 0 {
-			if innerErr = unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_USER_COOKIE, opts.RoutingMark); innerErr != nil {
-				return
-			}
-		}
+func WithRoutingMark(mark int) SocketOption {
+	return SocketOptionFunc(func(_, _ string, c syscall.RawConn) error {
+		return rawConnControl(c, func(fd uintptr) error {
+			return unix.SetsockoptInt(int(fd), unix.SOL_SOCKET, unix.SO_USER_COOKIE, mark)
+		})
 	})
-
-	if innerErr != nil {
-		err = innerErr
-	}
-	return err
 }

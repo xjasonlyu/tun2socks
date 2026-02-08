@@ -1,30 +1,41 @@
 package dialer
 
-func isTCPSocket(network string) bool {
-	switch network {
-	case "tcp", "tcp4", "tcp6":
-		return true
-	default:
-		return false
-	}
+import (
+	"errors"
+	"syscall"
+)
+
+var _ SocketOption = SocketOptionFunc(nil)
+
+// SocketOption applies a socket-level configuration to a network connection
+// during dialing or listening, via syscall.RawConn.
+type SocketOption interface {
+	Apply(network, address string, c syscall.RawConn) error
 }
 
-func isUDPSocket(network string) bool {
-	switch network {
-	case "udp", "udp4", "udp6":
-		return true
-	default:
-		return false
-	}
+// SocketOptionFunc adapts a function to a SocketOption.
+type SocketOptionFunc func(network, address string, c syscall.RawConn) error
+
+func (f SocketOptionFunc) Apply(network, address string, c syscall.RawConn) error {
+	return f(network, address, c)
 }
 
-func isICMPSocket(network string) bool {
-	switch network {
-	case "ip:icmp", "ip4:icmp", "ip6:ipv6-icmp":
-		return true
-	case "ip4", "ip6":
-		return true
-	default:
-		return false
+// UnsupportedSocketOption is a sentinel SocketOption that always reports
+// ErrUnsupported when applied.
+var UnsupportedSocketOption = SocketOptionFunc(unsupportedSocketOpt)
+
+func unsupportedSocketOpt(_, _ string, _ syscall.RawConn) error {
+	return errors.ErrUnsupported
+}
+
+// rawConnControl runs f with the file descriptor obtained via RawConn.Control
+// and correctly propagates errors returned from f.
+func rawConnControl(c syscall.RawConn, f func(uintptr) error) error {
+	var innerErr error
+	if err := c.Control(func(fd uintptr) {
+		innerErr = f(fd)
+	}); err != nil {
+		return err
 	}
+	return innerErr
 }

@@ -7,39 +7,19 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func setSocketOptions(network, address string, c syscall.RawConn, opts *Options) (err error) {
-	if opts == nil || !isTCPSocket(network) && !isUDPSocket(network) && !isICMPSocket(network) {
-		return err
-	}
-
-	var innerErr error
-	err = c.Control(func(fd uintptr) {
-		host, _, _ := net.SplitHostPort(address)
-		if ip := net.ParseIP(host); ip != nil && !ip.IsGlobalUnicast() {
-			return
-		}
-
-		if opts.InterfaceIndex == 0 && opts.InterfaceName != "" {
-			if iface, err := net.InterfaceByName(opts.InterfaceName); err == nil {
-				opts.InterfaceIndex = iface.Index
-			}
-		}
-
-		if opts.InterfaceIndex != 0 {
+func WithBindToInterface(iface *net.Interface) SocketOption {
+	index := iface.Index
+	return SocketOptionFunc(func(network, _ string, c syscall.RawConn) error {
+		return rawConnControl(c, func(fd uintptr) error {
 			switch network {
-			case "tcp4", "udp4":
-				innerErr = unix.SetsockoptInt(int(fd), syscall.IPPROTO_IP, syscall.IP_BOUND_IF, opts.InterfaceIndex)
-			case "tcp6", "udp6":
-				innerErr = unix.SetsockoptInt(int(fd), syscall.IPPROTO_IPV6, syscall.IPV6_BOUND_IF, opts.InterfaceIndex)
+			case "ip4", "tcp4", "udp4":
+				return unix.SetsockoptInt(int(fd), unix.IPPROTO_IP, unix.IP_BOUND_IF, index)
+			case "ip6", "tcp6", "udp6":
+				return unix.SetsockoptInt(int(fd), unix.IPPROTO_IPV6, unix.IPV6_BOUND_IF, index)
 			}
-			if innerErr != nil {
-				return
-			}
-		}
+			return nil
+		})
 	})
-
-	if innerErr != nil {
-		err = innerErr
-	}
-	return err
 }
+
+func WithRoutingMark(_ int) SocketOption { return UnsupportedSocketOption }
