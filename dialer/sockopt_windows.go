@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"net"
 	"syscall"
-	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -42,7 +41,7 @@ func bindSocketToInterface4(handle windows.Handle, index uint32) error {
 	// Ref: https://learn.microsoft.com/en-us/windows/win32/winsock/ipproto-ip-socket-options
 	var bytes [4]byte
 	binary.BigEndian.PutUint32(bytes[:], index)
-	index = *(*uint32)(unsafe.Pointer(&bytes[0]))
+	index = binary.BigEndian.Uint32(bytes[:])
 	return windows.SetsockoptInt(handle, windows.IPPROTO_IP, IP_UNICAST_IF, int(index))
 }
 
