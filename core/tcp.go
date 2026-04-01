@@ -1,6 +1,8 @@
 package core
 
 import (
+	"sync"
+	"sync/atomic"
 	"time"
 
 	glog "gvisor.dev/gvisor/pkg/log"
@@ -24,6 +26,11 @@ const (
 	// of in-flight tcp connection attempts.
 	maxConnAttempts = 2 << 10
 
+	// maxEstablishedConns caps the number of concurrently active TCP
+	// connections to prevent unbounded memory growth. New SYN packets
+	// are RST'd when this limit is reached.
+	maxEstablishedConns int64 = 4096
+
 	// tcpKeepaliveCount is the maximum number of
 	// TCP keep-alive probes to send before giving up
 	// and killing the connection if no response is
@@ -42,6 +49,8 @@ const (
 )
 
 func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
+	var activeConns atomic.Int64
+
 	return func(s *stack.Stack) error {
 		tcpForwarder := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
 			var (
@@ -58,9 +67,16 @@ func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
 				}
 			}()
 
+			if activeConns.Load() >= maxEstablishedConns {
+				r.Complete(true)
+				return
+			}
+			activeConns.Add(1)
+
 			// Perform a TCP three-way handshake.
 			ep, err = r.CreateEndpoint(&wq)
 			if err != nil {
+				activeConns.Add(-1)
 				// RST: prevent potential half-open TCP connection leak.
 				r.Complete(true)
 				return
@@ -73,11 +89,46 @@ func withTCPHandler(handle func(adapter.TCPConn)) option.Option {
 				TCPConn: gonet.NewTCPConn(&wq, ep),
 				id:      id,
 			}
-			handle(conn)
+
+			// Wrap so the counter decrements when the connection is
+			// actually closed (in tunnel.handleTCPConn), not when
+			// the dispatch returns.
+			var once sync.Once
+			counted := &countedTCPConn{
+				TCPConn: conn,
+				onClose: func() { once.Do(func() { activeConns.Add(-1) }) },
+			}
+			handle(counted)
 		})
 		s.SetTransportProtocolHandler(tcp.ProtocolNumber, tcpForwarder.HandlePacket)
 		return nil
 	}
+}
+
+// countedTCPConn wraps a TCPConn and calls onClose exactly once when
+// the connection is closed, used to maintain an active-connection gauge.
+type countedTCPConn struct {
+	adapter.TCPConn
+	onClose func()
+}
+
+func (c *countedTCPConn) Close() error {
+	c.onClose()
+	return c.TCPConn.Close()
+}
+
+func (c *countedTCPConn) CloseRead() error {
+	if cr, ok := c.TCPConn.(interface{ CloseRead() error }); ok {
+		return cr.CloseRead()
+	}
+	return nil
+}
+
+func (c *countedTCPConn) CloseWrite() error {
+	if cw, ok := c.TCPConn.(interface{ CloseWrite() error }); ok {
+		return cw.CloseWrite()
+	}
+	return nil
 }
 
 func setSocketOptions(s *stack.Stack, ep tcpip.Endpoint) tcpip.Error {
@@ -117,6 +168,6 @@ type tcpConn struct {
 	id stack.TransportEndpointID
 }
 
-func (c *tcpConn) ID() *stack.TransportEndpointID {
-	return &c.id
+func (c *tcpConn) ID() stack.TransportEndpointID {
+	return c.id
 }
