@@ -6,6 +6,8 @@ type Key struct {
 	MTU                      int           `yaml:"mtu"`
 	Mark                     int           `yaml:"fwmark"`
 	Proxy                    string        `yaml:"proxy"`
+	TCPProxy                 string        `yaml:"tcp-proxy"`
+	UDPProxy                 string        `yaml:"udp-proxy"`
 	RestAPI                  string        `yaml:"restapi"`
 	Device                   string        `yaml:"device"`
 	LogLevel                 string        `yaml:"loglevel"`

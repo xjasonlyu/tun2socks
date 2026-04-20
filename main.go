@@ -29,6 +29,8 @@ func init() {
 	flag.StringVarP(&configFile, "config", "c", "", "YAML format configuration file")
 	flag.StringVarP(&key.Device, "device", "d", "", "Use this device [driver://]name")
 	flag.StringVarP(&key.Proxy, "proxy", "p", "", "Use this proxy [protocol://]host[:port]")
+	flag.StringVar(&key.TCPProxy, "tcp-proxy", "", "Use this proxy for TCP only (overrides proxy for TCP)")
+	flag.StringVar(&key.UDPProxy, "udp-proxy", "", "Use this proxy for UDP only (overrides proxy for UDP; required for MASQUE)")
 	flag.StringVar(&key.Interface, "interface", "", "Use network INTERFACE (Linux/MacOS/Windows)")
 	flag.StringVar(&key.LogLevel, "loglevel", "info", "Log level [debug|info|warn|error|silent]")
 	flag.StringVar(&key.RestAPI, "restapi", "", "HTTP statistic server listen address")

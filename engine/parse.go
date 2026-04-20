@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/netip"
@@ -83,6 +84,54 @@ func parseProxy(s string) (proxy.Proxy, error) {
 		return nil, err
 	}
 	return proxy.Parse(u)
+}
+
+// buildProxy resolves the (Proxy, TCPProxy, UDPProxy) triple into a
+// single proxy.Proxy. When TCPProxy or UDPProxy is set, the result is a
+// proxy.Split wrapper with the Proxy value (if any) used as the default
+// for the unspecified side.
+func buildProxy(k *Key) (proxy.Proxy, error) {
+	parseOne := func(s string) (proxy.Proxy, error) {
+		if s == "" {
+			return nil, nil
+		}
+		return parseProxy(s)
+	}
+
+	base, err := parseOne(k.Proxy)
+	if err != nil {
+		return nil, err
+	}
+	tcp, err := parseOne(k.TCPProxy)
+	if err != nil {
+		return nil, err
+	}
+	udp, err := parseOne(k.UDPProxy)
+	if err != nil {
+		return nil, err
+	}
+
+	if tcp == nil && udp == nil {
+		if base == nil {
+			return nil, errors.New("no proxy configured: set proxy or tcp-proxy/udp-proxy")
+		}
+		return base, nil
+	}
+
+	tcpSide, udpSide := tcp, udp
+	if tcpSide == nil {
+		tcpSide = base
+	}
+	if udpSide == nil {
+		udpSide = base
+	}
+	if tcpSide == nil {
+		return nil, errors.New("udp-proxy is set but no TCP proxy configured (set proxy or tcp-proxy)")
+	}
+	if udpSide == nil {
+		return nil, errors.New("tcp-proxy is set but no UDP proxy configured (set proxy or udp-proxy)")
+	}
+	return &proxy.Split{TCP: tcpSide, UDP: udpSide}, nil
 }
 
 func parseMulticastGroups(v []string) ([]netip.Addr, error) {
