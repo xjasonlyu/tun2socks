@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"os/exec"
 	"sync"
@@ -178,9 +179,6 @@ func restAPI(k *Key) error {
 }
 
 func netstack(k *Key) (err error) {
-	if k.Proxy == "" {
-		return errors.New("empty proxy")
-	}
 	if k.Device == "" {
 		return errors.New("empty device")
 	}
@@ -207,7 +205,7 @@ func netstack(k *Key) (err error) {
 		return err
 	}
 
-	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
+	if _defaultProxy, err = buildProxy(k); err != nil {
 		return err
 	}
 	tunnel.T().SetProxy(_defaultProxy)
@@ -247,6 +245,23 @@ func netstack(k *Key) (err error) {
 		return err
 	}
 
-	log.Infof("[STACK] %s <-> %s", k.Device, k.Proxy)
+	log.Infof("[STACK] %s <-> %s", k.Device, proxyDescription(k))
 	return nil
+}
+
+// proxyDescription renders a short, log-friendly description of the
+// proxy configuration, accounting for the split case where tcp-proxy
+// and/or udp-proxy override --proxy.
+func proxyDescription(k *Key) string {
+	if k.TCPProxy == "" && k.UDPProxy == "" {
+		return k.Proxy
+	}
+	tcp, udp := k.TCPProxy, k.UDPProxy
+	if tcp == "" {
+		tcp = k.Proxy
+	}
+	if udp == "" {
+		udp = k.Proxy
+	}
+	return fmt.Sprintf("tcp=%s udp=%s", tcp, udp)
 }
