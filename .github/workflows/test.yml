@@ -97,7 +97,7 @@ jobs:
             proxy: ss://aes-128-gcm:pass@192.168.1.2:8388
             udp: true
           - protocol: SSH
-            image: gogost/gost:3.0.0-nightly.20241002
+            image: gogost/gost:latest
             args: -L "sshd://user:pass@:2222"
             proxy: ssh://user:pass@192.168.1.2:2222
             udp: false
