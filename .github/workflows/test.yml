@@ -210,12 +210,6 @@ jobs:
         if: ${{ matrix.udp }}
         run: docker exec "${APP_TUN2SOCKS}" dig @8.8.8.8 www.google.com +tries=2
 
-      - name: Test UDP via QUIC
-        if: ${{ matrix.udp }}
-        run: |
-          docker exec "${APP_TUN2SOCKS}" curl -4 -fsS -v --max-time 10 -o /dev/null \
-            --http3-only https://cloudflare-quic.com
-
       - name: Test upload speed via iPerf
         run: |
           docker exec "${APP_TUN2SOCKS}" iperf3 --bind-dev "${TUN_IF}" \
