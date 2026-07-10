@@ -1,6 +1,8 @@
 package log
 
 import (
+	"strings"
+
 	"go.uber.org/zap/zapcore"
 )
 
@@ -20,11 +22,13 @@ const (
 	SilentLevel  = InvalidLevel + 1
 )
 
-// ParseLevel is a thin wrapper for zapcore.ParseLevel.
+// ParseLevel is a wrapper for zapcore.ParseLevel
 func ParseLevel(text string) (Level, error) {
-	switch text {
-	case "silent", "SILENT":
+	switch strings.ToLower(strings.TrimSpace(text)) {
+	case "silent", "none", "off", "disable", "disabled":
 		return SilentLevel, nil
+	case "warning":
+		return WarnLevel, nil
 	default:
 		return zapcore.ParseLevel(text)
 	}
