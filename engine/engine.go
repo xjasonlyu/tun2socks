@@ -39,18 +39,14 @@ var (
 	_defaultStack *stack.Stack
 )
 
-// Start starts the default engine up.
-func Start() {
-	if err := start(); err != nil {
-		log.Fatalf("[ENGINE] failed to start: %v", err)
-	}
+// Start starts the default engine up (returns error)
+func Start() error {
+	return start()
 }
 
 // Stop shuts the default engine down.
-func Stop() {
-	if err := stop(); err != nil {
-		log.Fatalf("[ENGINE] failed to stop: %v", err)
-	}
+func Stop() error {
+	return stop()
 }
 
 // Insert loads *Key to the default engine.
@@ -108,9 +104,12 @@ func execCommand(cmd string) error {
 func general(k *Key) error {
 	level, err := log.ParseLevel(k.LogLevel)
 	if err != nil {
-		return err
+		level = log.InfoLevel
 	}
 	log.SetLogger(log.Must(log.NewLeveled(level)))
+	if err != nil {
+		log.Warnf("[ENGINE] invalid log level %q, falling back to info", k.LogLevel)
+	}
 
 	if k.Interface != "" {
 		iface, err := net.InterfaceByName(k.Interface)
