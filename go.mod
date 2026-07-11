@@ -12,6 +12,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/schema v1.4.1
 	github.com/gorilla/websocket v1.5.3
+	github.com/miekg/dns v1.1.52
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	go.uber.org/atomic v1.11.0
@@ -33,7 +34,10 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20260611194520-c48552f49976 // indirect
+	golang.org/x/mod v0.37.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/sync v0.21.0 // indirect
+	golang.org/x/tools v0.46.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

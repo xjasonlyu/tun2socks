@@ -73,16 +73,20 @@ func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
 	return fdbased.Open(u.Host, mtu, offset)
 }
 
-func parseProxy(s string) (proxy.Proxy, error) {
+func parseProxy(s string) (proxy.Proxy, string, error) {
 	if !strings.Contains(s, "://") {
 		s = fmt.Sprintf("%s://%s", "socks5" /* default */, s)
 	}
 
 	u, err := url.Parse(s)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return proxy.Parse(u)
+	p, err := proxy.Parse(u)
+	if err != nil {
+		return nil, "", err
+	}
+	return p, u.Scheme, nil
 }
 
 func parseMulticastGroups(v []string) ([]netip.Addr, error) {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/xjasonlyu/tun2socks/v2/buffer"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
@@ -25,6 +26,8 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 		DstIP:   parseTCPIPAddress(id.LocalAddress),
 		DstPort: id.LocalPort,
 	}
+
+	dns.ProcessMetadata(metadata)
 
 	pc, err := t.Proxy().DialUDP(metadata)
 	if err != nil {
@@ -89,8 +92,9 @@ func copyPacketData(dst, src net.PacketConn, to net.Addr, timeout time.Duration)
 
 type symmetricNATPacketConn struct {
 	net.PacketConn
-	src string
-	dst string
+	src       string
+	dst       string
+	dstIsHost bool
 }
 
 func newSymmetricNATPacketConn(pc net.PacketConn, metadata *M.Metadata) *symmetricNATPacketConn {
@@ -98,6 +102,10 @@ func newSymmetricNATPacketConn(pc net.PacketConn, metadata *M.Metadata) *symmetr
 		PacketConn: pc,
 		src:        metadata.SourceAddress(),
 		dst:        metadata.DestinationAddress(),
+		// If the destination is a hostname (fake DNS rewrote it), we do not
+		// know the source IP which packets should originate from and cannot
+		// drop them accordingly.
+		dstIsHost: !metadata.DstIP.IsValid(),
 	}
 }
 
@@ -105,7 +113,7 @@ func (pc *symmetricNATPacketConn) ReadFrom(p []byte) (int, net.Addr, error) {
 	for {
 		n, from, err := pc.PacketConn.ReadFrom(p)
 
-		if from != nil && from.String() != pc.dst {
+		if from != nil && from.String() != pc.dst && !pc.dstIsHost {
 			log.Warnf("[UDP] symmetric NAT %s->%s: drop packet from %s", pc.src, pc.dst, from)
 			continue
 		}

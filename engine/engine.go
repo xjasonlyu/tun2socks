@@ -2,6 +2,7 @@ package engine
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"os/exec"
 	"sync"
@@ -12,11 +13,14 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 
+	"github.com/xjasonlyu/tun2socks/v2/component/fakeip"
+	"github.com/xjasonlyu/tun2socks/v2/component/trie"
 	"github.com/xjasonlyu/tun2socks/v2/core"
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/core/device"
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 	"github.com/xjasonlyu/tun2socks/v2/dialer"
+	"github.com/xjasonlyu/tun2socks/v2/dns"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/restapi"
@@ -95,6 +99,7 @@ func stop() (err error) {
 		_defaultStack.Close()
 		_defaultStack.Wait()
 	}
+	dns.DisableFakeDNS()
 	_engineMu.Unlock()
 	return nil
 }
@@ -176,6 +181,40 @@ func restAPI(k *Key) error {
 	return nil
 }
 
+// remoteDNSProtocols lists the proxy protocols whose upstream can resolve
+// FQDNs itself, so that fake DNS can hand off the original hostname.
+var remoteDNSProtocols = map[string]bool{
+	"socks5": true,
+	"socks4": true,
+	"http":   true,
+	"ss":     true,
+}
+
+// newFakeDNSPool validates the fake DNS configuration and builds its address
+// pool. It has no side effects, so it is safe to call before the netstack is
+// brought up: a configuration error here must not leave a half-started stack
+// behind.
+func newFakeDNSPool(k *Key, proxyScheme string) (*fakeip.Pool, error) {
+	if !k.FakeDNS {
+		return nil, nil
+	}
+
+	if !remoteDNSProtocols[proxyScheme] {
+		return nil, fmt.Errorf("remote DNS not supported with proxy protocol %q", proxyScheme)
+	}
+
+	_, ipnet, err := net.ParseCIDR(k.FakeDNSNetIPv4)
+	if err != nil {
+		return nil, err
+	}
+
+	return fakeip.New(fakeip.Options{
+		IPNet: ipnet,
+		Size:  1000,
+		Host:  trie.New(),
+	})
+}
+
 func netstack(k *Key) (err error) {
 	if k.Proxy == "" {
 		return errors.New("empty proxy")
@@ -206,10 +245,18 @@ func netstack(k *Key) (err error) {
 		return err
 	}
 
-	if _defaultProxy, err = parseProxy(k.Proxy); err != nil {
+	var proxyScheme string
+	if _defaultProxy, proxyScheme, err = parseProxy(k.Proxy); err != nil {
 		return err
 	}
 	tunnel.T().SetProxy(_defaultProxy)
+
+	// Validate fake DNS config and build its pool up front: an error here
+	// must not leave a half-started stack behind.
+	fakeDNSPool, err := newFakeDNSPool(k, proxyScheme)
+	if err != nil {
+		return err
+	}
 
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
 		return err
@@ -247,5 +294,12 @@ func netstack(k *Key) (err error) {
 	}
 
 	log.Infof("[STACK] %s <-> %s", k.Device, k.Proxy)
+
+	if fakeDNSPool != nil {
+		dns.ReCreateServer(k.FakeDNSListenAddress, fakeDNSPool)
+		dns.EnableFakeDNS()
+		log.Infof("[DNS] fake DNS enabled")
+	}
+
 	return nil
 }
