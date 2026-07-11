@@ -57,7 +57,7 @@ Welcome and feel free to ask any questions at [Discussions](https://github.com/x
   </picture>
 </a>
 
-[1]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/docker.yml?logo=github
+[1]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/docker.yml?branch=main&logo=github
 
 [2]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/linter.yml?branch=main&logo=githubactions&label=golangci-lint
 
