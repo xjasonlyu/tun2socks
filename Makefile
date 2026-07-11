@@ -50,8 +50,7 @@ WINDOWS_ARCH_LIST = \
 	windows-386 \
 	windows-amd64 \
 	windows-amd64-v3 \
-	windows-arm64 \
-	windows-arm32v7
+	windows-arm64
 
 all: linux-amd64 linux-arm64 darwin-amd64 darwin-arm64 windows-amd64
 
@@ -153,9 +152,6 @@ windows-amd64-v3:
 
 windows-arm64:
 	GOARCH=arm64 GOOS=windows $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe
-
-windows-arm32v7:
-	GOARCH=arm GOARM=7 GOOS=windows $(GO_BUILD) -o $(BUILD_DIR)/$(BINARY)-$@.exe
 
 unix_releases := $(addsuffix .zip, $(UNIX_ARCH_LIST))
 windows_releases := $(addsuffix .zip, $(WINDOWS_ARCH_LIST))
