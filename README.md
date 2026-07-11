@@ -1,8 +1,8 @@
 ![tun2socks](docs/logo.png)
 
-[![GitHub Workflow][1]](https://github.com/xjasonlyu/tun2socks/actions)
-[![Go Version][2]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
-[![Go Report][3]](https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks)
+[![Go Build][1]](https://github.com/xjasonlyu/tun2socks/actions/workflows/docker.yml)
+[![Go Linter][2]](https://github.com/xjasonlyu/tun2socks/actions/workflows/linter.yml)
+[![Go Version][3]](https://github.com/xjasonlyu/tun2socks/blob/main/go.mod)
 [![Maintainability][4]](https://qlty.sh/gh/xjasonlyu/projects/tun2socks)
 [![GitHub License][5]](https://github.com/xjasonlyu/tun2socks/blob/main/LICENSE)
 [![Docker Pulls][6]](https://hub.docker.com/r/xjasonlyu/tun2socks)
@@ -59,9 +59,9 @@ Welcome and feel free to ask any questions at [Discussions](https://github.com/x
 
 [1]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/docker.yml?logo=github
 
-[2]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks?logo=go
+[2]: https://img.shields.io/github/actions/workflow/status/xjasonlyu/tun2socks/linter.yml?branch=main&logo=githubactions&label=golangci-lint
 
-[3]: https://goreportcard.com/badge/github.com/xjasonlyu/tun2socks
+[3]: https://img.shields.io/github/go-mod/go-version/xjasonlyu/tun2socks?logo=go
 
 [4]: https://qlty.sh/gh/xjasonlyu/projects/tun2socks/maintainability.svg
 
