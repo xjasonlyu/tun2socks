@@ -103,10 +103,10 @@ func (p *Pool) get(host string) net.IP {
 			break
 		}
 
-		p.offset = (p.offset + 1) % (p.max - p.min)
+		p.offset = (p.offset + 1) % (p.max - p.min + 1)
 		// Avoid infinite loops
 		if p.offset == current {
-			p.offset = (p.offset + 1) % (p.max - p.min)
+			p.offset = (p.offset + 1) % (p.max - p.min + 1)
 			ip := uintToIP(p.min + p.offset)
 			p.store.DelByIP(ip)
 			break

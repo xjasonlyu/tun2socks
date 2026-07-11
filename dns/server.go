@@ -11,10 +11,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/log"
 )
 
-var (
-	server               = &Server{}
-	dnsDefaultTTL uint32 = 600
-)
+var server = &Server{}
 
 type (
 	handler func(r *D.Msg) (*D.Msg, error)
@@ -44,14 +41,19 @@ func handlerWithContext(handler handler, msg *D.Msg) (*D.Msg, error) {
 	return handler(msg)
 }
 
+// ReCreateServer (re)starts the fake DNS UDP listener at addr using pool.
+// Passing an empty addr or a nil pool stops any running server.
 func ReCreateServer(addr string, pool *fakeip.Pool) {
+	fakeMu.Lock()
+	defer fakeMu.Unlock()
+
 	fakePool = pool
 	if server.Server != nil {
 		server.Shutdown()
 		server = &Server{}
 	}
 
-	if addr == "" {
+	if addr == "" || pool == nil {
 		return
 	}
 
@@ -84,11 +86,15 @@ func ReCreateServer(addr string, pool *fakeip.Pool) {
 		err = nil
 	}
 
-	server = &Server{handler: fakeipHandler(fakePool)}
+	server = &Server{handler: fakeipHandler()}
 	server.Server = &D.Server{Addr: addr, PacketConn: udpConn, Handler: server}
 
+	// Capture the current *Server so a concurrent ReCreateServer call
+	// swapping the package-level `server` var can't redirect this goroutine
+	// to serve on the wrong instance.
+	srv := server
 	go func() {
-		server.ActivateAndServe()
+		srv.ActivateAndServe()
 	}()
 
 	log.Infof("DNS server listening at: %s", udpConn.LocalAddr().String())

@@ -99,6 +99,7 @@ func stop() (err error) {
 		_defaultStack.Close()
 		_defaultStack.Wait()
 	}
+	dns.DisableFakeDNS()
 	_engineMu.Unlock()
 	return nil
 }
@@ -189,34 +190,29 @@ var remoteDNSProtocols = map[string]bool{
 	"ss":     true,
 }
 
-func fakeDNS(k *Key, proxyScheme string) (err error) {
+// newFakeDNSPool validates the fake DNS configuration and builds its address
+// pool. It has no side effects, so it is safe to call before the netstack is
+// brought up: a configuration error here must not leave a half-started stack
+// behind.
+func newFakeDNSPool(k *Key, proxyScheme string) (*fakeip.Pool, error) {
 	if !k.FakeDNS {
-		return
+		return nil, nil
 	}
 
 	if !remoteDNSProtocols[proxyScheme] {
-		return fmt.Errorf("remote DNS not supported with proxy protocol %q", proxyScheme)
+		return nil, fmt.Errorf("remote DNS not supported with proxy protocol %q", proxyScheme)
 	}
 
 	_, ipnet, err := net.ParseCIDR(k.FakeDNSNetIPv4)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	pool, err := fakeip.New(fakeip.Options{
+	return fakeip.New(fakeip.Options{
 		IPNet: ipnet,
 		Size:  1000,
 		Host:  trie.New(),
 	})
-	if err != nil {
-		return err
-	}
-
-	dns.EnableFakeDNS()
-	dns.ReCreateServer(k.FakeDNSListenAddress, pool)
-
-	log.Infof("[DNS] fake DNS enabled")
-	return nil
 }
 
 func netstack(k *Key) (err error) {
@@ -255,6 +251,13 @@ func netstack(k *Key) (err error) {
 	}
 	tunnel.T().SetProxy(_defaultProxy)
 
+	// Validate fake DNS config and build its pool up front: an error here
+	// must not leave a half-started stack behind.
+	fakeDNSPool, err := newFakeDNSPool(k, proxyScheme)
+	if err != nil {
+		return err
+	}
+
 	if _defaultDevice, err = parseDevice(k.Device, uint32(k.MTU)); err != nil {
 		return err
 	}
@@ -292,8 +295,10 @@ func netstack(k *Key) (err error) {
 
 	log.Infof("[STACK] %s <-> %s", k.Device, k.Proxy)
 
-	if err = fakeDNS(k, proxyScheme); err != nil {
-		return err
+	if fakeDNSPool != nil {
+		dns.ReCreateServer(k.FakeDNSListenAddress, fakeDNSPool)
+		dns.EnableFakeDNS()
+		log.Infof("[DNS] fake DNS enabled")
 	}
 
 	return nil

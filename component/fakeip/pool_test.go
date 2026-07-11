@@ -95,6 +95,9 @@ func TestPool_CycleUsed(t *testing.T) {
 		assert.Equal(t, net.IP{192, 168, 0, 4}, pool.Lookup("4.com"))
 		assert.Equal(t, net.IP{192, 168, 0, 5}, pool.Lookup("5.com"))
 		assert.Equal(t, net.IP{192, 168, 0, 6}, pool.Lookup("6.com"))
+		// The pool for a /29 network spans .2-.7 (6 addresses); the last
+		// address must be reachable too, not just the first max-min of them.
+		assert.Equal(t, net.IP{192, 168, 0, 7}, pool.Lookup("7.com"))
 		assert.Equal(t, net.IP{192, 168, 0, 2}, pool.Lookup("12.com"))
 		assert.Equal(t, net.IP{192, 168, 0, 3}, pool.Lookup("3.com"))
 	}
