@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Setup Go
         uses: actions/setup-go@v6
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -54,7 +54,7 @@ jobs:
         run: docker save -o tun2socks-build.tar tun2socks:build
 
       - name: Upload image tarball
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: tun2socks-build-image
           path: tun2socks-build.tar
@@ -112,10 +112,10 @@ jobs:
       APP_TUN2SOCKS: tun2socks
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
 
       - name: Download image tarball
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: tun2socks-build-image
 
