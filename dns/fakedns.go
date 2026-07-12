@@ -14,12 +14,19 @@ import (
 )
 
 var (
-	// fakeMu guards fakePool and fakeDNSenabled, which are read from every
-	// TCP/UDP connection goroutine via ProcessMetadata and written once from
-	// the engine goroutine via EnableFakeDNS/DisableFakeDNS/ReCreateServer.
+	// fakeMu guards fakePool, fakeDNSenabled and fakeListenAddr, which are
+	// read from every TCP/UDP connection goroutine via ProcessMetadata and
+	// IsFakeDNSQuery, and written once from the engine goroutine via
+	// EnableFakeDNS/DisableFakeDNS/ReCreateServer.
 	fakeMu         sync.RWMutex
 	fakePool       *fakeip.Pool
 	fakeDNSenabled bool
+	// fakeListenAddr is the address fake DNS queries are expected on. It is
+	// used to recognize fake DNS traffic that arrives through the tunnel
+	// (e.g. on platforms like Android, where all traffic including DNS is
+	// captured by the TUN device and never reaches a real OS-level socket),
+	// independent of whether ReCreateServer managed to bind a real listener.
+	fakeListenAddr netip.AddrPort
 )
 
 func setMsgTTL(msg *D.Msg, ttl uint32) {
@@ -48,6 +55,30 @@ func DisableFakeDNS() {
 	fakeDNSenabled = false
 	fakeMu.Unlock()
 	ReCreateServer("", nil)
+}
+
+// IsFakeDNSQuery reports whether dst is the configured fake DNS listen
+// address, i.e. a UDP/TCP flow to dst should be answered locally via
+// HandleQuery instead of being dialed out through the proxy.
+func IsFakeDNSQuery(dst netip.AddrPort) bool {
+	fakeMu.RLock()
+	defer fakeMu.RUnlock()
+	return fakeDNSenabled && fakeListenAddr.IsValid() && dst == fakeListenAddr
+}
+
+// HandleQuery answers a raw DNS query message using the fake IP pool, for
+// callers that intercept DNS traffic directly from the tunnel rather than
+// through the real OS-level socket managed by ReCreateServer.
+func HandleQuery(data []byte) ([]byte, error) {
+	var msg D.Msg
+	if err := msg.Unpack(data); err != nil {
+		return nil, err
+	}
+	resp, err := fakeipHandler()(&msg)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Pack()
 }
 
 func ProcessMetadata(metadata *M.Metadata) bool {

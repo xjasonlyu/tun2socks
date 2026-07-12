@@ -2,6 +2,7 @@ package tunnel
 
 import (
 	"context"
+	"encoding/binary"
 	"io"
 	"net"
 	"sync"
@@ -27,6 +28,11 @@ func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 		DstPort: id.LocalPort,
 	}
 
+	if dns.IsFakeDNSQuery(metadata.DestinationAddrPort()) {
+		t.handleFakeDNSTCP(originConn)
+		return
+	}
+
 	dns.ProcessMetadata(metadata)
 
 	ctx, cancel := context.WithTimeout(context.Background(), tcpConnectTimeout)
@@ -44,6 +50,40 @@ func (t *Tunnel) handleTCPConn(originConn adapter.TCPConn) {
 
 	log.Infof("[TCP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	pipe(originConn, remoteConn)
+}
+
+// handleFakeDNSTCP answers DNS-over-TCP queries (RFC 1035 4.2.2: each
+// message is prefixed with a 2-byte big-endian length) sent to the fake DNS
+// listen address locally via the fake IP pool, without dialing out through
+// the proxy.
+func (t *Tunnel) handleFakeDNSTCP(originConn adapter.TCPConn) {
+	for {
+		originConn.SetReadDeadline(time.Now().Add(tcpConnectTimeout))
+
+		var lenBuf [2]byte
+		if _, err := io.ReadFull(originConn, lenBuf[:]); err != nil {
+			return
+		}
+
+		msgBuf := make([]byte, binary.BigEndian.Uint16(lenBuf[:]))
+		if _, err := io.ReadFull(originConn, msgBuf); err != nil {
+			return
+		}
+
+		resp, err := dns.HandleQuery(msgBuf)
+		if err != nil {
+			log.Debugf("[DNS] fake DNS query: %v", err)
+			return
+		}
+
+		binary.BigEndian.PutUint16(lenBuf[:], uint16(len(resp)))
+		if _, err := originConn.Write(lenBuf[:]); err != nil {
+			return
+		}
+		if _, err := originConn.Write(resp); err != nil {
+			return
+		}
+	}
 }
 
 // pipe copies data to & from provided net.Conn(s) bidirectionally.

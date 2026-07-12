@@ -27,6 +27,11 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 		DstPort: id.LocalPort,
 	}
 
+	if dns.IsFakeDNSQuery(metadata.DestinationAddrPort()) {
+		t.handleFakeDNSUDP(uc)
+		return
+	}
+
 	dns.ProcessMetadata(metadata)
 
 	pc, err := t.Proxy().DialUDP(metadata)
@@ -49,6 +54,34 @@ func (t *Tunnel) handleUDPConn(uc adapter.UDPConn) {
 
 	log.Infof("[UDP] %s <-> %s", metadata.SourceAddress(), metadata.DestinationAddress())
 	pipePacket(uc, pc, remote, t.udpTimeout.Load())
+}
+
+// handleFakeDNSUDP answers DNS queries sent to the fake DNS listen address
+// locally via the fake IP pool, without dialing out through the proxy. This
+// is what makes fake DNS work on platforms (e.g. Android) where all traffic,
+// including DNS, is captured by the TUN device and never reaches the real
+// OS-level socket ReCreateServer tries to bind.
+func (t *Tunnel) handleFakeDNSUDP(uc adapter.UDPConn) {
+	buf := buffer.Get(buffer.MaxSegmentSize)
+	defer buffer.Put(buf)
+
+	timeout := t.udpTimeout.Load()
+	for {
+		uc.SetReadDeadline(time.Now().Add(timeout))
+		n, from, err := uc.ReadFrom(buf)
+		if err != nil {
+			return
+		}
+
+		resp, err := dns.HandleQuery(buf[:n])
+		if err != nil {
+			log.Debugf("[DNS] fake DNS query: %v", err)
+			continue
+		}
+		if _, err := uc.WriteTo(resp, from); err != nil {
+			return
+		}
+	}
 }
 
 func pipePacket(origin, remote net.PacketConn, to net.Addr, timeout time.Duration) {

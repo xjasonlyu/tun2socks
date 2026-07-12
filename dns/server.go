@@ -3,6 +3,7 @@ package dns
 import (
 	"errors"
 	"net"
+	"net/netip"
 
 	D "github.com/miekg/dns"
 
@@ -48,6 +49,7 @@ func ReCreateServer(addr string, pool *fakeip.Pool) {
 	defer fakeMu.Unlock()
 
 	fakePool = pool
+	fakeListenAddr = netip.AddrPort{}
 	if server.Server != nil {
 		server.Shutdown()
 		server = &Server{}
@@ -73,6 +75,14 @@ func ReCreateServer(addr string, pool *fakeip.Pool) {
 	if err != nil {
 		return
 	}
+	// Recorded regardless of whether the OS-level bind below succeeds, so
+	// that fake DNS queries arriving through the tunnel (see
+	// IsFakeDNSQuery/HandleQuery) are still answered even on platforms
+	// where binding this address as a real local socket isn't possible.
+	// Unmap in case ResolveUDPAddr returned an IPv4-in-6 form: addresses
+	// coming from the tunnel (gVisor) are always plain IPv4, so comparing
+	// against a mapped address in IsFakeDNSQuery would never match.
+	fakeListenAddr = netip.AddrPortFrom(udpAddr.AddrPort().Addr().Unmap(), uint16(udpAddr.Port))
 
 	udpConn, err := net.ListenUDP("udp", udpAddr)
 	if err != nil {
