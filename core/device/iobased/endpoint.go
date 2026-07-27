@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io"
 	"sync"
+	"syscall"
 
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
@@ -143,6 +144,17 @@ func (e *Endpoint) writePacket(pkt *stack.PacketBuffer) tcpip.Error {
 	defer buf.Release()
 	if e.offset != 0 {
 		v := buffer.NewViewWithData(make([]byte, e.offset))
+		// On macOS/iOS, TUN devices require a 4-byte header with the
+		// address family in byte 3 (AF_INET=2, AF_INET6=30).
+		// Without this, the kernel drops the outbound packet.
+		if e.offset >= 4 {
+			switch pkt.NetworkProtocolNumber {
+			case header.IPv4ProtocolNumber:
+				v.AsSlice()[3] = syscall.AF_INET
+			case header.IPv6ProtocolNumber:
+				v.AsSlice()[3] = syscall.AF_INET6
+			}
+		}
 		_ = buf.Prepend(v)
 	}
 
