@@ -61,9 +61,7 @@ func main() {
 
 	engine.Insert(key)
 
-	if err := engine.Start(); err != nil {
-		log.Fatalf("Failed to start engine: %v", err)
-	}
+	engine.Start()
 	defer engine.Stop()
 
 	sigCh := make(chan os.Signal, 1)
