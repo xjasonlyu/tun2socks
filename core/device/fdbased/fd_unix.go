@@ -4,6 +4,7 @@ package fdbased
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 
 	"golang.org/x/sys/unix"
@@ -18,6 +19,7 @@ type FD struct {
 	stack.LinkEndpoint
 
 	fd     int
+	file   *os.File // non-nil on darwin/bsd (iobased path); nil on linux
 	mtu    uint32
 	closed bool
 }
@@ -44,7 +46,17 @@ func (f *FD) Name() string {
 func (f *FD) Close() {
 	if !f.closed {
 		defer f.LinkEndpoint.Close()
-		_ = unix.Close(f.fd)
+		// On darwin/bsd the iobased endpoint wraps the fd in an *os.File
+		// and parks a goroutine in os.File.Read (runtime netpoller).
+		// Closing via os.File.Close() triggers runtime_pollUnblock and
+		// wakes that goroutine so dispatchLoop can exit and the link
+		// endpoint's Wait() can return. A bare unix.Close(fd) does NOT
+		// notify the netpoller, leaving the goroutine blocked forever.
+		if f.file != nil {
+			_ = f.file.Close()
+		} else {
+			_ = unix.Close(f.fd)
+		}
 		f.closed = true
 	}
 }
