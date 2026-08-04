@@ -1,6 +1,7 @@
 package fdbased
 
 import (
+	"runtime"
 	"strconv"
 	"testing"
 	"time"
@@ -40,9 +41,8 @@ func TestCloseUnblocksDispatchLoop(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Open() error = %v", err)
 	}
-	f, ok := dev.(*FD)
-	if !ok || f.file == nil {
-		t.Skip("iobased (os.File) path not used on this platform")
+	if runtime.GOOS == "linux" {
+		t.Skip("iobased (os.File) path not used on linux")
 	}
 
 	// Attach a dispatcher and send a probe packet so we know the dispatch
