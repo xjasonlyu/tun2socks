@@ -64,13 +64,17 @@ func parseDevice(s string, mtu uint32) (device.Device, error) {
 }
 
 func parseFD(u *url.URL, mtu uint32) (device.Device, error) {
-	offset := 0
-	// fd offset in darwin and ios
-	// https://stackoverflow.com/questions/69260852/ios-network-extension-packet-parsing/69487795#69487795
+	return fdbased.Open(u.Host, mtu, fdOffset())
+}
+
+// fdOffset returns the utun packet header offset applied to fd:// devices.
+// On darwin/ios, utun packets carry a 4-byte header (byte 3 = address family).
+// https://stackoverflow.com/questions/69260852/ios-network-extension-packet-parsing/69487795#69487795
+func fdOffset() int {
 	if runtime.GOOS == "darwin" || runtime.GOOS == "ios" {
-		offset = 4
+		return 4
 	}
-	return fdbased.Open(u.Host, mtu, offset)
+	return 0
 }
 
 func parseProxy(s string) (proxy.Proxy, error) {
