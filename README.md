@@ -49,11 +49,11 @@ Welcome and feel free to ask any questions at [Discussions](https://github.com/x
 
 ## Star History
 
-<a href="https://star-history.com/#xjasonlyu/tun2socks&Date">
+<a href="https://star-history.dera.page/#xjasonlyu/tun2socks&Date">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=xjasonlyu/tun2socks&type=Date&theme=dark" />
-    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=xjasonlyu/tun2socks&type=Date" />
-    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=xjasonlyu/tun2socks&type=Date" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://star-history.dera.page/svg?repos=xjasonlyu/tun2socks&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://star-history.dera.page/svg?repos=xjasonlyu/tun2socks&type=Date" />
+    <img alt="Star History Chart" src="https://star-history.dera.page/svg?repos=xjasonlyu/tun2socks&type=Date" />
   </picture>
 </a>
 
