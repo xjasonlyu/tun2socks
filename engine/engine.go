@@ -42,16 +42,6 @@ var (
 	_icmpHandler adapter.NetworkHandler
 )
 
-// Start starts the default engine up.
-func Start() error {
-	return start()
-}
-
-// Stop shuts the default engine down.
-func Stop() error {
-	return stop()
-}
-
 // Insert loads *Key to the default engine.
 func Insert(k *Key) {
 	_engineMu.Lock()
@@ -66,7 +56,8 @@ func SetICMPHandler(h adapter.NetworkHandler) {
 	_engineMu.Unlock()
 }
 
-func start() error {
+// Start starts the default engine up.
+func Start() error {
 	_engineMu.Lock()
 	defer _engineMu.Unlock()
 
@@ -86,7 +77,16 @@ func start() error {
 	return nil
 }
 
-func stop() (err error) {
+// StartOrFatal starts the default engine up, and exits the
+// process if it fails.
+func StartOrFatal() {
+	if err := Start(); err != nil {
+		log.Fatalf("[ENGINE] failed to start: %v", err)
+	}
+}
+
+// Stop shuts the default engine down.
+func Stop() error {
 	_engineMu.Lock()
 	if _defaultDevice != nil {
 		_defaultDevice.Close()
@@ -97,6 +97,14 @@ func stop() (err error) {
 	}
 	_engineMu.Unlock()
 	return nil
+}
+
+// StopOrFatal shuts the default engine down, and exits the
+// process if it fails.
+func StopOrFatal() {
+	if err := Stop(); err != nil {
+		log.Fatalf("[ENGINE] failed to stop: %v", err)
+	}
 }
 
 func execCommand(cmd string) error {

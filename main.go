@@ -61,14 +61,8 @@ func main() {
 
 	engine.Insert(key)
 
-	if err := engine.Start(); err != nil {
-		log.Fatalf("[ENGINE] failed to start: %v", err)
-	}
-	defer func() {
-		if err := engine.Stop(); err != nil {
-			log.Fatalf("[ENGINE] failed to stop: %v", err)
-		}
-	}()
+	engine.StartOrFatal()
+	defer engine.StopOrFatal()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
