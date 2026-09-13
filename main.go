@@ -61,8 +61,8 @@ func main() {
 
 	engine.Insert(key)
 
-	engine.Start()
-	defer engine.Stop()
+	engine.StartOrFatal()
+	defer engine.StopOrFatal()
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
