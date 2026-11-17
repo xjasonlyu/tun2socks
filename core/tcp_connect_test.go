@@ -11,10 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/v2/core"
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/adapters/gonet"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
@@ -23,6 +19,11 @@ import (
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv6"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
 	"gvisor.dev/gvisor/pkg/tcpip/transport/tcp"
+
+	"github.com/xjasonlyu/tun2socks/v2/core"
+	M "github.com/xjasonlyu/tun2socks/v2/metadata"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
 type testProxy struct {
@@ -104,8 +105,10 @@ func newTCPPolicyHarness(t *testing.T, dial func(context.Context, *M.Metadata) (
 				buf := pkt.ToBuffer()
 				wire := buf.Flatten()
 				var tcpBytes []byte
-				if pkt.NetworkProtocolNumber == ipv6.ProtocolNumber && header.IPv6(wire).TransportProtocol() == tcp.ProtocolNumber {
-					tcpBytes = wire[header.IPv6MinimumSize:]
+				if pkt.NetworkProtocolNumber == ipv6.ProtocolNumber {
+					if proto, ok := header.IPv6(wire).TryParseTransportProtocol(); ok && proto == tcp.ProtocolNumber {
+						tcpBytes = wire[header.IPv6MinimumSize:]
+					}
 				} else if pkt.NetworkProtocolNumber == ipv4.ProtocolNumber && header.IPv4(wire).TransportProtocol() == tcp.ProtocolNumber {
 					tcpBytes = wire[header.IPv4(wire).HeaderLength():]
 				}

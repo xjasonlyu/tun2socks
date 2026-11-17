@@ -1,16 +1,19 @@
 package engine
 
 import (
-	"gopkg.in/yaml.v3"
 	"strings"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
-var _ func() error = Start
-var _ func() error = Stop
-var _ func(*Key) = Insert
-var _ = Key{Device: "tun://test", Proxy: "socks5://127.0.0.1:1080"}
+var (
+	_ func() error = Start
+	_ func() error = Stop
+	_ func(*Key)   = Insert
+	_              = Key{Device: "tun://test", Proxy: "socks5://127.0.0.1:1080"}
+)
 
 func TestStartRejectsMissingKey(t *testing.T) {
 	// No device/route operations occur in this test.

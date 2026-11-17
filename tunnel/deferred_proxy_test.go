@@ -11,13 +11,14 @@ import (
 	"testing"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/tcpip"
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	httpproxy "github.com/xjasonlyu/tun2socks/v2/proxy/http"
 	"github.com/xjasonlyu/tun2socks/v2/proxy/socks4"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
-	"gvisor.dev/gvisor/pkg/tcpip"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 func realHandshakeProxy(t *testing.T, protocol string, succeed bool, replyGate <-chan struct{}) (proxy.Proxy, <-chan struct{}, <-chan struct{}) {

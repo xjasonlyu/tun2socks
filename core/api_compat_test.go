@@ -3,14 +3,17 @@ package core
 import (
 	"testing"
 
-	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 )
 
 // Existing signatures and named-field configurations remain compatible.
 // Positional struct literals are intentionally not a compatibility requirement.
-var _ func(*Config) (*stack.Stack, error) = CreateStack
-var _ = Config{TransportHandler: legacyOnlyHandler{}}
+var (
+	_ func(*Config) (*stack.Stack, error) = CreateStack
+	_                                     = Config{TransportHandler: legacyOnlyHandler{}}
+)
 
 type legacyOnlyHandler struct{}
 

@@ -8,14 +8,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/v2/core"
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
+	"github.com/xjasonlyu/tun2socks/v2/core"
+	M "github.com/xjasonlyu/tun2socks/v2/metadata"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
 // Replay the actual reported pattern: same tuple and raw ISN after each reset.
@@ -41,8 +42,10 @@ func TestFailedSYNReplayDoesNotRedial(t *testing.T) {
 			tun := tunnel.New(proxy, statistic.DefaultManager)
 			tun.ProcessAsync()
 			handler := tunnel.NewDeferredTCPHandler(ctx, tun)
-			s, err := core.CreateStack(&core.Config{LinkEndpoint: link, TransportHandler: handler,
-				DeferredTCP: &core.DeferredTCPConfig{Context: ctx}})
+			s, err := core.CreateStack(&core.Config{
+				LinkEndpoint: link, TransportHandler: handler,
+				DeferredTCP: &core.DeferredTCPConfig{Context: ctx},
+			})
 			if err != nil {
 				t.Fatal(err)
 			}

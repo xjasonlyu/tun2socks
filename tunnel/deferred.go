@@ -5,12 +5,13 @@ import (
 	"errors"
 	"net"
 
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
 	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
 	"github.com/xjasonlyu/tun2socks/v2/log"
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 // DeferredTCPHandler is an explicit adapter for core.Config.DeferredTCP.
@@ -24,8 +25,10 @@ type DeferredTCPHandler struct {
 	timeouts proxy.TCPTimeouts
 }
 
-var _ adapter.TransportHandler = (*DeferredTCPHandler)(nil)
-var _ adapter.TCPConnector = (*DeferredTCPHandler)(nil)
+var (
+	_ adapter.TransportHandler = (*DeferredTCPHandler)(nil)
+	_ adapter.TCPConnector     = (*DeferredTCPHandler)(nil)
+)
 
 func NewDeferredTCPHandler(ctx context.Context, t *Tunnel) *DeferredTCPHandler {
 	h, _ := NewDeferredTCPHandlerWithConfig(ctx, t, proxy.TCPTimeouts{})
@@ -48,8 +51,10 @@ func (h *DeferredTCPHandler) HandleTCP(c adapter.TCPConn) { h.tunnel.HandleTCP(c
 func (h *DeferredTCPHandler) HandleUDP(c adapter.UDPConn) { h.tunnel.HandleUDP(c) }
 
 func tcpMetadata(id stack.TransportEndpointID) *M.Metadata {
-	return &M.Metadata{Network: M.TCP, SrcIP: parseTCPIPAddress(id.RemoteAddress), SrcPort: id.RemotePort,
-		DstIP: parseTCPIPAddress(id.LocalAddress), DstPort: id.LocalPort}
+	return &M.Metadata{
+		Network: M.TCP, SrcIP: parseTCPIPAddress(id.RemoteAddress), SrcPort: id.RemotePort,
+		DstIP: parseTCPIPAddress(id.LocalAddress), DstPort: id.LocalPort,
+	}
 }
 
 // DialTCP includes the proxy CONNECT result, not merely a connection to its port.

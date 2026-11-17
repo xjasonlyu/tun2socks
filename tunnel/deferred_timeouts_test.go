@@ -7,10 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
 	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"github.com/xjasonlyu/tun2socks/v2/proxy"
 	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
-	"gvisor.dev/gvisor/pkg/tcpip/stack"
 )
 
 type timeoutProxy struct {
@@ -20,6 +21,7 @@ type timeoutProxy struct {
 func (p timeoutProxy) DialContext(ctx context.Context, m *M.Metadata) (net.Conn, error) {
 	return p.dial(ctx, m)
 }
+
 func (timeoutProxy) DialUDP(*M.Metadata) (net.PacketConn, error) { return nil, errors.New("unused") }
 
 type stagedTimeoutProxy struct {

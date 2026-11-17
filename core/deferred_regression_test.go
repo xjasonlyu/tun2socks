@@ -10,15 +10,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/v2/core"
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel"
-	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
+	"github.com/xjasonlyu/tun2socks/v2/core"
+	M "github.com/xjasonlyu/tun2socks/v2/metadata"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel"
+	"github.com/xjasonlyu/tun2socks/v2/tunnel/statistic"
 )
 
 func regressionSYN(v6 bool, port uint16, isn uint32) []byte {

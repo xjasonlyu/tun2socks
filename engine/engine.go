@@ -269,8 +269,10 @@ func netstack(k *Key) (err error) {
 			cancel()
 			return err
 		}
-		cfg.DeferredTCP = &core.DeferredTCPConfig{Context: ctx,
-			FailureCacheTTL: k.TCPFailureCacheTTL, FailureCacheCapacity: k.TCPFailureCacheCapacity}
+		cfg.DeferredTCP = &core.DeferredTCPConfig{
+			Context:         ctx,
+			FailureCacheTTL: k.TCPFailureCacheTTL, FailureCacheCapacity: k.TCPFailureCacheCapacity,
+		}
 	}
 	if _defaultStack, err = core.CreateStack(cfg); err != nil {
 		if k.TCPDeferredHandshake {

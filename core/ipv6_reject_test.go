@@ -11,14 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xjasonlyu/tun2socks/v2/core"
-	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
-	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 	"gvisor.dev/gvisor/pkg/buffer"
 	"gvisor.dev/gvisor/pkg/tcpip/checksum"
 	"gvisor.dev/gvisor/pkg/tcpip/header"
 	"gvisor.dev/gvisor/pkg/tcpip/link/channel"
 	"gvisor.dev/gvisor/pkg/tcpip/stack"
+
+	"github.com/xjasonlyu/tun2socks/v2/core"
+	"github.com/xjasonlyu/tun2socks/v2/core/adapter"
+	M "github.com/xjasonlyu/tun2socks/v2/metadata"
 )
 
 func TestRejectIPv6TCPIndependentOfDeferredHandshake(t *testing.T) {
@@ -171,8 +172,9 @@ func TestRejectIPv6UDPAndRecovery(t *testing.T) {
 				}
 				reply := readPolicyReply(t, link)
 				ip := header.IPv6(reply)
+				proto, ok := ip.TryParseTransportProtocol()
 				icmp := header.ICMPv6(reply[header.IPv6MinimumSize:])
-				if ip.TransportProtocol() != header.ICMPv6ProtocolNumber || icmp.Type() != header.ICMPv6DstUnreachable || icmp.Code() != header.ICMPv6Prohibited {
+				if !ok || proto != header.ICMPv6ProtocolNumber || icmp.Type() != header.ICMPv6DstUnreachable || icmp.Code() != header.ICMPv6Prohibited {
 					t.Fatalf("wrong ICMPv6 reply: %x", reply)
 				}
 				if ip.SourceAddress() != tcpAddr("2001:db8::10") || ip.DestinationAddress() != tcpAddr("fd00::2") {
