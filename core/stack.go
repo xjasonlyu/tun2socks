@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"net/netip"
 
 	"gvisor.dev/gvisor/pkg/tcpip/network/ipv4"
@@ -35,10 +36,33 @@ type Config struct {
 	// Options are supplement options to apply settings
 	// for the internal stack.
 	Options []option.Option
+
+	// DeferredTCP opts into remote-first TCP handshakes. Nil retains legacy
+	// behavior without SYN tracking, failure caching or lifetime watchers.
+	DeferredTCP *DeferredTCPConfig
+
+	// RejectIPv6 locally rejects IPv6 TCP/UDP before proxy dispatch. TCP gets
+	// RST; UDP gets ICMPv6 administratively prohibited. False preserves normal
+	// forwarding. Independent of DeferredTCP; fixed for this stack's lifetime.
+	RejectIPv6 bool
 }
 
 // CreateStack creates *stack.Stack with given config.
 func CreateStack(cfg *Config) (*stack.Stack, error) {
+	var tcpHandler option.Option
+	if cfg.DeferredTCP == nil {
+		tcpHandler = withTCPHandler(cfg.TransportHandler, cfg.RejectIPv6)
+	} else {
+		settings, err := cfg.DeferredTCP.normalized()
+		if err != nil {
+			return nil, err
+		}
+		connector, ok := cfg.TransportHandler.(adapter.TCPConnector)
+		if !ok {
+			return nil, errors.New("deferred TCP requires a TCPConnector transport handler")
+		}
+		tcpHandler = withDeferredTCPHandler(connector, settings, cfg.RejectIPv6)
+	}
 	opts := []option.Option{option.WithDefault()}
 	if len(opts) > 0 {
 		opts = append(opts, cfg.Options...)
@@ -65,8 +89,8 @@ func CreateStack(cfg *Config) (*stack.Stack, error) {
 		// before creating NIC, otherwise NIC would dispatch packets
 		// to stack and cause race condition.
 		// Initiate transport protocol (TCP/UDP) with given handler.
-		withTCPHandler(cfg.TransportHandler),
-		withUDPHandler(cfg.TransportHandler),
+		tcpHandler,
+		withUDPHandler(cfg.TransportHandler, cfg.RejectIPv6),
 
 		// gVisor added NetworkPacketInfo.LocalAddressTemporary to
 		// identify packets received with temporary addresses due
