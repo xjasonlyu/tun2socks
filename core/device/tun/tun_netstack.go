@@ -84,7 +84,7 @@ func (t *TUN) Close() {
 		// those descriptors from another thread does not wake an idle poll.
 		// Detach first: it signals the eventfd and joins the read workers
 		// before LinkEndpoint.Close releases their notification resources.
-		t.LinkEndpoint.Attach(nil)
+		t.Attach(nil)
 		_ = unix.Close(t.fd)
 		t.LinkEndpoint.Close()
 	})
