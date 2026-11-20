@@ -11,7 +11,7 @@ import (
 	"github.com/xjasonlyu/tun2socks/v2/core/option"
 )
 
-func withUDPHandler(h adapter.TransportHandler) option.Option {
+func withUDPHandler(h adapter.TransportHandler, rejectIPv6 bool) option.Option {
 	return func(s *stack.Stack) error {
 		f := udp.NewForwarder(s, func(r *udp.ForwarderRequest) bool {
 			var (
@@ -32,8 +32,7 @@ func withUDPHandler(h adapter.TransportHandler) option.Option {
 			h.HandleUDP(conn)
 			return true
 		})
-		s.SetTransportProtocolHandler(udp.ProtocolNumber, f.HandlePacket)
-		return nil
+		return setTransportHandler(s, udp.ProtocolNumber, f.HandlePacket, rejectIPv6)
 	}
 }
 

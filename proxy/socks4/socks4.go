@@ -43,6 +43,19 @@ func (ss *Socks4) DialContext(ctx context.Context, metadata *M.Metadata) (c net.
 	return c, err
 }
 
+// DialContextWithTimeouts opts into separate proxy-connect and handshake budgets.
+// DialContext above intentionally retains its original behavior.
+func (ss *Socks4) DialContextWithTimeouts(ctx context.Context, metadata *M.Metadata, cfg proxy.TCPTimeouts) (net.Conn, error) {
+	cfg, err := cfg.WithDefaults()
+	if err != nil {
+		return nil, err
+	}
+	return utils.DialWithHandshake(ctx, "tcp", ss.addr, "SOCKS4", cfg.ProxyHandshakeTimeout,
+		dialer.DialContext, func(c net.Conn) error {
+			return socks4.ClientHandshake(c, metadata.DestinationAddress(), socks4.CmdConnect, ss.userID)
+		})
+}
+
 func (ss *Socks4) DialUDP(*M.Metadata) (net.PacketConn, error) {
 	return nil, errors.ErrUnsupported
 }

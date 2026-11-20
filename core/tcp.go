@@ -41,7 +41,7 @@ const (
 	tcpKeepaliveInterval = 30 * time.Second
 )
 
-func withTCPHandler(h adapter.TransportHandler) option.Option {
+func withTCPHandler(h adapter.TransportHandler, rejectIPv6 bool) option.Option {
 	return func(s *stack.Stack) error {
 		f := tcp.NewForwarder(s, defaultWndSize, maxConnAttempts, func(r *tcp.ForwarderRequest) {
 			var (
@@ -75,8 +75,7 @@ func withTCPHandler(h adapter.TransportHandler) option.Option {
 			}
 			h.HandleTCP(conn)
 		})
-		s.SetTransportProtocolHandler(tcp.ProtocolNumber, f.HandlePacket)
-		return nil
+		return setTransportHandler(s, tcp.ProtocolNumber, f.HandlePacket, rejectIPv6)
 	}
 }
 

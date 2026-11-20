@@ -4,6 +4,7 @@ package tun
 
 import (
 	"fmt"
+	"sync"
 
 	"golang.org/x/sys/unix"
 	"gvisor.dev/gvisor/pkg/rawfile"
@@ -17,9 +18,10 @@ import (
 type TUN struct {
 	stack.LinkEndpoint
 
-	fd   int
-	mtu  uint32
-	name string
+	fd        int
+	mtu       uint32
+	name      string
+	closeOnce sync.Once
 }
 
 func Open(name string, mtu uint32) (device.Device, error) {
@@ -77,8 +79,15 @@ func (t *TUN) Name() string {
 }
 
 func (t *TUN) Close() {
-	defer t.LinkEndpoint.Close()
-	_ = unix.Close(t.fd)
+	t.closeOnce.Do(func() {
+		// fdbased readers wait on both the TUN and a stop eventfd. Closing
+		// those descriptors from another thread does not wake an idle poll.
+		// Detach first: it signals the eventfd and joins the read workers
+		// before LinkEndpoint.Close releases their notification resources.
+		t.Attach(nil)
+		_ = unix.Close(t.fd)
+		t.LinkEndpoint.Close()
+	})
 }
 
 func setMTU(name string, n uint32) error {

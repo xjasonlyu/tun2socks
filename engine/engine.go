@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 	"net"
 	"os/exec"
@@ -37,6 +38,7 @@ var (
 
 	// _defaultStack holds the default stack for the engine.
 	_defaultStack *stack.Stack
+	_stackCancel  context.CancelFunc
 
 	// _icmpHandler holds the custom ICMP handler for the engine.
 	_icmpHandler adapter.NetworkHandler
@@ -64,6 +66,12 @@ func Start() error {
 	if _defaultKey == nil {
 		return errors.New("empty key")
 	}
+	if _defaultKey.TCPFailureCacheTTL < 0 || _defaultKey.TCPFailureCacheCapacity < 0 {
+		return errors.New("TCP failure cache TTL and capacity must not be negative")
+	}
+	if _, err := tcpTimeouts(_defaultKey).WithDefaults(); err != nil {
+		return err
+	}
 
 	for _, f := range []func(*Key) error{
 		general,
@@ -88,6 +96,10 @@ func StartOrFatal() {
 // Stop shuts the default engine down.
 func Stop() error {
 	_engineMu.Lock()
+	if _stackCancel != nil {
+		_stackCancel()
+		_stackCancel = nil
+	}
 	if _defaultDevice != nil {
 		_defaultDevice.Close()
 	}
@@ -241,16 +253,38 @@ func netstack(k *Key) (err error) {
 		opts = append(opts, option.WithTCPReceiveBufferSize(int(size)))
 	}
 
-	if _defaultStack, err = core.CreateStack(&core.Config{
+	cfg := &core.Config{
 		LinkEndpoint:     _defaultDevice,
 		TransportHandler: tunnel.T(),
 		ICMPHandler:      _icmpHandler,
 		MulticastGroups:  multicastGroups,
 		Options:          opts,
-	}); err != nil {
+		RejectIPv6:       k.RejectIPv6,
+	}
+	if k.TCPDeferredHandshake {
+		ctx, cancel := context.WithCancel(context.Background())
+		_stackCancel = cancel
+		cfg.TransportHandler, err = tunnel.NewDeferredTCPHandlerWithConfig(ctx, tunnel.T(), tcpTimeouts(k))
+		if err != nil {
+			cancel()
+			return err
+		}
+		cfg.DeferredTCP = &core.DeferredTCPConfig{
+			Context:         ctx,
+			FailureCacheTTL: k.TCPFailureCacheTTL, FailureCacheCapacity: k.TCPFailureCacheCapacity,
+		}
+	}
+	if _defaultStack, err = core.CreateStack(cfg); err != nil {
+		if k.TCPDeferredHandshake {
+			_stackCancel()
+		}
 		return err
 	}
 
 	log.Infof("[STACK] %s <-> %s", k.Device, k.Proxy)
 	return nil
+}
+
+func tcpTimeouts(k *Key) proxy.TCPTimeouts {
+	return proxy.TCPTimeouts{ProxyHandshakeTimeout: k.TCPProxyHandshakeTimeout}
 }
