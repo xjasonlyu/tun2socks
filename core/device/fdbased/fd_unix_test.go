@@ -1,4 +1,4 @@
-//go:build unix && !linux
+//go:build unix
 
 package fdbased
 
@@ -32,8 +32,7 @@ func TestCloseUnblocksDispatchLoop(t *testing.T) {
 	}
 	defer unix.Close(fds[1])
 
-	// os.NewFile only registers the fd with the runtime netpoller when the
-	// fd is non-blocking, which is the iobased path this fix targets.
+	// The iobased path on non-Linux systems needs a nonblocking fd for netpoll.
 	if err := unix.SetNonblock(fds[0], true); err != nil {
 		t.Fatalf("SetNonblock() error = %v", err)
 	}
@@ -48,7 +47,10 @@ func TestCloseUnblocksDispatchLoop(t *testing.T) {
 	dispatcher := &testDispatcher{got: make(chan struct{}, 1)}
 	dev.Attach(dispatcher)
 
-	ipv4 := []byte{0x45, 0x00, 0x00, 0x14, 0x00, 0x00, 0x00, 0x00, 0x40, 0x11, 0x00, 0x00, 0x7f, 0x00, 0x00, 0x01, 0x7f, 0x00, 0x00, 0x01}
+	ipv4 := []byte{
+		0x45, 0, 0, 28, 0, 0, 0, 0, 64, 17, 0x7c, 0xcf, 127, 0, 0, 1, 127, 0, 0, 1,
+		0x04, 0xd2, 0x16, 0x2e, 0, 8, 0, 0, // UDP header
+	}
 	if _, err := unix.Write(fds[1], ipv4); err != nil {
 		t.Fatalf("Write() error = %v", err)
 	}
@@ -58,14 +60,15 @@ func TestCloseUnblocksDispatchLoop(t *testing.T) {
 		t.Fatal("probe packet not dispatched; dispatch loop not running")
 	}
 
-	// Close the device and verify Wait() returns instead of hanging.
+	// Let the reader settle into its next idle poll. Keep the peer open so
+	// only shutting down the device can wake it.
+	time.Sleep(50 * time.Millisecond)
 	done := make(chan struct{})
 	go func() {
+		dev.Close()
 		dev.Wait()
 		close(done)
 	}()
-
-	dev.Close()
 
 	select {
 	case <-done:
