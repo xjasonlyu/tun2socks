@@ -55,6 +55,9 @@ func (f *FD) Close() {
 		if f.file != nil {
 			_ = f.file.Close()
 		} else {
+			// Linux (including Android): signal the stop eventfd and wait for
+			// idle readers before closing the descriptors they poll.
+			f.Attach(nil)
 			_ = unix.Close(f.fd)
 		}
 		f.closed = true
